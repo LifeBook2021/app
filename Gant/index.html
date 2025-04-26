@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ガントチャート</title>
+    <!-- FaviconはScriptで設定 -->
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
+    <!-- Bootstrap Icons CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+
+    <style>
+        :root {
+            /* --- レイアウト寸法 --- */
+            --header-height: 50px;
+            --timeline-header-height: 50px;
+            --task-list-width: 550px;
+            --task-delete-button-width: 50px;
+            --row-height: 35px;
+            --dayWidth: 35px; /* JSが更新 */
+            --resize-handle-width: 8px;
+
+            /* --- 色 --- */
+            --border-color: #e0e0e0;
+            --saturday-bg: #eaf4ff;
+            --sunday-bg: #fff4e5;
+            --holiday-bg-new: #fff0f5; /* 薄いピンク (LavenderBlush) - 祝日用 */
+            --holiday-bg: var(--holiday-bg-new); /* 祝日背景色 */
+            --today-bg: #ffffeb;
+            --today-border-color: #e74c3c;
+            --gantt-bar-color: #3498db;
+            --gantt-progress-color: #2ecc71;
+            --text-color: #212529;
+            --secondary-text-color: #6c757d;
+            --header-bg: #f8f9fa;
+            --body-bg: #ffffff;
+            --hover-bg: #f0f8ff;
+
+            /* --- 効果 --- */
+            --dragging-opacity: 0.7;
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+            font-size: 12px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--header-bg);
+            color: var(--text-color);
+            user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+        }
+
+        /* --- ヘッダー コントロール --- */
+        .controls {
+            height: var(--header-height);
+            padding: 0 15px;
+            border-bottom: 1px solid var(--border-color);
+            background-color: var(--body-bg);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0;
+        }
+        #add-task-button {
+            background-color: #0d6efd;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 0.25rem;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: bold;
+        }
+        #add-task-button:hover { background-color: #0b5ed7; }
+        .controls-right { display: flex; align-items: center; margin-left: auto; }
+        .view-switch { display: flex; border: 1px solid #dee2e6; border-radius: 0.25rem; overflow: hidden; }
+        .view-switch label { padding: 6px 12px; cursor: pointer; background-color: var(--body-bg); color: var(--secondary-text-color); font-size: 13px; border-left: 1px solid #dee2e6; transition: background-color 0.2s ease; margin-bottom: 0; }
+        .view-switch label:first-child { border-left: none; }
+        .view-switch input[type="radio"] { display: none; }
+        .view-switch input[type="radio"]:checked + label { background-color: #e9ecef; color: var(--text-color); font-weight: bold; }
+        .view-switch label:hover { background-color: var(--header-bg); }
+        #json-controls { margin-left: 15px; display: flex; align-items: center; }
+        #json-controls button { padding: 4px 8px; font-size: 12px; margin-left: 5px; cursor: pointer; border: 1px solid #ced4da; background-color: var(--header-bg); border-radius: 0.25rem; color: var(--secondary-text-color); transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease; }
+        #json-controls button:hover { background-color: #e9ecef; }
+        #json-controls input[type="file"] { display: none; }
+        /* JSON読込日時表示のスタイル */
+        #json-load-timestamp {
+            font-size: 11px;
+            color: var(--secondary-text-color);
+            margin-left: 8px; /* loading-statusとの間隔 */
+            margin-right: 15px; /* view-switchとの間隔 */
+        }
+        #loading-status { margin-right: 15px; font-style: italic; color: var(--secondary-text-color); font-size: 12px; }
+
+        /* --- ガントチャートレイアウト --- */
+        .gantt-chart-container { display: flex; flex-grow: 1; overflow: hidden; border-top: 1px solid var(--border-color); }
+
+        /* --- タスクリスト --- */
+        .task-list { width: var(--task-list-width); border-right: 1px solid var(--border-color); overflow: hidden; flex-shrink: 0; background-color: var(--body-bg); display: flex; flex-direction: column; }
+        .task-list-header { height: var(--timeline-header-height); display: grid; grid-template-columns: 1fr 100px 100px 100px 70px var(--task-delete-button-width); align-items: center; font-weight: bold; background-color: var(--header-bg); border-bottom: 1px solid var(--border-color); padding: 0 5px; box-sizing: border-box; position: sticky; top: 0; z-index: 20; }
+        .task-list-header > div { padding: 5px 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: center; color: var(--secondary-text-color); }
+        .task-list-header > div:first-child { text-align: left; }
+        .task-list-body { overflow-y: auto; flex-grow: 1; position: relative; }
+        .task-row { display: grid; grid-template-columns: 1fr 100px 100px 100px 70px var(--task-delete-button-width); border-bottom: 1px solid var(--border-color); height: var(--row-height); align-items: center; padding: 0 5px; box-sizing: border-box; position: relative; z-index: 1; }
+        .task-row:nth-child(even) { background-color: #fdfdfd; }
+        .task-row:hover { background-color: var(--hover-bg); }
+        .task-row > div { padding: 5px 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; position: relative; z-index: 2; display: flex; align-items: center; }
+        .task-row > div[data-field] { cursor: pointer; }
+        .task-row > div[data-field="progress"] { justify-content: flex-end; padding-right: 10px; }
+        .task-row input[type="text"], .task-row input[type="date"], .task-row input[type="number"] { width: 100%; padding: 4px 8px; border: 1px solid #0d6efd; font-size: 12px; box-sizing: border-box; height: calc(var(--row-height) - 10px); border-radius: 0.25rem; }
+        .task-row input[type="number"] { width: 50px; text-align: right; }
+        .task-row .delete-button-cell { padding: 0; justify-content: center; align-items: center; display: flex; }
+        .delete-task-button { background-color: transparent; color: var(--secondary-text-color); border: 1px solid #adb5bd; padding: 4px 8px; border-radius: 0.25rem; cursor: pointer; font-size: 14px; line-height: 1; transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease; display: inline-flex; align-items: center; justify-content: center; }
+        .delete-task-button i { color: inherit; }
+        .delete-task-button:hover { background-color: var(--secondary-text-color); color: white; border-color: var(--secondary-text-color); }
+
+        /* --- タイムライン --- */
+        .timeline-container { flex-grow: 1; overflow: auto; position: relative; background-color: var(--body-bg); }
+        .timeline-header { position: sticky; top: 0; z-index: 15; background-color: var(--header-bg); border-bottom: 1px solid var(--border-color); white-space: nowrap; }
+        .timeline-header-row { display: flex; border-bottom: 1px solid var(--border-color); box-sizing: border-box; }
+        .timeline-header-row:last-child { border-bottom: none; }
+        .header-unit { text-align: center; border-left: 1px solid var(--border-color); font-size: 11px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: var(--secondary-text-color); }
+        .header-unit:first-child { border-left: none; }
+        .header-unit-top { height: calc(var(--timeline-header-height) * 0.4); font-weight: bold; font-size: 12px; color: var(--text-color); }
+        .header-unit-bottom { height: calc(var(--timeline-header-height) * 0.6); font-size: 10px; position: relative; overflow: hidden; padding: 0 2px; }
+        .header-unit-bottom.saturday-header { background-color: var(--saturday-bg); }
+        .header-unit-bottom.sunday-header { background-color: var(--sunday-bg); }
+        .header-unit-bottom.holiday-header { background-color: var(--holiday-bg); } /* 祝日ヘッダーの背景色 */
+        .header-unit-bottom.today-header { background-color: var(--today-bg); border-top: 1px solid var(--today-border-color); border-left: 1px solid var(--today-border-color); border-right: 1px solid var(--today-border-color); border-bottom: none; box-sizing: border-box; color: var(--text-color); font-weight: bold; }
+        .timeline-body { position: relative; }
+        .timeline-row { height: var(--row-height); position: relative; box-sizing: border-box; }
+        .day-column-bg { position: absolute; top: 0; height: 100%; z-index: 0; pointer-events: none; }
+        .saturday-bg { background-color: var(--saturday-bg); }
+        .sunday-bg { background-color: var(--sunday-bg); }
+        .holiday-bg { background-color: var(--holiday-bg); } /* 祝日ボディの背景色 */
+        .today-bg { background-color: var(--today-bg); }
+        .vertical-grid-line { position: absolute; top: 0; height: 100%; width: 1px; background-color: var(--border-color); z-index: 1; pointer-events: none; }
+        .timeline-horizontal-grid-line { position: absolute; left: 0; width: 100%; height: 1px; background-color: var(--border-color); z-index: 1; pointer-events: none; }
+        .today-marker { position: absolute; top: 0; height: 100%; width: var(--dayWidth); z-index: 1; pointer-events: none; border-left: 1px solid var(--today-border-color); border-right: 1px solid var(--today-border-color); border-bottom: 1px solid var(--today-border-color); border-top: none; box-sizing: border-box; }
+
+        /* ガントバー */
+        .gantt-bar { position: absolute; top: 5px; height: calc(var(--row-height) - 10px); background-color: var(--gantt-bar-color); border-radius: 4px; cursor: grab; display: flex; align-items: center; overflow: visible; box-shadow: 0 1px 3px rgba(0,0,0,0.1); transition: background-color 0.2s ease, opacity 0.2s ease; z-index: 2; }
+        .gantt-bar:hover { background-color: #2980b9; }
+        .gantt-bar.dragging { cursor: grabbing; opacity: var(--dragging-opacity); z-index: 10; }
+        .gantt-bar.resizing-start, .gantt-bar.resizing-end { opacity: var(--dragging-opacity); z-index: 10; }
+        .gantt-bar-progress { height: 100%; background-color: var(--gantt-progress-color); border-radius: 4px 0 0 4px; position: absolute; left: 0; top: 0; opacity: 0.6; z-index: 1; pointer-events: none; }
+        .gantt-bar-label { font-size: 11px; color: white; padding: 0 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; position: relative; z-index: 2; width: 100%; text-align: left; pointer-events: none; }
+        .resize-handle { position: absolute; top: 0; width: var(--resize-handle-width); height: 100%; cursor: ew-resize; z-index: 3; background-color: transparent; }
+        .resize-handle-left { left: calc(var(--resize-handle-width) / -2); }
+        .resize-handle-right { right: calc(var(--resize-handle-width) / -2); }
+        .progress-handle { position: absolute; top: 50%; transform: translateY(-50%); width: 8px; height: 8px; background-color: rgba(255, 255, 255, 0.7); border: 1px solid #666; border-radius: 50%; cursor: pointer; z-index: 4; box-shadow: 0 0 3px rgba(0,0,0,0.3); display: none; /* left はJSで設定 */ }
+        .gantt-bar:hover .progress-handle { display: block; }
+        .gantt-bar.dragging-progress .progress-handle { display: block; background-color: rgba(255, 255, 255, 0.9); }
+
+        /* 保存ボタン（未保存状態） */
+        #save-json-button.unsaved-changes { background-color: #ffc107; border-color: #ffc107; color: #000; font-weight: bold; }
+        #save-json-button.unsaved-changes:hover { background-color: #ffca2c; border-color: #ffc720; }
+
+    </style>
+</head>
+<body>
+
+    <!-- コントロールヘッダー -->
+    <div class="controls">
+        <button id="add-task-button">+ タスク追加</button>
+        <div class="controls-right">
+            <span id="loading-status"></span>
+            <span id="json-load-timestamp"></span> <!-- JSON読込日時表示 -->
+            <div class="view-switch">
+                <input type="radio" name="view" id="view-daily" value="daily" checked>
+                <label for="view-daily">日</label>
+                <input type="radio" name="view" id="view-weekly" value="weekly">
+                <label for="view-weekly">週</label>
+                <input type="radio" name="view" id="view-monthly" value="monthly">
+                <label for="view-monthly">月</label>
+            </div>
+            <div id="json-controls">
+                <input type="file" id="json-file-input" accept=".json">
+                <button onclick="document.getElementById('json-file-input').click();">読込</button>
+                <button id="save-json-button">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ガントチャート本体 -->
+    <div class="gantt-chart-container" id="gantt-chart">
+        <!-- タスクリスト（左側） -->
+        <div class="task-list" id="task-list">
+            <div class="task-list-header">
+                <div>タスク</div>
+                <div>担当者</div>
+                <div>開始日</div>
+                <div>終了日</div>
+                <div>進捗率</div>
+                <div>操作</div>
+            </div>
+            <div class="task-list-body" id="task-list-body">
+                <!-- JSで描画 -->
+            </div>
+        </div>
+        <!-- タイムライン（右側） -->
+        <div class="timeline-container" id="timeline-container">
+            <div class="timeline-header" id="timeline-header">
+                <!-- JSで描画 -->
+            </div>
+            <div class="timeline-body" id="timeline-body">
+                <!-- JSで描画 -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- グローバル変数定義 ---
+        let tasks = [];                  // タスクデータ
+        let currentView = 'daily';       // 表示モード ('daily', 'weekly', 'monthly')
+        let chartStartDate = null;       // タイムラインの表示開始日
+        let chartEndDate = null;         // タイムラインの表示終了日
+        let dayWidth = 35;               // 1日あたりの列幅 (px)
+        let activeEditingElement = null; // インライン編集中の要素情報
+        let isSyncingLeftScroll = false; // スクロール同期フラグ (左→右)
+        let isSyncingRightScroll = false;// スクロール同期フラグ (右→左)
+        let holidaysData = {};           // 祝日データ {'YYYY-MM-DD': '祝日名'}
+        let hasUnsavedChanges = false;   // 未保存の変更フラグ
+
+        // ドラッグ＆ドロップ関連
+        let isDragging = false;          // ドラッグ中フラグ
+        let dragMode = null;             // ドラッグの種類 ('move', 'resizeStart', 'resizeEnd', 'progress')
+        let draggedElement = null;       // ドラッグ中のバー要素
+        let draggedTaskId = null;        // ドラッグ中のタスクID
+        let startX = 0;                  // ドラッグ開始時のマウスX座標
+        let initialLeft = 0;             // ドラッグ開始時のバーの left (px)
+        let initialWidth = 0;            // ドラッグ開始時のバー幅 or 進捗バー幅 (px)
+        let timelineContainerRect = null;// タイムラインコンテナの矩形情報 (境界チェック用)
+        const MIN_TASK_DURATION_DAYS = 1; // タスクの最小期間（日数）
+        const MIN_BAR_WIDTH_FOR_PROGRESS_HANDLE = 20; // 進捗ハンドルを表示する最小バー幅 (px)
+
+        // --- 日付関連ヘルパー ---
+
+        /** 日付文字列(YYYY-MM-DD or YYYY/MM/DD)をUTC基準のDateオブジェクトに変換 */
+        const parseDate = (dateString) => {
+            if (!dateString) return null;
+            const parts = dateString.split(/[-/]/);
+            if (parts.length !== 3) return null;
+            const [year, month, day] = parts.map(Number);
+            if (isNaN(year) || isNaN(month) || isNaN(day) || month < 1 || month > 12 || day < 1 || day > 31) return null;
+            const date = new Date(Date.UTC(year, month - 1, day));
+            if (date.getUTCFullYear() !== year || date.getUTCMonth() !== month - 1 || date.getUTCDate() !== day) return null;
+            return date;
+        };
+
+        /** DateオブジェクトをUTC基準でフォーマット (デフォルト: YYYY/MM/DD) */
+        const formatDate = (date, separator = '/') => {
+            if (!(date instanceof Date) || isNaN(date)) return '';
+            const year = date.getUTCFullYear();
+            const month = (date.getUTCMonth() + 1).toString().padStart(2, '0');
+            const day = date.getUTCDate().toString().padStart(2, '0');
+            return `${year}${separator}${month}${separator}${day}`;
+        };
+
+         /** Dateオブジェクトをローカルタイムゾーン基準でフォーマット (デフォルト: YYYY-MM-DD) */
+         const formatLocalDate = (date, separator = '-') => {
+            if (!(date instanceof Date) || isNaN(date)) return '';
+            const year = date.getFullYear();
+            const month = (date.getMonth() + 1).toString().padStart(2, '0');
+            const day = date.getDate().toString().padStart(2, '0');
+            return `${year}${separator}${month}${separator}${day}`;
+        };
+
+        /** Dateオブジェクトをローカルタイムゾーン基準でフォーマット (YYYY/MM/DD HH:MM:SS) */
+        const formatLocalDateTime = (date) => {
+            if (!(date instanceof Date) || isNaN(date)) return '';
+            const year = date.getFullYear();
+            const month = (date.getMonth() + 1).toString().padStart(2, '0');
+            const day = date.getDate().toString().padStart(2, '0');
+            const hours = date.getHours().toString().padStart(2, '0');
+            const minutes = date.getMinutes().toString().padStart(2, '0');
+            const seconds = date.getSeconds().toString().padStart(2, '0');
+            return `${year}/${month}/${day} ${hours}:${minutes}:${seconds}`;
+        };
+
+        /** Dateオブジェクトに日数を加算 (UTC) */
+        const addDays = (date, days) => {
+            const result = new Date(date);
+            result.setUTCDate(result.getUTCDate() + days);
+            return result;
+        };
+
+        /** 2つのDateオブジェクト間の日数の差を計算 (UTC) */
+        const getDaysDiff = (date1, date2) => {
+            if (!date1 || !date2) return 0;
+            const millisecondsPerDay = 86400000; // 24 * 60 * 60 * 1000
+            return Math.round((date2.getTime() - date1.getTime()) / millisecondsPerDay);
+        };
+
+        /** 週の開始日を取得 (UTC) */
+        const getStartOfWeek = (date, startDay = 1) => { // startDay: 0=Sun, 1=Mon
+            const dateCopy = new Date(date);
+            const dayOfWeek = dateCopy.getUTCDay();
+            const diff = dateCopy.getUTCDate() - dayOfWeek + (startDay === 1 ? (dayOfWeek === 0 ? -6 : 1) : 0);
+            return new Date(Date.UTC(dateCopy.getUTCFullYear(), dateCopy.getUTCMonth(), diff));
+        };
+
+        /** 月の開始日を取得 (UTC) */
+        const getStartOfMonth = (date) => {
+            return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), 1));
+        };
+
+        /** 月の週番号を取得 (UTC, 1始まり) */
+        const getWeekOfMonth = (date) => {
+            const dateOfMonth = date.getUTCDate();
+            const firstDayOfMonth = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), 1));
+            const firstWeekday = firstDayOfMonth.getUTCDay() || 7; // 1(Mon) - 7(Sun)
+            const offset = firstWeekday - 1;
+            return Math.ceil((dateOfMonth + offset) / 7);
+        };
+
+        /** 祝日かどうかを判定 */
+        const isHoliday = (date) => {
+            if (!(date instanceof Date) || isNaN(date)) return undefined;
+            const dateString = formatDate(date, '-');
+            return holidaysData[dateString];
+        };
+
+        /** 今日の日付文字列を取得 (ローカルタイムゾーン, YYYY-MM-DD) */
+        const getTodayString = () => {
+            return formatLocalDate(new Date(), '-');
+        };
+
+        // --- 初期タスクデータ ---
+        const initializeDefaultTasks = () => {
+            const todayLocal = new Date();
+            const startDateStr = formatLocalDate(todayLocal, '-');
+            const endDate = new Date(todayLocal);
+            endDate.setDate(todayLocal.getDate() + 7);
+            const endDateStr = formatLocalDate(endDate, '-');
+            return [{ id: 1, name: "新規タスク", assignee: "", start: startDateStr, end: endDateStr, progress: 0 }];
+        };
+        tasks = initializeDefaultTasks();
+
+        // --- チャート計算と描画 ---
+
+        /** タイムラインの表示期間を計算 */
+        const calculateDateRange = () => {
+            if (tasks.length === 0) {
+                const todayUTC = new Date(); todayUTC.setUTCHours(0,0,0,0);
+                chartStartDate = getStartOfMonth(todayUTC);
+                const twoMonthsLater = new Date(Date.UTC(todayUTC.getUTCFullYear(), todayUTC.getUTCMonth() + 2, 1));
+                chartEndDate = addDays(twoMonthsLater, -1);
+                return;
+            }
+            let minTaskDate = null, maxTaskDate = null;
+            tasks.forEach(task => {
+                const start = parseDate(task.start); const end = parseDate(task.end);
+                if (start && (!minTaskDate || start < minTaskDate)) minTaskDate = start;
+                if (end && (!maxTaskDate || end > maxTaskDate)) maxTaskDate = end;
+            });
+            if (!minTaskDate || !maxTaskDate) { // フォールバック
+                 const todayUTC = new Date(); todayUTC.setUTCHours(0,0,0,0);
+                 minTaskDate = minTaskDate || getStartOfMonth(todayUTC);
+                 maxTaskDate = maxTaskDate || addDays(getStartOfMonth(addDays(todayUTC, 60)), -1);
+            }
+            // 前後にパディングを追加
+            chartStartDate = addDays(minTaskDate, -14);
+            chartEndDate = addDays(maxTaskDate, 14);
+            // ビューに合わせて期間を調整
+            if (currentView === 'daily' || currentView === 'weekly') {
+                chartStartDate = getStartOfWeek(chartStartDate, 1);
+                chartEndDate = addDays(getStartOfWeek(addDays(chartEndDate, 7), 1), 6);
+            } else if (currentView === 'monthly') {
+                chartStartDate = getStartOfMonth(chartStartDate);
+                const nextMonthStart = new Date(Date.UTC(chartEndDate.getUTCFullYear(), chartEndDate.getUTCMonth() + 1, 1));
+                chartEndDate = addDays(nextMonthStart, -1);
+            }
+        };
+
+        /** タスクリスト（左側グリッド）を描画 */
+        const renderTaskList = () => {
+            const taskListBody = document.getElementById('task-list-body');
+            if (!taskListBody) return;
+            taskListBody.innerHTML = '';
+            const fragment = document.createDocumentFragment();
+            tasks.forEach(task => {
+                const row = document.createElement('div');
+                row.className = 'task-row'; row.dataset.taskId = task.id;
+                const progressDisplay = formatCellContent('progress', task.progress);
+                row.innerHTML = `
+                    <div data-field="name" title="編集">${task.name || ''}</div>
+                    <div data-field="assignee" title="編集">${task.assignee || ''}</div>
+                    <div data-field="start" title="編集">${formatCellContent('start', task.start)}</div>
+                    <div data-field="end" title="編集">${formatCellContent('end', task.end)}</div>
+                    <div data-field="progress" title="編集">${progressDisplay}</div>`;
+                const deleteCell = document.createElement('div'); deleteCell.className = 'delete-button-cell';
+                const deleteButton = document.createElement('button'); deleteButton.className = 'delete-task-button'; deleteButton.dataset.taskId = task.id; deleteButton.title = `タスク「${task.name}」を削除`;
+                const icon = document.createElement('i'); icon.className = 'bi bi-trash'; deleteButton.appendChild(icon);
+                deleteButton.addEventListener('click', handleDeleteTaskClick); deleteCell.appendChild(deleteButton); row.appendChild(deleteCell);
+                fragment.appendChild(row);
+                row.querySelectorAll('div[data-field]').forEach(cell => cell.addEventListener('click', handleCellClick));
+            });
+            taskListBody.appendChild(fragment);
+            syncScroll();
+        };
+
+        /** タイムラインヘッダーを描画し、総幅を返す */
+        const renderTimelineHeader = () => {
+            const timelineHeader = document.getElementById('timeline-header');
+            if (!timelineHeader || !chartStartDate || !chartEndDate) return 0;
+            timelineHeader.innerHTML = '';
+            const topRow = document.createElement('div'); topRow.className = 'timeline-header-row';
+            const bottomRow = document.createElement('div'); bottomRow.className = 'timeline-header-row';
+            let totalWidth = 0; let currentDate = new Date(chartStartDate); let currentTopUnit = null; let topUnits = [];
+            const todayStr = getTodayString();
+
+            if (currentView === 'daily') {
+                dayWidth = 35; document.documentElement.style.setProperty('--dayWidth', `${dayWidth}px`);
+                const weekdayFmt = new Intl.DateTimeFormat('ja-JP', { weekday: 'short' });
+                let currentMonthWidth = 0;
+                while (currentDate <= chartEndDate) {
+                    const year = currentDate.getUTCFullYear(); const month = currentDate.getUTCMonth(); const day = currentDate.getUTCDate(); const weekday = currentDate.getUTCDay(); const monthYearKey = `${year}-${month}`;
+                    if (!currentTopUnit || currentTopUnit.key !== monthYearKey) { if (currentTopUnit) { currentTopUnit.width = currentMonthWidth; topUnits.push(currentTopUnit); } currentTopUnit = { key: monthYearKey, width: 0, element: document.createElement('div') }; currentTopUnit.element.className = 'header-unit header-unit-top'; currentTopUnit.element.textContent = `${year}年 ${month + 1}月`; currentMonthWidth = 0; }
+                    const bottomUnit = document.createElement('div'); bottomUnit.className = 'header-unit header-unit-bottom'; bottomUnit.style.width = `${dayWidth}px`; const holidayName = isHoliday(currentDate); const dateStr = formatDate(currentDate, '-'); bottomUnit.innerHTML = `${day}<br>${weekdayFmt.format(currentDate)}`;
+                    if (holidayName) { bottomUnit.title = holidayName; bottomUnit.classList.add('holiday-header'); }
+                    else if (weekday === 6) { bottomUnit.classList.add('saturday-header'); }
+                    else if (weekday === 0) { bottomUnit.classList.add('sunday-header'); }
+                    if (dateStr === todayStr) { bottomUnit.classList.add('today-header'); }
+                    bottomRow.appendChild(bottomUnit); totalWidth += dayWidth; currentMonthWidth += dayWidth; currentDate = addDays(currentDate, 1);
+                }
+                if (currentTopUnit) { currentTopUnit.width = currentMonthWidth; topUnits.push(currentTopUnit); }
+            } else { // weekly or monthly
+                dayWidth = (currentView === 'weekly') ? 12 : 5; document.documentElement.style.setProperty('--dayWidth', `${dayWidth}px`);
+                let currentYearWidth = 0;
+                while (currentDate <= chartEndDate) {
+                    const year = currentDate.getUTCFullYear(); let unitStart, unitEnd, unitDays, unitWidthPx, topLabel, bottomLabel, nextDate;
+                    if (currentView === 'weekly') { unitStart = getStartOfWeek(currentDate, 1); unitEnd = addDays(unitStart, 6); const effectiveEnd = unitEnd > chartEndDate ? chartEndDate : unitEnd; unitDays = getDaysDiff(unitStart, effectiveEnd) + 1; unitWidthPx = unitDays * dayWidth; topLabel = `${year}年`; bottomLabel = `${unitStart.getUTCMonth() + 1}月 第${getWeekOfMonth(unitStart)}週`; nextDate = addDays(unitStart, 7); }
+                    else { unitStart = getStartOfMonth(currentDate); const nextMonthStart = new Date(Date.UTC(year, unitStart.getUTCMonth() + 1, 1)); unitEnd = addDays(nextMonthStart, -1); const effectiveEnd = unitEnd > chartEndDate ? chartEndDate : unitEnd; unitDays = getDaysDiff(unitStart, effectiveEnd) + 1; unitWidthPx = unitDays * dayWidth; topLabel = `${year}年`; bottomLabel = `${unitStart.getUTCMonth() + 1}月`; nextDate = nextMonthStart; }
+                    if (!currentTopUnit || currentTopUnit.key !== topLabel) { if (currentTopUnit) { currentTopUnit.width = currentYearWidth; topUnits.push(currentTopUnit); } currentTopUnit = { key: topLabel, width: 0, element: document.createElement('div') }; currentTopUnit.element.className = 'header-unit header-unit-top'; currentTopUnit.element.textContent = topLabel; currentYearWidth = 0; }
+                    const bottomUnit = document.createElement('div'); bottomUnit.className = 'header-unit header-unit-bottom'; bottomUnit.style.width = `${unitWidthPx}px`; bottomUnit.textContent = bottomLabel; bottomRow.appendChild(bottomUnit); totalWidth += unitWidthPx; currentYearWidth += unitWidthPx; currentDate = nextDate;
+                }
+                if (currentTopUnit) { currentTopUnit.width = currentYearWidth; topUnits.push(currentTopUnit); }
+            }
+            topUnits.forEach(unit => { unit.element.style.width = `${unit.width}px`; topRow.appendChild(unit.element); });
+            timelineHeader.appendChild(topRow); timelineHeader.appendChild(bottomRow); timelineHeader.style.width = `${totalWidth}px`;
+            const timelineBody = document.getElementById('timeline-body'); if (timelineBody) timelineBody.style.width = `${totalWidth}px`;
+            return totalWidth;
+        };
+
+        /** タイムライン本体（グリッド、マーカー、バー）を描画 */
+        const renderTimelineBody = (totalWidth) => {
+            const timelineBody = document.getElementById('timeline-body');
+            if (!timelineBody || !chartStartDate || !chartEndDate) return;
+            timelineBody.innerHTML = '';
+            const totalDays = getDaysDiff(chartStartDate, chartEndDate) + 1;
+            if (totalDays <= 0) return;
+            const rowHeight = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--row-height'));
+            const totalHeightPx = tasks.length * rowHeight;
+            timelineBody.style.height = `${totalHeightPx}px`;
+
+            renderGridLines(totalWidth); // 縦グリッドと背景色
+
+            // 横グリッド線
+            const hLinesFragment = document.createDocumentFragment();
+            for (let i = 0; i < tasks.length; i++) { const line = document.createElement('div'); line.className = 'timeline-horizontal-grid-line'; line.style.top = `${(i + 1) * rowHeight - 1}px`; hLinesFragment.appendChild(line); }
+            timelineBody.appendChild(hLinesFragment);
+
+            // 今日のマーカー (日表示のみ)
+            if (currentView === 'daily') { const todayStr = getTodayString(); let current = new Date(chartStartDate); for (let i = 0; i < totalDays; i++) { if (formatDate(current, '-') === todayStr) { const marker = document.createElement('div'); marker.className = 'today-marker'; marker.style.left = `${i * dayWidth}px`; marker.style.height = `${totalHeightPx}px`; timelineBody.appendChild(marker); break; } current = addDays(current, 1); } }
+
+            // タスクバー
+            const barsFragment = document.createDocumentFragment();
+            tasks.forEach((task, index) => {
+                const rowContainer = document.createElement('div'); rowContainer.className = 'timeline-row'; rowContainer.dataset.taskId = task.id; rowContainer.style.position = 'absolute'; rowContainer.style.top = `${index * rowHeight}px`; rowContainer.style.height = `${rowHeight}px`; rowContainer.style.width = '100%';
+                const start = parseDate(task.start); const end = parseDate(task.end);
+                if (start && end && end >= start && end >= chartStartDate && start <= chartEndDate) {
+                    const startOffset = Math.max(0, getDaysDiff(chartStartDate, start)); const endOffset = Math.min(totalDays, getDaysDiff(chartStartDate, end) + 1); const duration = Math.max(1, endOffset - startOffset); const barLeft = startOffset * dayWidth; const barWidth = duration * dayWidth;
+                    if (barWidth > 0) {
+                        const bar = document.createElement('div'); bar.className = 'gantt-bar'; bar.style.left = `${barLeft}px`; bar.style.width = `${barWidth}px`; bar.dataset.taskId = task.id; bar.title = `${task.name} (${task.assignee||''})\n期間: ${formatDate(start)} - ${formatDate(end)}\n進捗: ${task.progress}%`;
+                        const progress = document.createElement('div'); progress.className = 'gantt-bar-progress'; progress.style.width = `${task.progress}%`; bar.appendChild(progress);
+                        const label = document.createElement('div'); label.className = 'gantt-bar-label'; label.textContent = `${task.name} ${task.assignee ? '('+task.assignee+')' : ''}`; if (barWidth < 100) label.textContent = task.name; if (barWidth < 30) label.textContent = ''; bar.appendChild(label);
+                        if (currentView === 'daily') { // ハンドル類は日表示のみ
+                            const hLeft = document.createElement('div'); hLeft.className = 'resize-handle resize-handle-left'; hLeft.dataset.taskId = task.id; hLeft.addEventListener('mousedown', handleMouseDown); bar.appendChild(hLeft);
+                            const hRight = document.createElement('div'); hRight.className = 'resize-handle resize-handle-right'; hRight.dataset.taskId = task.id; hRight.addEventListener('mousedown', handleMouseDown); bar.appendChild(hRight);
+                            if (barWidth >= MIN_BAR_WIDTH_FOR_PROGRESS_HANDLE) { const pHandle = document.createElement('div'); pHandle.className = 'progress-handle'; pHandle.dataset.taskId = task.id; pHandle.title = '進捗率を変更 (ドラッグ)'; pHandle.style.left = calculateProgressHandleLeft(task.progress, barWidth) + 'px'; pHandle.addEventListener('mousedown', handleMouseDown); bar.appendChild(pHandle); }
+                        }
+                        bar.addEventListener('mousedown', handleMouseDown); rowContainer.appendChild(bar);
+                    }
+                }
+                barsFragment.appendChild(rowContainer);
+            });
+            timelineBody.appendChild(barsFragment);
+            syncScroll();
+        };
+
+        /** タイムラインの縦グリッドと背景色を描画 */
+        const renderGridLines = (totalWidth) => {
+            const timelineBody = document.getElementById('timeline-body');
+            if (!timelineBody || !chartStartDate || !chartEndDate) return;
+            timelineBody.querySelectorAll('.day-column-bg, .vertical-grid-line, .today-marker, .timeline-horizontal-grid-line').forEach(el => el.remove()); // 既存要素クリア
+            const rowHeight = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--row-height'));
+            const totalHeightPx = tasks.length * rowHeight;
+            if (totalHeightPx <= 0) return;
+            const totalDays = getDaysDiff(chartStartDate, chartEndDate) + 1;
+            const fragment = document.createDocumentFragment();
+            const todayStr = getTodayString();
+            let current = new Date(chartStartDate);
+
+            if (currentView === 'daily') {
+                for (let i = 0; i < totalDays; i++) {
+                    const weekday = current.getUTCDay(); const holidayName = isHoliday(current); const dateStr = formatDate(current, '-');
+                    if (i > 0) { const vLine = document.createElement('div'); vLine.className = 'vertical-grid-line'; vLine.style.left = `${i * dayWidth}px`; vLine.style.height = `${totalHeightPx}px`; fragment.appendChild(vLine); }
+                    let bgClass = '';
+                    if (dateStr === todayStr) { bgClass = 'today-bg'; }
+                    else if (holidayName) { bgClass = 'holiday-bg'; }
+                    else if (weekday === 0) { bgClass = 'sunday-bg'; }
+                    else if (weekday === 6) { bgClass = 'saturday-bg'; }
+                    if (bgClass) { const bgCol = document.createElement('div'); bgCol.className = `day-column-bg ${bgClass}`; bgCol.style.left = `${i * dayWidth}px`; bgCol.style.width = `${dayWidth}px`; bgCol.style.height = `${totalHeightPx}px`; fragment.appendChild(bgCol); }
+                    current = addDays(current, 1);
+                }
+            } else { // weekly or monthly
+                let currentLeft = 0; const timelineHeader = document.getElementById('timeline-header');
+                if (timelineHeader) { const bottomUnits = timelineHeader.querySelectorAll('.timeline-header-row:last-child .header-unit'); bottomUnits.forEach((unit, index) => { const unitWidth = parseFloat(unit.style.width); if (index > 0) { const vLine = document.createElement('div'); vLine.className = 'vertical-grid-line'; vLine.style.left = `${currentLeft}px`; vLine.style.height = `${totalHeightPx}px`; fragment.appendChild(vLine); } currentLeft += unitWidth; }); }
+            }
+            timelineBody.insertBefore(fragment, timelineBody.firstChild); // グリッド要素を先に追加
+        };
+
+        /** ガントチャート全体を描画/再描画 */
+        const renderGanttChart = () => {
+            if (activeEditingElement) { saveCellEdit(activeEditingElement); if (activeEditingElement) return; } // 編集中なら保存試行
+            const loadingStatus = document.getElementById('loading-status');
+            if(loadingStatus) loadingStatus.textContent = '描画中...';
+            requestAnimationFrame(() => { // 描画タイミングを最適化
+                try { calculateDateRange(); renderTaskList(); const totalTimelineWidth = renderTimelineHeader(); renderTimelineBody(totalTimelineWidth); }
+                catch (error) { console.error("ガントチャート描画エラー:", error); if(loadingStatus) loadingStatus.textContent = '描画エラー'; }
+                finally { if (loadingStatus && loadingStatus.textContent === '描画中...') { loadingStatus.textContent = ''; } }
+            });
+        };
+
+        // --- タスク操作 ---
+
+        /** タスク削除処理 */
+        const handleDeleteTaskClick = (event) => {
+            event.stopPropagation(); const button = event.target.closest('button'); if (!button) return; const taskId = parseInt(button.dataset.taskId); const task = tasks.find(t => t.id === taskId); if (!task) return;
+            if (confirm(`タスク「${task.name}」を削除してもよろしいですか？`)) {
+                if (activeEditingElement && activeEditingElement.taskId === taskId) { revertCellEdit(activeEditingElement); activeEditingElement = null; } // 編集中ならキャンセル
+                tasks = tasks.filter(t => t.id !== taskId); hasUnsavedChanges = true; updateSaveButtonState(); renderGanttChart();
+                const loadingStatus = document.getElementById('loading-status'); if(loadingStatus) { loadingStatus.textContent = 'タスク削除完了'; setTimeout(() => { loadingStatus.textContent = ''; }, 2000); }
+            }
+        };
+
+        // --- インライン編集 ---
+
+        /** セルクリック時の編集開始処理 */
+        const handleCellClick = (event) => {
+            const cell = event.target.closest('div[data-field]'); if (!cell || cell.querySelector('input') || isDragging) return; const field = cell.dataset.field; const taskId = parseInt(cell.closest('.task-row').dataset.taskId);
+            if (activeEditingElement && activeEditingElement.cell !== cell) { saveCellEdit(activeEditingElement); if (activeEditingElement) return; } if (activeEditingElement && activeEditingElement.cell === cell) return; const task = tasks.find(t => t.id === taskId); if (!task) return;
+            const originalDisplay = cell.innerHTML; let currentValue = task[field]; if (field === 'start' || field === 'end') { currentValue = formatDate(parseDate(currentValue), '-'); } cell.innerHTML = ''; let input;
+            if (field === 'start' || field === 'end') { input = document.createElement('input'); input.type = 'date'; input.value = currentValue || ''; } else if (field === 'progress') { input = document.createElement('input'); input.type = 'number'; input.min = 0; input.max = 100; input.value = currentValue !== undefined ? currentValue : 0; } else { input = document.createElement('input'); input.type = 'text'; input.value = currentValue || ''; }
+            input.dataset.originalValue = task[field] !== undefined ? task[field] : ''; input.dataset.originalDisplay = originalDisplay; cell.appendChild(input); input.focus(); input.select(); activeEditingElement = { cell, input, taskId, field }; input.addEventListener('blur', handleInputBlur); input.addEventListener('keydown', handleInputKeyDown);
+        };
+
+        /** 編集中のフォーカスアウト処理 */
+        const handleInputBlur = (event) => { setTimeout(() => { if (activeEditingElement && document.activeElement !== activeEditingElement.input) { saveCellEdit(activeEditingElement); } }, 150); }; // 少し遅延させて判定
+
+        /** 編集中のキー入力処理 (Enter/Esc) */
+        const handleInputKeyDown = (event) => { if (!activeEditingElement) return; if (event.key === 'Enter') { event.preventDefault(); saveCellEdit(activeEditingElement); } else if (event.key === 'Escape') { event.preventDefault(); revertCellEdit(activeEditingElement); } };
+
+        /** 編集内容を保存 */
+        const saveCellEdit = (editingInfo) => {
+            if (!editingInfo) return; const { cell, input, taskId, field } = editingInfo; const newValue = input.value; const task = tasks.find(t => t.id === taskId); if (!task) { revertCellEdit(editingInfo); return; } let isValid = true; let errorMsg = ''; let valueToSave = newValue;
+            if (field === 'start' || field === 'end') { const newDate = parseDate(newValue); if (!newValue && (task[field] === null || task[field] === '')) { valueToSave = null; } else if (!newDate) { isValid = false; errorMsg = '日付形式が無効です (YYYY-MM-DD)'; valueToSave = task[field]; } else { valueToSave = formatDate(newDate, '-'); if (field === 'start') { const end = parseDate(task.end); if (end && newDate > end) { isValid = false; errorMsg = '開始日は終了日より後に設定できません。'; valueToSave = task[field]; } } else { const start = parseDate(task.start); if (start && newDate < start) { isValid = false; errorMsg = '終了日は開始日より前に設定できません。'; valueToSave = task[field]; } } } }
+            else if (field === 'progress') { const num = parseInt(newValue, 10); if (newValue === '' || newValue === null) { valueToSave = 0; } else if (isNaN(num) || num < 0 || num > 100) { isValid = false; errorMsg = '進捗率は0から100の間で入力してください。'; valueToSave = task[field]; } else { valueToSave = num; } }
+            else { valueToSave = newValue.trim(); }
+            if (!isValid) { alert(errorMsg); input.focus(); return; } // バリデーション失敗
+            const originalValue = task[field]; let hasChanged = false; if(field === 'progress') { hasChanged = Number(originalValue) !== Number(valueToSave); } else { hasChanged = String(originalValue ?? '') !== String(valueToSave ?? ''); }
+            if (hasChanged) { task[field] = valueToSave; cell.innerHTML = formatCellContent(field, valueToSave); cell.title = cell.textContent || '編集'; activeEditingElement = null; hasUnsavedChanges = true; updateSaveButtonState(); renderGanttChart(); }
+            else { revertCellEdit(editingInfo); } // 変更なし
+        };
+
+        /** 編集をキャンセルして元に戻す */
+        const revertCellEdit = (editingInfo) => { if (!editingInfo) return; const { cell, input } = editingInfo; cell.innerHTML = input.dataset.originalDisplay; cell.title = cell.textContent || '編集'; activeEditingElement = null; };
+
+        /** セル表示用にデータをフォーマット */
+        const formatCellContent = (field, value) => { if (field === 'start' || field === 'end') { return formatDate(parseDate(value), '/') || ''; } if (field === 'progress') { return (typeof value === 'number' && !isNaN(value) && value !== null) ? `${value}%` : ''; } return value || ''; };
+
+        // --- スクロール同期 ---
+        const syncScroll = () => { const taskListBody = document.getElementById('task-list-body'); const timelineContainer = document.getElementById('timeline-container'); if (!taskListBody || !timelineContainer) return; taskListBody.removeEventListener('scroll', handleTaskListScroll); timelineContainer.removeEventListener('scroll', handleTimelineScroll); taskListBody.addEventListener('scroll', handleTaskListScroll); timelineContainer.addEventListener('scroll', handleTimelineScroll); };
+        const handleTaskListScroll = (event) => { if (isSyncingLeftScroll) return; isSyncingRightScroll = true; const timelineContainer = document.getElementById('timeline-container'); if (timelineContainer) timelineContainer.scrollTop = event.target.scrollTop; requestAnimationFrame(() => { isSyncingRightScroll = false; }); };
+        const handleTimelineScroll = (event) => { if (isSyncingRightScroll) return; isSyncingLeftScroll = true; const taskListBody = document.getElementById('task-list-body'); const timelineHeader = document.getElementById('timeline-header'); if (taskListBody) taskListBody.scrollTop = event.target.scrollTop; if (timelineHeader) timelineHeader.scrollLeft = event.target.scrollLeft; requestAnimationFrame(() => { isSyncingLeftScroll = false; }); };
+
+        // --- 祝日データ取得 ---
+        const fetchHolidays = async () => { const loading = document.getElementById('loading-status'); if(loading) loading.textContent = '祝日取得中...'; try { const res = await fetch('https://holidays-jp.github.io/api/v1/date.json'); if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`); holidaysData = await res.json(); if(loading) loading.textContent = ''; } catch (error) { console.error('祝日データの取得に失敗:', error); if(loading) loading.textContent = '祝日取得失敗'; } finally { renderGanttChart(); } };
+
+        // --- 進捗ハンドルのLeft位置計算 ---
+        /** 進捗率とバー幅からハンドルのleftスタイル値を計算 */
+        const calculateProgressHandleLeft = (progressPercent, barWidthPx, handleWidth = 8) => { const progWidth = barWidthPx * (progressPercent / 100); let left = progWidth - (handleWidth / 2); left = Math.max(0, Math.min(left, barWidthPx - handleWidth)); return left; };
+
+        // --- ドラッグ＆ドロップ ---
+
+        /** バーまたはハンドルの mousedown イベント */
+        const handleMouseDown = (event) => {
+            if (event.button !== 0 || activeEditingElement) return; const target = event.target; const barEl = target.closest('.gantt-bar'); if (!barEl) return; if (currentView !== 'daily') return;
+            isDragging = true; draggedElement = barEl; draggedTaskId = parseInt(barEl.dataset.taskId); startX = event.clientX; initialLeft = barEl.offsetLeft; initialWidth = barEl.offsetWidth; // 移動/リサイズ用の初期値
+            const progressEl = barEl.querySelector('.gantt-bar-progress'); const progressWidth = progressEl ? progressEl.offsetWidth : 0;
+
+            if (target.classList.contains('progress-handle')) { dragMode = 'progress'; barEl.classList.add('dragging-progress'); document.body.style.cursor = 'pointer'; initialWidth = progressWidth; /* 進捗用に初期幅を上書き */ }
+            else if (target.classList.contains('resize-handle-left')) { dragMode = 'resizeStart'; barEl.classList.add('resizing-start'); document.body.style.cursor = 'ew-resize'; }
+            else if (target.classList.contains('resize-handle-right')) { dragMode = 'resizeEnd'; barEl.classList.add('resizing-end'); document.body.style.cursor = 'ew-resize'; }
+            else if (target === barEl) { dragMode = 'move'; barEl.classList.add('dragging'); document.body.style.cursor = 'grabbing'; }
+            else { isDragging = false; return; } // バー内の他の要素(ラベル等)は無視
+
+            const timeline = document.getElementById('timeline-container'); timelineContainerRect = timeline.getBoundingClientRect();
+            document.addEventListener('mousemove', handleMouseMove); document.addEventListener('mouseup', handleMouseUp);
+        };
+
+        /** ドラッグ中の mousemove イベント */
+        const handleMouseMove = (event) => {
+            if (!isDragging || !draggedElement) return; event.preventDefault();
+            const currentX = event.clientX; const barRect = draggedElement.getBoundingClientRect(); const barLeftAbs = barRect.left; const barTotalW = barRect.width;
+
+            if (dragMode === 'progress') { // 進捗変更
+                const progress = draggedElement.querySelector('.gantt-bar-progress'); const handle = draggedElement.querySelector('.progress-handle'); if (!progress || !handle || barTotalW <= 0) return;
+                let mouseRelX = currentX - barLeftAbs; mouseRelX = Math.max(0, Math.min(mouseRelX, barTotalW));
+                let newPercent = Math.round((mouseRelX / barTotalW) * 100); newPercent = Math.max(0, Math.min(100, newPercent));
+                progress.style.width = `${newPercent}%`; handle.style.left = calculateProgressHandleLeft(newPercent, barTotalW) + 'px';
+                // ツールチップ更新
+                const task = tasks.find(t => t.id === draggedTaskId); const name = task ? task.name : ''; const assignee = task ? (task.assignee || '') : ''; const start = task ? formatDate(parseDate(task.start)) : ''; const end = task ? formatDate(parseDate(task.end)) : ''; draggedElement.title = `${name} (${assignee})\n期間: ${start} - ${end}\n進捗: ${newPercent}%`;
+            } else { // 移動 or リサイズ
+                 const deltaX = currentX - startX; const timelineBody = document.getElementById('timeline-body');
+                 if (dragMode === 'move') { let newLeft = initialLeft + deltaX; const snapDays = Math.round(newLeft / dayWidth); newLeft = snapDays * dayWidth; const maxL = timelineBody.offsetWidth - initialWidth; /* initialWidth=バー初期幅 */ newLeft = Math.max(0, Math.min(newLeft, maxL)); draggedElement.style.left = `${newLeft}px`; }
+                 else if (dragMode === 'resizeStart') { let newLeft = initialLeft + deltaX; let snapDays = Math.round(newLeft / dayWidth); newLeft = snapDays * dayWidth; let newWidth = initialLeft + initialWidth - newLeft; /* initialWidth=バー初期幅 */ const minW = MIN_TASK_DURATION_DAYS * dayWidth; if (newWidth < minW) { newWidth = minW; newLeft = initialLeft + initialWidth - minW; snapDays = Math.round(newLeft / dayWidth); newLeft = snapDays * dayWidth; newWidth = initialLeft + initialWidth - newLeft; } if (newLeft < 0) { newLeft = 0; newWidth = initialLeft + initialWidth; if (newWidth < minW) newWidth = minW; } draggedElement.style.left = `${newLeft}px`; draggedElement.style.width = `${newWidth}px`; }
+                 else if (dragMode === 'resizeEnd') { let newWidth = initialWidth + deltaX; /* initialWidth=バー初期幅 */ const minW = MIN_TASK_DURATION_DAYS * dayWidth; const snapDur = Math.max(MIN_TASK_DURATION_DAYS, Math.round(newWidth / dayWidth)); newWidth = snapDur * dayWidth; const maxR = timelineBody.offsetWidth; if (initialLeft + newWidth > maxR) { newWidth = maxR - initialLeft; if (newWidth < minW) newWidth = minW; } if (newWidth < minW) { newWidth = minW; } draggedElement.style.width = `${newWidth}px`; }
+                 // 移動/リサイズ中のツールチップ更新
+                 try { const curL = parseFloat(draggedElement.style.left || initialLeft); const curW = parseFloat(draggedElement.style.width || initialWidth); const offStart = Math.round(curL / dayWidth); const durDays = Math.max(MIN_TASK_DURATION_DAYS - 1, Math.round(curW / dayWidth) - 1); const tmpStart = addDays(chartStartDate, offStart); const tmpEnd = addDays(tmpStart, durDays); const task = tasks.find(t => t.id === draggedTaskId); const prog = task ? task.progress : 0; draggedElement.title = `期間: ${formatDate(tmpStart)} - ${formatDate(tmpEnd)}\n進捗: ${prog}%`; } catch(e) { /* console.warn("Tooltip update failed:", e); */ }
+            }
+        };
+
+        /** ドラッグ終了時の mouseup イベント */
+        const handleMouseUp = (event) => {
+            if (!isDragging || !draggedElement) return;
+            draggedElement.classList.remove('dragging', 'resizing-start', 'resizing-end', 'dragging-progress'); document.body.style.cursor = 'default'; isDragging = false;
+            document.removeEventListener('mousemove', handleMouseMove); document.removeEventListener('mouseup', handleMouseUp);
+            const taskIndex = tasks.findIndex(t => t.id === draggedTaskId);
+            if (taskIndex === -1) { console.error(`Task ID ${draggedTaskId} not found on drag end.`); renderGanttChart(); /* グローバル変数クリア */ draggedElement = null; draggedTaskId = null; dragMode = null; startX = 0; initialLeft = 0; initialWidth = 0; timelineContainerRect = null; return; }
+            const originalTask = tasks[taskIndex]; let needsRender = false;
+
+            if (dragMode === 'progress') { // 進捗変更完了
+                const progress = draggedElement.querySelector('.gantt-bar-progress'); const barW = draggedElement.offsetWidth; let finalPercent = 0;
+                if (progress && barW > 0) { const finalW = progress.offsetWidth; finalPercent = Math.max(0, Math.min(100, Math.round((finalW / barW) * 100))); }
+                if (originalTask.progress !== finalPercent) { tasks[taskIndex].progress = finalPercent; hasUnsavedChanges = true; updateSaveButtonState(); needsRender = true; /* console.log(`Task ${draggedTaskId} progress updated to ${finalPercent}%`); */ }
+            }
+            else if (dragMode === 'move' || dragMode === 'resizeStart' || dragMode === 'resizeEnd') { // 移動/リサイズ完了
+                const finalL = draggedElement.offsetLeft; const finalW = draggedElement.offsetWidth; const offStart = Math.round(finalL / dayWidth); const durDays = Math.max(MIN_TASK_DURATION_DAYS, Math.round(finalW / dayWidth)) - 1; const newStart = addDays(chartStartDate, offStart); const newEnd = addDays(newStart, durDays);
+                if (newStart <= newEnd) { const newStartStr = formatDate(newStart, '-'); const newEndStr = formatDate(newEnd, '-'); const changed = originalTask.start !== newStartStr || originalTask.end !== newEndStr; if (changed) { tasks[taskIndex] = { ...originalTask, start: newStartStr, end: newEndStr }; hasUnsavedChanges = true; updateSaveButtonState(); needsRender = true; /* console.log(`Task ${draggedTaskId} ${dragMode} updated`); */ } }
+                else { console.warn("Invalid date range after drag/resize. Reverting."); needsRender = true; }
+            }
+
+            if (needsRender) { renderGanttChart(); } // 変更があれば再描画
+            else { /* 変更なくてもツールチップを最終状態に */ const task = tasks[taskIndex]; const start = parseDate(task.start); const end = parseDate(task.end); draggedElement.title = `${task.name} (${task.assignee||''})\n期間: ${formatDate(start)} - ${formatDate(end)}\n進捗: ${task.progress}%`; }
+            /* グローバル変数クリア */ draggedElement = null; draggedTaskId = null; dragMode = null; startX = 0; initialLeft = 0; initialWidth = 0; timelineContainerRect = null;
+        };
+
+        // --- 未保存状態のボタン更新 ---
+        const updateSaveButtonState = () => { const btn = document.getElementById('save-json-button'); if (!btn) return; if (hasUnsavedChanges) { btn.classList.add('unsaved-changes'); btn.title = '未保存の変更があります'; } else { btn.classList.remove('unsaved-changes'); btn.title = ''; } };
+
+        // --- Favicon 設定 ---
+        const setFavicon = (emoji) => { const canvas = document.createElement('canvas'); canvas.width = 32; canvas.height = 32; const ctx = canvas.getContext('2d'); ctx.clearRect(0, 0, 32, 32); ctx.font = '28px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(emoji, 16, 18); const dataUri = canvas.toDataURL('image/png'); let link = document.querySelector("link[rel~='icon']"); if (!link) { link = document.createElement('link'); link.rel = 'icon'; document.head.appendChild(link); } link.href = dataUri; };
+
+        // --- 初期化処理 ---
+         document.addEventListener('DOMContentLoaded', () => {
+             // DOM要素取得
+             const viewSwitch = document.querySelector('.view-switch');
+             const jsonFileInput = document.getElementById('json-file-input');
+             const saveJsonButton = document.getElementById('save-json-button');
+             const addTaskButton = document.getElementById('add-task-button');
+             const loadingStatus = document.getElementById('loading-status');
+             const jsonLoadTimestampSpan = document.getElementById('json-load-timestamp');
+
+             // Favicon設定
+             setFavicon('📊');
+
+             // イベントリスナー設定
+             if (viewSwitch) { viewSwitch.addEventListener('change', (e) => { if (e.target.type === 'radio') { currentView = e.target.value; renderGanttChart(); } }); }
+             if (addTaskButton) { addTaskButton.addEventListener('click', () => { if (activeEditingElement) { saveCellEdit(activeEditingElement); if (activeEditingElement) return; } const newId = tasks.length > 0 ? Math.max(...tasks.map(t => t.id)) + 1 : 1; const today = new Date(); const startStr = formatLocalDate(today, '-'); const endDt = new Date(today); endDt.setDate(today.getDate() + 7); const endStr = formatLocalDate(endDt, '-'); const newTask = { id: newId, name: "新規タスク", assignee: "", start: startStr, end: endStr, progress: 0 }; tasks.push(newTask); hasUnsavedChanges = true; updateSaveButtonState(); renderGanttChart(); requestAnimationFrame(() => { const listBody = document.getElementById('task-list-body'); if(!listBody) return; const newRow = listBody.querySelector(`.task-row[data-task-id="${newId}"]`); if (newRow) { newRow.scrollIntoView({ behavior: 'smooth', block: 'center' }); const nameCell = newRow.querySelector('div[data-field="name"]'); if (nameCell) setTimeout(() => nameCell.click(), 100); } }); }); }
+             if (jsonFileInput) { jsonFileInput.addEventListener('change', (event) => { const file = event.target.files[0]; if (!file) return; if(loadingStatus) loadingStatus.textContent = 'JSON読込中...'; const reader = new FileReader(); reader.onload = (e) => { try { if (activeEditingElement) revertCellEdit(activeEditingElement); const data = JSON.parse(e.target.result); if (Array.isArray(data) && data.every(item => typeof item.id !== 'undefined' && item.name && item.start && item.end)) { tasks = data; hasUnsavedChanges = false; updateSaveButtonState();
+                // JSON読込成功時に日時を表示
+                if (jsonLoadTimestampSpan) {
+                    jsonLoadTimestampSpan.textContent = `読込日時: ${formatLocalDateTime(new Date())}`;
+                    jsonLoadTimestampSpan.title = `ファイル名: ${file.name}`; // ツールチップにファイル名も表示
+                }
+                renderGanttChart(); alert('読込が完了しました。');
+             } else { throw new Error('JSON形式が無効か必須フィールドが不足しています。'); } } catch (error) { console.error("JSON解析エラー:", error); alert(`読込失敗: ${error.message}`); if(loadingStatus) loadingStatus.textContent = '読込失敗';
+                if (jsonLoadTimestampSpan) jsonLoadTimestampSpan.textContent = ''; // 失敗時はクリア
+             } finally { jsonFileInput.value = ''; if (loadingStatus && loadingStatus.textContent === 'JSON読込中...') loadingStatus.textContent = ''; } }; reader.onerror = () => { alert('ファイル読込失敗'); if(loadingStatus) loadingStatus.textContent = '読込失敗'; jsonFileInput.value = '';
+                if (jsonLoadTimestampSpan) jsonLoadTimestampSpan.textContent = ''; // 失敗時はクリア
+             }; reader.readAsText(file); }); }
+             if (saveJsonButton) { saveJsonButton.addEventListener('click', () => { if (activeEditingElement) { saveCellEdit(activeEditingElement); if (activeEditingElement) return; } try { const now = new Date(); const ts = formatLocalDate(now, '') + String(now.getHours()).padStart(2, '0') + String(now.getMinutes()).padStart(2, '0') + String(now.getSeconds()).padStart(2, '0'); const filename = `GANT${ts}.json`; const jsonStr = JSON.stringify(tasks, null, 2); const blob = new Blob([jsonStr], { type: 'application/json' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = filename; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url); hasUnsavedChanges = false; updateSaveButtonState(); if(loadingStatus) loadingStatus.textContent = '保存完了'; setTimeout(() => { if(loadingStatus) loadingStatus.textContent = ''; }, 2000); } catch (error) { console.error("JSON保存エラー:", error); alert(`保存失敗: ${error.message}`); if(loadingStatus) loadingStatus.textContent = '保存失敗'; } }); }
+             // グローバルクリックリスナー (編集外クリックで保存)
+             document.addEventListener('click', (event) => { if (activeEditingElement && !activeEditingElement.cell.contains(event.target)) { const clickedOnNonEditable = !event.target.closest('.controls, .task-row div[data-field], .delete-task-button, .gantt-bar, .view-switch label, #json-controls button'); if (clickedOnNonEditable) { saveCellEdit(activeEditingElement); } } });
+
+             // 初期表示設定
+             const initialViewRadio = document.querySelector(`.view-switch input[value="${currentView}"]`); if (initialViewRadio) initialViewRadio.checked = true; else { const dailyRadio = document.querySelector(`.view-switch input[value="daily"]`); if(dailyRadio) dailyRadio.checked = true; }
+             updateSaveButtonState(); // 保存ボタン初期状態
+             fetchHolidays(); // 祝日取得＆初回描画
+         });
+    </script>
+
+</body>
+</html>
