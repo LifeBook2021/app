@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>モダンマインドマップ</title>
+<style>
+  body {
+    font-family: 'Segoe UI', 'Meiryo UI', Meiryo, 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    background-color: #f8f9fa;
+  }
+
+  /* --- モダンなヘッダー --- */
+  #controls {
+    padding: 12px 20px;
+    background-color: #343a40; /* 黒背景 */
+    border-bottom: 1px solid #495057;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  #controls button {
+    padding: 8px 14px;
+    cursor: pointer;
+    border: none;
+    background-color: #495057;
+    color: #f8f9fa;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+  }
+  #controls button:hover { background-color: #6c757d; }
+  #controls button:active { transform: scale(0.98); background-color: #5a6268; }
+  #save-json-btn { background-color: #0d6efd; color: white; }
+   #save-json-btn:hover { background-color: #0b5ed7; }
+   #expand-all-btn, #collapse-all-btn {
+       padding: 8px 12px;
+       font-size: 13px;
+   }
+
+  /* Zoom Controls Styles */
+  .zoom-controls { display: flex; align-items: center; gap: 5px; margin-left: 15px; }
+  .zoom-controls button { background-color: #495057; color: #f8f9fa; padding: 5px 10px; font-size: 16px; font-weight: bold; min-width: 30px; justify-content: center; }
+   .zoom-controls button:hover { background-color: #6c757d; }
+   #fit-to-screen-btn { padding: 5px 12px; font-size: 13px; font-weight: 500; }
+  .zoom-controls input[type="number"] { width: 60px; padding: 6px 8px; background-color: #495057; color: #f8f9fa; border: 1px solid #6c757d; border-radius: 4px; font-size: 13px; text-align: right; -moz-appearance: textfield; }
+  .zoom-controls input[type="number"]::-webkit-outer-spin-button, .zoom-controls input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  .zoom-controls input[type="number"]:focus { outline: none; border-color: #86b7fe; box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25); }
+  .zoom-controls span { font-size: 14px; margin-left: 2px; color: #ced4da; }
+  /* End Zoom Controls Styles */
+  /* --- ヘッダー終わり --- */
+
+  #mindmap-container { position: relative; width: 100%; flex-grow: 1; overflow: auto; background-color: #f8f9fa; outline: none; cursor: grab; }
+  #mindmap-container.panning { cursor: grabbing; }
+  #mindmap-canvas { position: absolute; top: 0; left: 0; width: 4000px; height: 3000px; transform-origin: 0 0; pointer-events: auto; /* transition: transform 0.15s ease-out; */ }
+  #mindmap-svg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; overflow: visible; }
+  #mindmap-svg path { stroke-width: 1.8; fill: none; transition: stroke 0.3s ease; }
+  #mindmap-nodes { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; }
+  .node { position: absolute; border-width: 1.5px; border-style: solid; border-radius: 8px; padding: 10px 15px; cursor: grab; user-select: none; min-width: 70px; text-align: left; box-shadow: 0 2px 5px rgba(0,0,0,0.1); z-index: 2; white-space: pre-wrap; word-wrap: break-word; font-size: 14px; color: #212529; transition: box-shadow 0.2s ease, border-color 0.2s ease, background-color 0.2s ease, transform 0.1s ease, outline 0.2s ease; pointer-events: auto; }
+   .node.root-node { padding: 12px 18px; font-size: 15px; }
+   .node.dragging { cursor: grabbing; box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
+  .node.selected { box-shadow: 0 0 0 4px rgba(0, 123, 255, 0.3); }
+  .node:active:not(.dragging) { transform: scale(1.02); }
+  .node .edit-input { display: block; width: calc(100% - 12px); min-height: 32px; border: 1px solid #adb5bd; font: inherit; padding: 6px; box-sizing: border-box; resize: none; margin: 0; border-radius: 5px; box-shadow: inset 0 1px 2px rgba(0,0,0,0.1); background-color: rgba(255, 255, 255, 0.9); color: #212529; pointer-events: auto; z-index: 3; }
+  .delete-button { position: absolute; top: -10px; right: -10px; width: 20px; height: 20px; background-color: #dc3545; color: white; border: none; border-radius: 50%; cursor: pointer; font-size: 12px; line-height: 20px; text-align: center; z-index: 4; font-weight: bold; box-shadow: 0 1px 3px rgba(0,0,0,0.2); pointer-events: auto; display: none; align-items: center; justify-content: center; }
+  .delete-button:hover { background-color: #c82333; }
+  .node.selected .delete-button { display: inline-flex; }
+  .toggle-button { position: absolute; bottom: -10px; left: 50%; transform: translateX(-50%); width: 20px; height: 20px; background-color: #fff; color: #495057; border: 1px solid #ced4da; border-radius: 50%; cursor: pointer; font-size: 14px; z-index: 4; font-weight: bold; box-shadow: 0 1px 3px rgba(0,0,0,0.1); pointer-events: auto; display: none; align-items: center; justify-content: center; }
+  .toggle-button:hover { background-color: #f1f3f5; border-color: #adb5bd; }
+  .node.has-children .toggle-button { display: inline-flex; }
+
+  /* === ドロップターゲットハイライト用CSS === */
+  .node.drop-target-highlight {
+    outline: 3px solid #ffc107; /* 黄色いアウトライン */
+    outline-offset: 2px;        /* アウトラインを少し外側に */
+    box-shadow: 0 4px 12px rgba(255, 193, 7, 0.4); /* 少し強調された影 */
+  }
+  /* === CSS追加ここまで === */
+
+</style>
+</head>
+<body>
+
+  <div id="controls">
+    <button id="save-json-btn">💾 保存</button>
+    <button id="load-json-btn">📂 読込</button>
+    <input type="file" id="load-json-input" accept=".json" style="display: none;">
+    <button id="expand-all-btn" title="全て展開">全て展開</button>
+    <button id="collapse-all-btn" title="全て閉じる">全て閉じる</button>
+    <div class="zoom-controls">
+        <button id="zoom-out-btn" title="縮小">-</button>
+        <input type="number" id="zoom-input" min="10" max="200" step="10">
+        <span>%</span>
+        <button id="zoom-in-btn" title="拡大">+</button>
+        <button id="fit-to-screen-btn" title="全体表示">全体</button>
+    </div>
+  </div>
+
+  <div id="mindmap-container" tabindex="0">
+      <div id="mindmap-canvas">
+          <svg id="mindmap-svg"></svg>
+          <div id="mindmap-nodes"></div>
+      </div>
+  </div>
+
+<script>
+  // ========================================
+  // === グローバル変数 & DOM要素参照 ===
+  // ========================================
+  const container = document.getElementById('mindmap-container');
+  const canvas = document.getElementById('mindmap-canvas');
+  const nodesContainer = document.getElementById('mindmap-nodes');
+  const svg = document.getElementById('mindmap-svg');
+  const saveJsonBtn = document.getElementById('save-json-btn');
+  const loadJsonBtn = document.getElementById('load-json-btn');
+  const loadJsonInput = document.getElementById('load-json-input');
+  const expandAllBtn = document.getElementById('expand-all-btn');
+  const collapseAllBtn = document.getElementById('collapse-all-btn');
+  const zoomInBtn = document.getElementById('zoom-in-btn');
+  const zoomOutBtn = document.getElementById('zoom-out-btn');
+  const zoomInput = document.getElementById('zoom-input');
+  const fitToScreenBtn = document.getElementById('fit-to-screen-btn');
+
+  let nodes = [];
+  let nextNodeId = 1;
+  let selectedNodeId = null;
+  let draggingNode = null;
+  let isEditing = false;
+  let rootNodeId = null;
+  let highlightedDropTargetId = null; // ハイライト中のターゲットID
+  let isPanning = false;
+  let panStartX = 0, panStartY = 0;
+  let panInitialScrollLeft = 0, panInitialScrollTop = 0;
+  let currentScale = 1.0;
+  const minScale = 0.1;
+  const maxScale = 2.0;
+  const scaleStep = 0.1;
+
+  const colorPalette = [
+    { bg: '#e3f2fd', border: '#90caf9', line: '#90caf9' }, { bg: '#e8f5e9', border: '#a5d6a7', line: '#a5d6a7' },
+    { bg: '#fff3e0', border: '#ffcc80', line: '#ffcc80' }, { bg: '#fce4ec', border: '#f8bbd0', line: '#f8bbd0' },
+    { bg: '#ede7f6', border: '#d1c4e9', line: '#d1c4e9' }, { bg: '#e0f7fa', border: '#80deea', line: '#80deea' },
+    { bg: '#f9fbe7', border: '#e6ee9c', line: '#e6ee9c' }, { bg: '#fffde7', border: '#fff59d', line: '#fff59d' },
+  ];
+  const defaultColor = { bg: '#e9ecef', border: '#adb5bd', line: '#adb5bd' };
+  const selectedBorderColor = '#007bff';
+
+  // ========================================
+  // === 初期化処理 ===
+  // ========================================
+  function init() { if (nodes.length === 0) { const initialX = canvas.offsetWidth / 2 - 70; const initialY = canvas.offsetHeight / 2 - 100; const root = createNodeObject(null, '中心トピック', initialX, initialY); nodes.push(root); selectedNodeId = root.id; rootNodeId = root.id; } else { const root = nodes.find(n => n.parentId === null); rootNodeId = root ? root.id : null; if (rootNodeId) { selectedNodeId = rootNodeId; } else if (nodes.length > 0) { selectedNodeId = nodes[0].id; } } render(); setupEventListeners(); updateScale(currentScale, false); if (rootNodeId) { centerViewOnNode(rootNodeId, false); } else { container.focus(); } }
+
+  // ========================================
+  // === データ構造 & ユーティリティ関数 ===
+  // ========================================
+  function createNodeObject(parentId, text, x, y) { return { id: nextNodeId++, parentId: parentId, text: text, x: x, y: y, isCollapsed: false }; }
+  function getNodeColorInfo(nodeId) { const node = getNodeById(nodeId); if (!node || node.parentId === null) return defaultColor; let current = node; let mainTopicNode = null; while (current && current.parentId !== null) { if (current.parentId === rootNodeId) { mainTopicNode = current; break; } current = getNodeById(current.parentId); } if (mainTopicNode) { const mainTopics = nodes.filter(n => n.parentId === rootNodeId).sort((a, b) => a.id - b.id); const index = mainTopics.findIndex(n => n.id === mainTopicNode.id); if (index !== -1) { const colorIndex = index % colorPalette.length; return colorPalette[colorIndex]; } } return defaultColor; }
+  function getNodeById(id) { if (id === null || id === undefined) return undefined; return nodes.find(node => node.id === id); }
+  function getChildren(parentId, includeCollapsed = false) { if (!includeCollapsed) { const parentNode = getNodeById(parentId); if (parentNode && parentNode.isCollapsed) { return []; } } return nodes.filter(node => node.parentId === parentId); }
+  function getDescendantIds(nodeId) { let ids = []; const children = nodes.filter(node => node.parentId === nodeId); children.forEach(child => { ids.push(child.id); ids = ids.concat(getDescendantIds(child.id)); }); return ids; }
+  function getVisibleNodes() { const visible = []; const rootNodes = nodes.filter(n => n.parentId === null); function findVisibleDescendants(node) { const children = nodes.filter(n => n.parentId === node.id); children.forEach(child => { if (!child.isCollapsed) { visible.push(child); findVisibleDescendants(child); } }); } rootNodes.forEach(root => { visible.push(root); if (!root.isCollapsed) { findVisibleDescendants(root); } }); return visible; }
+
+  // ========================================
+  // === レンダリング関連関数 ===
+  // ========================================
+  function render() { nodesContainer.innerHTML = ''; svg.innerHTML = ''; const visibleNodes = getVisibleNodes(); visibleNodes.forEach(node => { renderSingleNode(node); }); renderLines(); }
+  function renderSingleNode(node) { const nodeEl = document.createElement('div'); nodeEl.classList.add('node'); const colorInfo = getNodeColorInfo(node.id); if (node.parentId === null) { nodeEl.classList.add('root-node'); } nodeEl.dataset.id = node.id; nodeEl.style.left = `${node.x}px`; nodeEl.style.top = `${node.y}px`; nodeEl.style.backgroundColor = colorInfo.bg; nodeEl.style.borderColor = colorInfo.border; if (!isEditing || selectedNodeId !== node.id) { const textSpan = document.createElement('span'); textSpan.innerHTML = node.text.replace(/\n/g, '<br>'); nodeEl.appendChild(textSpan); } if (node.id === selectedNodeId) { nodeEl.classList.add('selected'); nodeEl.style.borderColor = selectedBorderColor; if (!isEditing) { const deleteBtn = document.createElement('button'); deleteBtn.classList.add('delete-button'); deleteBtn.innerHTML = '&times;'; deleteBtn.title = '削除 (Del/BS)'; deleteBtn.onclick = (e) => { e.stopPropagation(); deleteSelectedNode(); }; nodeEl.appendChild(deleteBtn); } } const allChildren = nodes.filter(n => n.parentId === node.id); if (allChildren.length > 0) { nodeEl.classList.add('has-children'); const toggleBtn = document.createElement('button'); toggleBtn.classList.add('toggle-button'); toggleBtn.innerHTML = node.isCollapsed ? '➕' : '➖'; toggleBtn.title = node.isCollapsed ? '展開' : '折りたたむ'; toggleBtn.onclick = (e) => { e.stopPropagation(); toggleNodeCollapse(node.id); }; nodeEl.appendChild(toggleBtn); } nodeEl.addEventListener('mousedown', handleNodeMouseDown); nodeEl.addEventListener('click', handleNodeClick); nodeEl.addEventListener('dblclick', handleNodeDblClick); nodesContainer.appendChild(nodeEl); if (isEditing && selectedNodeId === node.id) { appendEditInputToNode(nodeEl, node); } }
+  function appendEditInputToNode(nodeEl, node) { const existingSpan = nodeEl.querySelector('span:not(.delete-button):not(.toggle-button)'); if(existingSpan) existingSpan.remove(); const input = document.createElement('textarea'); input.classList.add('edit-input'); input.value = node.text; input.dataset.editingId = node.id; input.style.height = 'auto'; input.style.overflowY = 'hidden'; const setHeight = () => { input.style.height = 'auto'; input.style.height = `${input.scrollHeight}px`; }; input.addEventListener('blur', handleEditBlur); input.addEventListener('keydown', handleEditKeyDown); input.addEventListener('input', setHeight); const deleteBtn = nodeEl.querySelector('.delete-button'); const toggleBtn = nodeEl.querySelector('.toggle-button'); const referenceNode = deleteBtn || toggleBtn || null; nodeEl.insertBefore(input, referenceNode); input.focus(); input.select(); setTimeout(setHeight, 0); }
+  function renderLines() { svg.innerHTML = ''; const visibleNodes = getVisibleNodes(); visibleNodes.forEach(node => { if (node.parentId !== null) { const parentNode = getNodeById(node.parentId); if (parentNode && visibleNodes.some(vn => vn.id === parentNode.id)) { const parentEl = nodesContainer.querySelector(`.node[data-id='${parentNode.id}']`); const childEl = nodesContainer.querySelector(`.node[data-id='${node.id}']`); if (parentEl && childEl) { const colorInfo = getNodeColorInfo(node.id); const path = drawCurvedLine(parentEl, childEl); if (path) { path.setAttribute('data-from-node-id', parentNode.id); path.setAttribute('data-to-node-id', node.id); path.style.stroke = colorInfo.line; svg.appendChild(path); } } } } }); }
+  function drawCurvedLine(el1, el2) { const x1 = el1.offsetLeft + el1.offsetWidth / 2; const y1 = el1.offsetTop + el1.offsetHeight / 2; const x2 = el2.offsetLeft + el2.offsetWidth / 2; const y2 = el2.offsetTop + el2.offsetHeight / 2; const dx = x2 - x1; const curveFactor = 0.5; const ctrlX1 = x1 + dx * curveFactor; const ctrlY1 = y1; const ctrlX2 = x1 + dx * (1 - curveFactor); const ctrlY2 = y2; const pathData = `M ${x1} ${y1} C ${ctrlX1} ${ctrlY1}, ${ctrlX2} ${ctrlY2}, ${x2} ${y2}`; const path = document.createElementNS('http://www.w3.org/2000/svg', 'path'); path.setAttribute('d', pathData); return path; }
+
+  // ========================================
+  // === イベントリスナー設定 ===
+  // ========================================
+  function setupEventListeners() { saveJsonBtn.addEventListener('click', handleSaveJson); loadJsonBtn.addEventListener('click', () => loadJsonInput.click()); loadJsonInput.addEventListener('change', handleLoadJsonFile); expandAllBtn.addEventListener('click', handleExpandAll); collapseAllBtn.addEventListener('click', handleCollapseAll); zoomInBtn.addEventListener('click', handleZoomIn); zoomOutBtn.addEventListener('click', handleZoomOut); fitToScreenBtn.addEventListener('click', handleFitToScreen); zoomInput.addEventListener('change', handleZoomInputChange); zoomInput.addEventListener('blur', handleZoomInputChange); window.addEventListener('keydown', handleKeyDown); container.addEventListener('mousedown', handlePanStart); container.addEventListener('wheel', handleWheelZoom, { passive: false }); window.addEventListener('mousemove', handlePanOrDragMove); window.addEventListener('mouseup', handlePanOrDragEnd); }
+
+  // ========================================
+  // === イベントハンドラ ===
+  // ========================================
+
+  // --- トピック操作 ---
+  function addChildNode() { if (selectedNodeId === null || isEditing) return; const parentNode = getNodeById(selectedNodeId); if (parentNode) { const children = nodes.filter(n => n.parentId === parentNode.id); const topicCounter = children.length + 1; let defaultText = (parentNode.parentId === null) ? `主トピック ${topicCounter}` : `サブトピック ${topicCounter}`; const parentEl = nodesContainer.querySelector(`.node[data-id='${parentNode.id}']`); const parentWidth = parentEl ? parentEl.offsetWidth : 100; const parentHeight = parentEl ? parentEl.offsetHeight : 40; const offsetX = parentWidth + 70 + Math.random() * 30; const lastChild = children.length > 0 ? getNodeById(children[children.length-1].id) : null; const lastChildEl = lastChild ? nodesContainer.querySelector(`.node[data-id='${lastChild.id}']`) : null; let newY = lastChildEl ? (lastChild.y + lastChildEl.offsetHeight + 25) : (parentNode.y + parentHeight * 0.1); const newX = parentNode.x + offsetX; const newNode = createNodeObject(selectedNodeId, defaultText, newX, newY); nodes.push(newNode); if (parentNode.isCollapsed) { parentNode.isCollapsed = false; } selectedNodeId = newNode.id; render(); startEditingNode(newNode.id); } }
+  function addSiblingNode() { if (selectedNodeId === null || isEditing) return; const selectedNode = getNodeById(selectedNodeId); if (selectedNode && selectedNode.parentId !== null) { const parentId = selectedNode.parentId; const parentNode = getNodeById(parentId); if (parentNode) { const siblings = nodes.filter(n => n.parentId === parentId); const topicCounter = siblings.length + 1; let defaultText = (parentNode.parentId === null) ? `主トピック ${topicCounter}` : `サブトピック ${topicCounter}`; const selectedNodeEl = nodesContainer.querySelector(`.node[data-id='${selectedNode.id}']`); const nodeHeight = selectedNodeEl ? selectedNodeEl.offsetHeight : 40; const newX = selectedNode.x; const newY = selectedNode.y + nodeHeight + 25; const newNode = createNodeObject(parentId, defaultText, newX, newY); nodes.push(newNode); selectedNodeId = newNode.id; render(); startEditingNode(newNode.id); } } else if (selectedNode && selectedNode.parentId === null) { addChildNode(); } }
+  function deleteSelectedNode() { if (selectedNodeId === null || isEditing) return; const nodeToDelete = getNodeById(selectedNodeId); if (!nodeToDelete) return; if (nodeToDelete.parentId === null && nodes.length > 1) { alert('中心トピックは削除できません。'); return; } if (nodeToDelete.parentId === null && nodes.length === 1) { if (!confirm('最後のトピックを削除しますか？マップが初期化されます。')) return; } else { const descendantIds = getDescendantIds(nodeToDelete.id); const hasChildren = descendantIds.length > 0; if (hasChildren) { if (!confirm(`'${nodeToDelete.text}' とその全てのサブトピックを削除しますか？`)) return; } } const idsToDelete = [nodeToDelete.id].concat(getDescendantIds(nodeToDelete.id)); let nextSelectedId = null; const parentId = nodeToDelete.parentId; if (parentId !== null) { const siblings = nodes.filter(n => n.parentId === parentId); const index = siblings.findIndex(n => n.id === nodeToDelete.id); if (index > 0) { nextSelectedId = siblings[index - 1].id; } else if (siblings.length > 1 && index === 0) { nextSelectedId = siblings[1].id; } else { nextSelectedId = parentId; } } else { nextSelectedId = null; } nodes = nodes.filter(node => !idsToDelete.includes(node.id)); selectedNodeId = nextSelectedId; if (nodes.length === 0) { nextNodeId = 1; selectedNodeId = null; rootNodeId = null; init(); } else { if (selectedNodeId === null && nodes.length > 0) { const newRoot = nodes.find(n => n.parentId === null); selectedNodeId = newRoot ? newRoot.id : nodes[0].id; rootNodeId = newRoot ? newRoot.id : null; } else if (selectedNodeId === null && nodes.length === 0) { /* Do nothing */ } render(); container.focus(); } }
+  function toggleNodeCollapse(nodeId) { const node = getNodeById(nodeId); if (node) { node.isCollapsed = !node.isCollapsed; const descendantIds = getDescendantIds(nodeId); if (node.isCollapsed && descendantIds.includes(selectedNodeId)) { selectedNodeId = nodeId; } render(); container.focus(); } }
+  function handleExpandAll() { nodes.forEach(node => node.isCollapsed = false); render(); container.focus(); }
+  function handleCollapseAll() { if (!rootNodeId) return; nodes.forEach(node => { if (node.id !== rootNodeId) { node.isCollapsed = true; } else { node.isCollapsed = false; } }); selectedNodeId = rootNodeId; render(); container.focus(); }
+
+  // --- 編集関連 ---
+  function startEditingSelectedNode() { if (selectedNodeId !== null && !isEditing) { startEditingNode(selectedNodeId); } }
+  function handleNodeClick(event) { if (isPanning || event.target.closest('.delete-button, .toggle-button, .edit-input')) { return; } const targetNodeEl = event.target.closest('.node'); if (targetNodeEl) { const nodeId = parseInt(targetNodeEl.dataset.id, 10); if (isEditing && selectedNodeId !== nodeId) { finishEditing(true); } selectedNodeId = nodeId; render(); container.focus(); } }
+  function handleNodeDblClick(event) { if (isPanning || event.target.closest('.edit-input, .delete-button, .toggle-button')) { return; } const targetNodeEl = event.target.closest('.node'); if (targetNodeEl) { const nodeId = parseInt(targetNodeEl.dataset.id, 10); if (isEditing && selectedNodeId !== nodeId) { finishEditing(true); } selectedNodeId = nodeId; startEditingNode(nodeId); } }
+  function startEditingNode(nodeId) { isEditing = true; selectedNodeId = nodeId; render(); /* console.log(`ノード ${nodeId} の編集を開始`); */ }
+  function handleEditBlur(event) { setTimeout(() => { if (isEditing && event.target.classList.contains('edit-input')) { finishEditing(true); } }, 100); }
+  function handleEditKeyDown(event) { if (!isEditing) return; const input = event.target; if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); event.stopPropagation(); finishEditing(true); } else if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); finishEditing(false); } else if (event.key === 'Tab') { event.preventDefault(); } }
+  function finishEditing(saveChanges) { if (!isEditing) return; const editingInput = nodesContainer.querySelector('.edit-input'); if (!editingInput) { isEditing = false; return; } const nodeId = parseInt(editingInput.dataset.editingId, 10); const node = getNodeById(nodeId); if (node && saveChanges) { const newText = editingInput.value; if (node.text !== newText) { node.text = newText; } } isEditing = false; selectedNodeId = nodeId; render(); container.focus(); }
+
+  // --- ドラッグ＆ドロップ / パン関連 ---
+  function handleNodeMouseDown(event) { if (isPanning || isEditing || event.button !== 0 || event.target.closest('.delete-button, .toggle-button, .edit-input')) { return; } const targetNodeEl = event.target.closest('.node'); if (!targetNodeEl) return; const nodeId = parseInt(targetNodeEl.dataset.id, 10); if (selectedNodeId !== nodeId) { selectedNodeId = nodeId; render(); const currentTargetEl = nodesContainer.querySelector(`.node[data-id='${nodeId}']`); if (!currentTargetEl) return; startDragging(event, nodeId, currentTargetEl); } else { startDragging(event, nodeId, targetNodeEl); } }
+  function startDragging(event, nodeId, nodeEl) { if (isPanning) return; const nodeRect = nodeEl.getBoundingClientRect(); const canvasRect = canvas.getBoundingClientRect(); draggingNode = { id: nodeId, element: nodeEl, offsetX: event.clientX - nodeRect.left, offsetY: event.clientY - nodeRect.top, initialOffsetX: (event.clientX - canvasRect.left) / currentScale - nodeEl.offsetLeft, initialOffsetY: (event.clientY - canvasRect.top) / currentScale - nodeEl.offsetTop, }; nodeEl.style.zIndex = 10; nodeEl.classList.add('dragging'); }
+  function handlePanStart(event) { if (event.button !== 0 || isEditing || event.target.closest('.node, button, input, textarea, .delete-button, .toggle-button')) { return; } isPanning = true; panStartX = event.clientX; panStartY = event.clientY; panInitialScrollLeft = container.scrollLeft; panInitialScrollTop = container.scrollTop; container.classList.add('panning'); }
+  function handlePanOrDragMove(event) { if (isPanning) { handlePanMove(event); } else if (draggingNode) { handleNodeDragMove(event); } } // ★修正済み関数を呼ぶ
+  function handlePanMove(event) { if (!isPanning) return; event.preventDefault(); const dx = event.clientX - panStartX; const dy = event.clientY - panStartY; container.scrollLeft = panInitialScrollLeft - dx; container.scrollTop = panInitialScrollTop - dy; }
+
+  // ========================================
+  // === ★修正済み handleNodeDragMove ===
+  // ========================================
+  /**
+   * ノードドラッグ中のマウス移動処理 (ノードの位置更新と接続線更新、ドロップターゲットのハイライト)
+   * @param {MouseEvent} event - mousemoveイベントオブジェクト
+   */
+  function handleNodeDragMove(event) {
+    if (!draggingNode) return;
+    event.preventDefault();
+
+    const draggedNodeId = draggingNode.id;
+    const draggedNodeElement = draggingNode.element;
+
+    // --- ノード位置の更新 ---
+    const canvasRect = canvas.getBoundingClientRect();
+    const mouseXInCanvas = (event.clientX - canvasRect.left) / currentScale;
+    const mouseYInCanvas = (event.clientY - canvasRect.top) / currentScale;
+    let newX = mouseXInCanvas - draggingNode.initialOffsetX;
+    let newY = mouseYInCanvas - draggingNode.initialOffsetY;
+    const nodeWidth = draggedNodeElement.offsetWidth;
+    const nodeHeight = draggedNodeElement.offsetHeight;
+    const canvasWidth = canvas.offsetWidth;
+    const canvasHeight = canvas.offsetHeight;
+    newX = Math.max(0, Math.min(newX, canvasWidth - nodeWidth));
+    newY = Math.max(0, Math.min(newY, canvasHeight - nodeHeight));
+    const node = getNodeById(draggedNodeId);
+    if (node) { node.x = newX; node.y = newY; }
+    draggedNodeElement.style.left = `${newX}px`;
+    draggedNodeElement.style.top = `${newY}px`;
+    updateConnectedLinesForNode(draggedNodeId);
+
+    // --- ドロップターゲットのハイライト処理 ---
+    let potentialTargetId = null;
+
+    draggedNodeElement.style.pointerEvents = 'none';
+    const elementUnderMouse = document.elementFromPoint(event.clientX, event.clientY);
+    draggedNodeElement.style.pointerEvents = 'auto';
+
+    if (elementUnderMouse) {
+      const potentialTargetElement = elementUnderMouse.closest('.node');
+      if (potentialTargetElement && potentialTargetElement.dataset.id !== String(draggedNodeId)) {
+        const targetId = parseInt(potentialTargetElement.dataset.id, 10);
+        const draggedNodeData = getNodeById(draggedNodeId);
+        const targetNodeData = getNodeById(targetId);
+        if (
+          draggedNodeData && targetNodeData &&
+          draggedNodeData.parentId !== targetId &&
+          draggedNodeData.parentId !== null &&
+          !getDescendantIds(draggedNodeId).includes(targetId)
+        ) {
+          potentialTargetId = targetId;
+        }
+      }
+    }
+
+    // --- ハイライトの更新 ---
+    if (potentialTargetId !== null && potentialTargetId !== highlightedDropTargetId) {
+      removeHighlightFromTarget();
+      addHighlightToTarget(potentialTargetId);
+    }
+    else if (potentialTargetId === null && highlightedDropTargetId !== null) {
+      removeHighlightFromTarget();
+    }
+  }
+
+  /**
+   * 指定されたIDのノードにハイライト用クラスを追加する
+   * @param {number} targetId - ハイライトするノードのID
+   */
+  function addHighlightToTarget(targetId) {
+    const targetElement = nodesContainer.querySelector(`.node[data-id='${targetId}']`);
+    if (targetElement) {
+      targetElement.classList.add('drop-target-highlight');
+      highlightedDropTargetId = targetId;
+    }
+  }
+
+  /**
+   * 現在ハイライトされているノードからハイライト用クラスを削除する
+   */
+  function removeHighlightFromTarget() {
+    if (highlightedDropTargetId !== null) {
+      const highlightedElement = nodesContainer.querySelector(`.node[data-id='${highlightedDropTargetId}']`);
+      if (highlightedElement) {
+        highlightedElement.classList.remove('drop-target-highlight');
+      }
+      highlightedDropTargetId = null;
+    }
+  }
+
+
+  function handlePanOrDragEnd(event) { if (isPanning) { handlePanEnd(event); } else if (draggingNode) { handleNodeDragEnd(event); } } // ★修正済み関数を呼ぶ
+  function handlePanEnd(event) { if (isPanning) { isPanning = false; container.classList.remove('panning'); } }
+
+  // ========================================
+  // === ★修正済み handleNodeDragEnd ===
+  // ========================================
+  /**
+   * ノードドラッグ操作の終了処理
+   * マウスが別のノード上で離された場合、親子関係を変更し、位置を再配置する
+   * @param {MouseEvent} event - mouseupイベントオブジェクト
+   */
+  function handleNodeDragEnd(event) {
+    if (draggingNode) {
+      const draggedNodeId = draggingNode.id;
+      const draggedNodeElement = draggingNode.element; // ドラッグされていた要素
+
+      // ドラッグ終了時にハイライトを解除
+      removeHighlightFromTarget();
+
+      // --- ドロップターゲットの特定 ---
+      draggedNodeElement.style.pointerEvents = 'none';
+      const elementUnderMouse = document.elementFromPoint(event.clientX, event.clientY);
+      draggedNodeElement.style.pointerEvents = 'auto';
+
+      let targetNodeElement = null;
+      if (elementUnderMouse) {
+        targetNodeElement = elementUnderMouse.closest('.node');
+      }
+
+      // --- 親子関係変更と位置再計算のロジック ---
+      let parentChanged = false;
+      if (targetNodeElement && targetNodeElement.dataset.id !== String(draggedNodeId)) {
+        const targetNodeId = parseInt(targetNodeElement.dataset.id, 10);
+        const draggedNode = getNodeById(draggedNodeId);
+        const targetNode = getNodeById(targetNodeId);
+
+        if (
+          draggedNode && targetNode &&
+          draggedNode.parentId !== targetNodeId &&
+          draggedNode.parentId !== null &&
+          !getDescendantIds(draggedNodeId).includes(targetNodeId)
+        ) {
+          // 親子関係を変更
+          draggedNode.parentId = targetNodeId;
+          parentChanged = true; // 親が変わったフラグを立てる
+
+          // ★★★ 親が変わった場合、位置を再計算 ★★★
+          const targetNodeWidth = targetNodeElement.offsetWidth;
+          // const targetNodeHeight = targetNodeElement.offsetHeight; // 必要なら使う
+          const draggedNodeWidth = draggedNodeElement.offsetWidth;
+          const draggedNodeHeight = draggedNodeElement.offsetHeight;
+          const canvasWidth = canvas.offsetWidth;
+          const canvasHeight = canvas.offsetHeight;
+
+          // 新しい親の右側に配置する座標を計算
+          const spacingX = 80; // 親からの横方向の距離
+          const spacingY = 0; // 親からの縦方向のずれ（ここでは同じ高さ）
+          let newDropX = targetNode.x + targetNodeWidth + spacingX;
+          let newDropY = targetNode.y + spacingY;
+
+          // キャンバス内に収まるように調整
+          newDropX = Math.max(0, Math.min(newDropX, canvasWidth - draggedNodeWidth));
+          newDropY = Math.max(0, Math.min(newDropY, canvasHeight - draggedNodeHeight));
+
+          // ドラッグされたノードのデータを更新
+          draggedNode.x = newDropX;
+          draggedNode.y = newDropY;
+          // console.log(`Node ${draggedNodeId} repositioned to (${newDropX}, ${newDropY}) relative to parent ${targetNodeId}`);
+
+          // 新しい親が折りたたまれていたら展開する
+          if (targetNode.isCollapsed) {
+            targetNode.isCollapsed = false;
+          }
+        }
+      }
+
+      // ドラッグ状態を解除
+      draggingNode = null;
+
+      // ドラッグ要素のスタイルを元に戻す
+      draggedNodeElement.style.zIndex = 2;
+      draggedNodeElement.classList.remove('dragging');
+
+      // --- 再描画処理 ---
+      if (parentChanged) {
+        selectedNodeId = draggedNodeId; // 選択は維持
+        render(); // 親が変わった場合は全体を再描画 (位置も更新される)
+      } else {
+        // 親が変わらない場合は、ドラッグで移動した最終位置で線を再描画
+        renderLines();
+      }
+
+      container.focus();
+    }
+  }
+
+  /**
+   * ドラッグ中に、指定されたノードに接続されている線の位置を更新する
+   * @param {number} nodeId - 移動したノードのID
+   */
+  function updateConnectedLinesForNode(nodeId) { svg.querySelectorAll(`path[data-from-node-id='${nodeId}'], path[data-to-node-id='${nodeId}']`).forEach(path => path.remove()); const node = getNodeById(nodeId); const nodeEl = nodesContainer.querySelector(`.node[data-id='${nodeId}']`); if (!node || !nodeEl) return; const isNodeVisible = getVisibleNodes().some(vn => vn.id === nodeId) || (draggingNode && draggingNode.id === nodeId); if (!isNodeVisible) return; if (node.parentId !== null) { const parentNode = getNodeById(node.parentId); const parentEl = nodesContainer.querySelector(`.node[data-id='${node.parentId}']`); const isParentVisible = parentNode && (getVisibleNodes().some(vn => vn.id === parentNode.id) || (draggingNode && draggingNode.id === parentNode.id)); if (isParentVisible && parentEl) { const colorInfo = getNodeColorInfo(node.id); const path = drawCurvedLine(parentEl, nodeEl); if (path) { path.setAttribute('data-from-node-id', parentNode.id); path.setAttribute('data-to-node-id', node.id); path.style.stroke = colorInfo.line; svg.appendChild(path); } } } if (!node.isCollapsed) { const children = nodes.filter(n => n.parentId === nodeId); children.forEach(child => { const childEl = nodesContainer.querySelector(`.node[data-id='${child.id}']`); const isChildVisible = childEl && (getVisibleNodes().some(vn => vn.id === child.id) || (draggingNode && draggingNode.id === child.id)); if (isChildVisible) { const colorInfo = getNodeColorInfo(child.id); const path = drawCurvedLine(nodeEl, childEl); if (path) { path.setAttribute('data-from-node-id', node.id); path.setAttribute('data-to-node-id', child.id); path.style.stroke = colorInfo.line; svg.appendChild(path); } } }); } }
+
+  // --- JSON 保存/読込 ---
+  function handleSaveJson() { if (nodes.length === 0) { alert("保存するデータがありません。"); return; } const dataToSave = { nodes: nodes, nextNodeId: nextNodeId }; const jsonString = JSON.stringify(dataToSave, null, 2); const blob = new Blob([jsonString], { type: 'application/json' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; const timestamp = new Date().toISOString().replace(/[:.-]/g, '').slice(0, 15); a.download = `mindmap_${timestamp}.json`; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url); }
+  function handleLoadJsonFile(event) { const file = event.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = (e) => { try { const loadedData = JSON.parse(e.target.result); if (loadedData && Array.isArray(loadedData.nodes) && typeof loadedData.nextNodeId === 'number') { nodes = loadedData.nodes; nodes.forEach(node => { if (node.isCollapsed === undefined) node.isCollapsed = false; }); nextNodeId = loadedData.nextNodeId; const root = nodes.find(n => n.parentId === null); rootNodeId = root ? root.id : null; selectedNodeId = rootNodeId || (nodes.length > 0 ? nodes[0].id : null); render(); if (rootNodeId || nodes.length > 0) { handleFitToScreen(); } else { updateScale(1.0, false); container.scrollLeft=0; container.scrollTop=0; container.focus(); } alert('マインドマップデータを読み込みました。'); } else { alert('無効なJSONファイル形式です。\n期待される形式: { "nodes": [...], "nextNodeId": ... }'); } } catch (error) { console.error('JSONファイルのパースに失敗しました:', error); alert('JSONファイルの読み込みに失敗しました。ファイル形式を確認してください。'); } finally { loadJsonInput.value = ''; } }; reader.onerror = () => { alert('ファイル読み込み中にエラーが発生しました。'); loadJsonInput.value = ''; }; reader.readAsText(file); }
+
+  // --- キーボード操作 ---
+  function handleKeyDown(event) { const activeElement = document.activeElement; const isCtrlOrMeta = event.ctrlKey || event.metaKey; if (isEditing) { return; } if (activeElement === zoomInput && !isCtrlOrMeta) { return; } if (isCtrlOrMeta) { switch (event.key.toLowerCase()) { case 's': event.preventDefault(); handleSaveJson(); return; case 'o': event.preventDefault(); loadJsonBtn.click(); return; case '+': case '=': event.preventDefault(); handleZoomIn(); return; case '-': event.preventDefault(); handleZoomOut(); return; case '0': event.preventDefault(); handleFitToScreen(); return; } } if (activeElement !== container && activeElement !== document.body) { return; } switch (event.key) { case 'Tab': event.preventDefault(); addChildNode(); break; case 'Enter': event.preventDefault(); addSiblingNode(); break; case 'Delete': case 'Backspace': event.preventDefault(); deleteSelectedNode(); break; case 'F2': event.preventDefault(); startEditingSelectedNode(); break; } }
+
+  // --- ビューポート操作 ---
+  function centerViewOnNode(nodeId, smooth = true) { const node = getNodeById(nodeId); const nodeEl = nodesContainer.querySelector(`.node[data-id='${nodeId}']`); if (node && nodeEl) { const containerRect = container.getBoundingClientRect(); const containerWidth = container.clientWidth; const containerHeight = container.clientHeight; const nodeCenterX = node.x + nodeEl.offsetWidth / 2; const nodeCenterY = node.y + nodeEl.offsetHeight / 2; const targetScrollLeft = nodeCenterX * currentScale - containerWidth / 2; const targetScrollTop = nodeCenterY * currentScale - containerHeight / 2; container.scrollTo({ left: Math.max(0, targetScrollLeft), top: Math.max(0, targetScrollTop), behavior: smooth ? 'smooth' : 'auto' }); container.focus(); } else { container.focus(); } }
+  function handleZoomIn() { const newScale = Math.min(maxScale, currentScale + scaleStep); updateScale(newScale, true); }
+  function handleZoomOut() { const newScale = Math.max(minScale, currentScale - scaleStep); updateScale(newScale, true); }
+  function handleZoomInputChange() { let newScalePercent = parseInt(zoomInput.value, 10); if (isNaN(newScalePercent)) { zoomInput.value = Math.round(currentScale * 100); return; } newScalePercent = Math.max(minScale * 100, Math.min(maxScale * 100, newScalePercent)); const newScale = newScalePercent / 100; updateScale(newScale, true); }
+  function handleWheelZoom(event) { if (!event.ctrlKey) return; event.preventDefault(); const oldScale = currentScale; let newScale; if (event.deltaY < 0) { newScale = Math.min(maxScale, oldScale + scaleStep); } else { newScale = Math.max(minScale, oldScale - scaleStep); } if (Math.abs(oldScale - newScale) < 0.001) return; const mouseX = event.clientX; const mouseY = event.clientY; const containerRect = container.getBoundingClientRect(); const containerX = containerRect.left; const containerY = containerRect.top; const mouseXInContainer = mouseX - containerX; const mouseYInContainer = mouseY - containerY; const canvasX = (container.scrollLeft + mouseXInContainer) / oldScale; const canvasY = (container.scrollTop + mouseYInContainer) / oldScale; const targetScrollLeft = canvasX * newScale - mouseXInContainer; const targetScrollTop = canvasY * newScale - mouseYInContainer; updateScale(newScale, false); requestAnimationFrame(() => { container.scrollLeft = Math.max(0, targetScrollLeft); container.scrollTop = Math.max(0, targetScrollTop); }); }
+  function updateScale(newScale, adjustScroll = false) { const oldScale = currentScale; newScale = Math.max(minScale, Math.min(maxScale, newScale)); if (Math.abs(oldScale - newScale) < 0.001) { zoomInput.value = Math.round(newScale * 100); return; } let targetScrollLeft = container.scrollLeft; let targetScrollTop = container.scrollTop; if (adjustScroll && oldScale > 0) { const viewWidth = container.clientWidth; const viewHeight = container.clientHeight; const canvasXAtCenter = (container.scrollLeft + viewWidth / 2) / oldScale; const canvasYAtCenter = (container.scrollTop + viewHeight / 2) / oldScale; targetScrollLeft = canvasXAtCenter * newScale - viewWidth / 2; targetScrollTop = canvasYAtCenter * newScale - viewHeight / 2; } requestAnimationFrame(() => { if (adjustScroll) { container.scrollLeft = Math.max(0, targetScrollLeft); container.scrollTop = Math.max(0, targetScrollTop); } currentScale = newScale; canvas.style.transform = `scale(${currentScale})`; zoomInput.value = Math.round(currentScale * 100); }); }
+  function handleFitToScreen() { if (nodes.length === 0) { updateScale(1.0, false); container.scrollLeft = 0; container.scrollTop = 0; container.focus(); return; } let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity; const renderedNodes = nodesContainer.querySelectorAll('.node'); if(renderedNodes.length === 0) { if (rootNodeId) { updateScale(1.0, false); centerViewOnNode(rootNodeId, false); } else { updateScale(1.0, false); container.scrollLeft = 0; container.scrollTop = 0;} container.focus(); return; } renderedNodes.forEach(nodeEl => { const nodeId = parseInt(nodeEl.dataset.id, 10); const nodeData = getNodeById(nodeId); if (!nodeData) return; const nodeLeft = nodeData.x; const nodeTop = nodeData.y; const nodeRight = nodeData.x + nodeEl.offsetWidth; const nodeBottom = nodeData.y + nodeEl.offsetHeight; minX = Math.min(minX, nodeLeft); minY = Math.min(minY, nodeTop); maxX = Math.max(maxX, nodeRight); maxY = Math.max(maxY, nodeBottom); }); if (minX === Infinity) { updateScale(1.0, false); container.scrollLeft = 0; container.scrollTop = 0; container.focus(); return; } const contentWidth = maxX - minX; const contentHeight = maxY - minY; if (contentWidth <= 0 || contentHeight <= 0) { if(nodes.length > 0) { const firstNodeId = renderedNodes[0] ? parseInt(renderedNodes[0].dataset.id, 10) : nodes[0].id; updateScale(1.0, false); centerViewOnNode(firstNodeId, false); } else { updateScale(1.0, false); container.scrollLeft = 0; container.scrollTop = 0; container.focus(); } return; } const containerWidth = container.clientWidth; const containerHeight = container.clientHeight; const padding = 40; const scaleX = (containerWidth > padding * 2) ? (containerWidth - padding * 2) / contentWidth : minScale; const scaleY = (containerHeight > padding * 2) ? (containerHeight - padding * 2) / contentHeight : minScale; let optimalScale = Math.min(scaleX, scaleY); optimalScale = Math.max(minScale, Math.min(maxScale, optimalScale)); currentScale = optimalScale; canvas.style.transform = `scale(${currentScale})`; zoomInput.value = Math.round(currentScale * 100); const contentCenterX = minX + contentWidth / 2; const contentCenterY = minY + contentHeight / 2; const targetScrollLeft = contentCenterX * currentScale - containerWidth / 2; const targetScrollTop = contentCenterY * currentScale - containerHeight / 2; container.scrollTo({ left: Math.max(0, targetScrollLeft), top: Math.max(0, targetScrollTop), behavior: 'auto' }); container.focus(); }
+
+  // ========================================
+  // === 初期化実行 ===
+  // ========================================
+  document.addEventListener('DOMContentLoaded', init);
+
+</script>
+
+</body>
+</html>
