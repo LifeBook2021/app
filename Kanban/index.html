@@ -1,0 +1,1212 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>カンバンボード</title>
+    <!-- Favicon -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22>
+        <text x=%2250%%22 y=%2250%%22 style=%22dominant-baseline:central;text-anchor:middle;font-size:90px;%22>📋</text></svg>">
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-giJF6kkoqNQ00vy+HMDP7azOuL0xtbfIcaT9wjKHr8RbDVddVHyTfAAsrekwKmP1" crossorigin="anonymous">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
+    <style>
+        /* --- 基本レイアウト --- */
+        html, body { height: 100%; overflow: hidden; }
+        body { background-color: #f8f9fa; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; display: flex; flex-direction: column; }
+        #app { flex-grow: 1; display: flex; flex-direction: column; overflow: hidden; }
+        .kanban-header { background-color: #0d6efd; color: white; flex-shrink: 0; }
+        .container-fluid.board-container { flex-grow: 1; overflow-y: hidden; padding: 1rem; display: flex; flex-direction: column; }
+        .kanban-board { display: flex; flex-grow: 1; overflow-x: auto; overflow-y: hidden; padding-bottom: 15px; }
+
+        /* --- リスト関連 --- */
+        .kanban-list-wrapper { flex-shrink: 0; width: 320px; margin-right: 1rem; height: 100%; display: flex; flex-direction: column; }
+        .kanban-list-wrapper:last-of-type { margin-right: 0; }
+        .kanban-list { background-color: #e9ecef; border-radius: 0.25rem; padding: 1rem; display: flex; flex-direction: column; height: 100%; overflow: hidden; }
+        .list-header { flex-shrink: 0; }
+        .list-content { flex-grow: 1; overflow-y: auto; padding-right: 5px; margin-right: -5px; }
+        .list-header-input { background-color: transparent; border: none; font-size: 1.1rem; font-weight: bold; padding: 0.2rem 0; box-shadow: none !important; }
+        .list-header-input:focus { background-color: rgba(255, 255, 255, 0.5); }
+
+        /* --- カード関連 --- */
+        .kanban-card { border: 1px solid #eee; border-radius: 0.25rem; padding: 0.8rem; margin-bottom: 0.8rem; word-wrap: break-word; cursor: pointer; transition: box-shadow 0.2s ease-in-out; }
+        .kanban-card:hover { box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,.075); }
+        .kanban-card:active { cursor: grabbing; }
+        .kanban-card:last-child { margin-bottom: 0; }
+        .fs-sm { font-size: 0.8rem; }
+        .text-muted { color: #6c757d !important; }
+        .due-date-badge { padding: 0.2em 0.5em; font-size: 0.75em; font-weight: 600; line-height: 1; color: #fff; text-align: center; white-space: nowrap; vertical-align: baseline; border-radius: 0.25rem; flex-shrink: 0; }
+        .due-date-none { background-color: #6c757d; color: white; }
+        .due-date-overdue { background-color: #dc3545; color: white; }
+        .due-date-today { background-color: #ffc107; color: black; }
+        .due-date-far { background-color: #0dcaf0; color: black; }
+        .card-labels { margin-top: 0.5rem; line-height: 1.5; }
+        .card-label-badge { font-size: 0.75em; margin-right: 0.3rem; margin-bottom: 0.3rem; padding: 0.2em 0.5em; color: black; border-radius: 0.25rem; }
+
+        /* --- ドラッグ＆ドロップ関連 --- */
+        .drag-handle { cursor: grab; color: #adb5bd; }
+        .drag-handle:active { cursor: grabbing; }
+        .ghost { opacity: 0.4; background: #c8ebfb; border: 1px dashed #0d6efd; }
+
+        /* --- ヘッダータイトル編集 --- */
+        .board-title-input { background-color: rgba(0, 0, 0, 0.2); color: white; border: 1px solid rgba(255, 255, 255, 0.5); font-size: 1.25rem; font-weight: 500; line-height: 1.2; padding: 0.25rem 0.5rem; width: auto; display: inline-block; vertical-align: middle; max-width: 300px; margin-right: 1rem; box-shadow: none !important; }
+        .board-title-input::placeholder { color: rgba(255, 255, 255, 0.7); }
+        .board-title-display { cursor: pointer; padding: 0.25rem 0.5rem; border-radius: 0.2rem; transition: background-color 0.15s ease-in-out; display: inline-block; margin-right: 1rem; }
+        .board-title-display:hover { background-color: rgba(255, 255, 255, 0.1); }
+        .kanban-header > div:first-of-type { flex-grow: 1; }
+        .kanban-header > div:last-of-type { flex-shrink: 0; }
+
+        /* --- モーダル関連 --- */
+        #modalTaskDescription { min-height: 120px; }
+        .form-control-plaintext-like { display: block; width: 100%; padding: 0.375rem 0.75rem; min-height: calc(1.5em + 0.75rem + 2px); line-height: 1.5; color: #212529; background-color: transparent; border: 1px solid #e0e0e0; border-radius: 0.25rem; cursor: pointer; user-select: none; word-wrap: break-word; white-space: pre-wrap; }
+        .form-control-plaintext-like.is-placeholder { color: #6c757d; font-style: italic; }
+        .form-control-plaintext-like-textarea { min-height: 120px; height: auto; }
+        .form-control-plaintext-like:hover { background-color: rgba(0, 0, 0, 0.03); }
+        .form-control-plaintext-like-textarea a { color: #0d6efd; text-decoration: underline; }
+        .form-control-plaintext-like-textarea a:hover { color: #0a58ca; }
+
+        /* カード色選択ボタンのスタイル */
+        .card-color-selector .color-option-label {
+            width: 28px; height: 28px; border-radius: 50%; border: 1px solid #ccc; margin-right: 0.5rem; cursor: pointer;
+            display: inline-flex; align-items: center; justify-content: center; transition: transform 0.1s ease-out, box-shadow 0.15s ease-in-out;
+            vertical-align: middle;
+        }
+        .card-color-selector .btn-check:checked + .color-option-label {
+            border-width: 2px; border-color: #0d6efd; transform: scale(1.1);
+            box-shadow: 0 0 0 2px rgba(13, 110, 253, 0.25);
+        }
+        .card-color-selector .btn-check:focus + .color-option-label {
+             box-shadow: 0 0 0 2px rgba(13, 110, 253, 0.25);
+        }
+        .card-color-selector .color-option-label.is-selected:not(.editing-mode) {
+            border-width: 2px; border-color: #6c757d;
+            transform: scale(1.1);
+            box-shadow: none;
+        }
+        .card-color-selector .color-option-label:not(.editing-mode):hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
+        }
+
+        /* モーダル内のラベル関連 */
+        .labels-section .badge { cursor: default; margin-right: 0.5rem; margin-bottom: 0.5rem; padding: 0.3em 0.6em; color: black; }
+        .labels-section .badge .btn-close-label { filter: brightness(0); opacity: 0.7; font-size: 0.8em; cursor: pointer; padding: 0 0.2em; margin-left: 0.3em; }
+        .labels-section .badge .btn-close-label:hover { opacity: 1; }
+        .label-input-group { display: flex; align-items: center; }
+        .label-input-group input { border-top-right-radius: 0; border-bottom-right-radius: 0; }
+        .label-input-group button { border-top-left-radius: 0; border-bottom-left-radius: 0; }
+        .available-label-list { max-height: 100px; overflow-y: auto; margin-top: 0.5rem; padding: 0.5rem; background-color: #f8f9fa; border-radius: 0.25rem; font-size: 0.9em; }
+        .available-label-item { display: inline-block; cursor: pointer; background-color: #e9ecef; border: 1px solid #dee2e6; padding: 0.2em 0.5em; border-radius: 0.2rem; margin-right: 0.4rem; margin-bottom: 0.4rem; }
+        .available-label-item:hover { background-color: #ced4da; }
+
+        /* --- チェックリスト関連 --- */
+        .checklist-section .bg-light { background-color: #f0f0f0 !important; }
+        .checklist-item { min-height: calc(1.5em + 0.375rem * 2 + 2px); }
+        .checklist-item-input { border: none; background-color: transparent; padding-left: 0.25rem; box-shadow: none !important; }
+        .checklist-item-input:focus { background-color: rgba(0, 0, 0, 0.05); }
+        .checklist-item-input:disabled { background-color: transparent !important; border: none !important; padding-left: 0.25rem; cursor: default !important; }
+        .checklist-item-text { padding: 0.25rem 0.5rem; margin-left: 0.25rem; word-break: break-all; line-height: 1.5; cursor: pointer; }
+        .checklist-item-text.is-placeholder { color: #6c757d; font-style: italic; }
+        .checklist-title-input { border: none; background-color: transparent; padding-left: 0; font-weight: bold; box-shadow: none !important; }
+        .checklist-title-input:focus { background-color: rgba(0, 0, 0, 0.05); }
+        .checklist-title-input:disabled { border: none !important; background-color: transparent !important; cursor: default !important; }
+        .checklist-title-display { padding: 0.25rem 0; word-break: break-all; }
+        .form-check-input { cursor: pointer; }
+
+        /* --- コメント関連 --- */
+        .comment-section .list-group-item { background-color: #f8f9fa; border-color: #dee2e6; padding: 0.5rem 0.75rem; }
+        .comment-timestamp { font-size: 0.8em; color: #6c757d; margin-bottom: 0.25rem; }
+        .comment-text { white-space: pre-wrap; word-wrap: break-word; }
+        .comment-text a { color: #0d6efd; text-decoration: underline; }
+        .comment-text a:hover { color: #0a58ca; }
+        #newCommentText { min-height: 60px; }
+        .comment-edit-area textarea { font-size: 0.9rem; min-height: 60px; }
+        .comment-actions button { margin-left: 0.25rem; }
+
+        /* --- ユーティリティ --- */
+        input::placeholder{ color: #6c757d; opacity: 0.7; }
+        .btn-xs { padding: 0.1rem 0.3rem; font-size: 0.75rem; line-height: 1.2; border-radius: 0.2rem; }
+
+    </style>
+</head>
+
+<body>
+    <div id="app">
+        <!-- ヘッダー -->
+        <div class="kanban-header d-flex justify-content-between align-items-center p-3 shadow-sm">
+            <div>
+                <div @click="startEditingBoardTitle" v-if="!isEditingBoardTitle" class="board-title-display" title="タイトル編集">
+                    <h1 class="h4 mb-0 d-inline">{{ boardTitle || 'カンバンボード' }}</h1>
+                </div>
+                <input type="text" v-model="boardTitle" v-else class="form-control form-control-sm board-title-input" @blur="finishEditingBoardTitle" @keyup.enter="finishEditingBoardTitle" @keyup.esc="cancelEditingBoardTitle" ref="boardTitleInput" placeholder="ボードタイトル">
+            </div>
+            <div class="d-flex align-items-center">
+                <!-- JSON読み込み日時 -->
+                <span v-if="formattedLastLoadedTime" class="text-white-50 small me-3" title="最終読込日時">
+                    <i class="bi bi-clock me-1"></i>{{ formattedLastLoadedTime }}
+                </span>
+                <!-- ボタン群 -->
+                <button class="btn btn-outline-light btn-sm me-2" @click="addGroup" title="リスト追加"><i class="bi bi-plus-lg me-1"></i> リスト追加</button>
+                <label for="fileInput" class="btn btn-outline-light btn-sm me-2" title="JSON読込"><i class="bi bi-box-arrow-up me-1"></i> JSON読込</label>
+                <input type="file" id="fileInput" accept=".json" @change="loadDataFromFile" style="display: none;">
+                <button :class="['btn', 'btn-sm', isDataChanged ? 'btn-warning' : 'btn-outline-light', 'me-2']" @click="saveDataToFile" :title="isDataChanged ? '変更あり！JSON保存' : 'JSON保存'">
+                    <i class="bi bi-download me-1"></i> JSON保存 {{ isDataChanged ? ' *' : '' }}
+                </button>
+            </div>
+        </div>
+
+        <!-- ボード本体 -->
+        <div class="container-fluid board-container">
+            <div class="kanban-board">
+                <draggable :list="tasks" ghost-class="ghost" handle=".list-drag-handle" group="lists" class="d-flex h-100">
+                    <div class="kanban-list-wrapper" v-for="(list, listIndex) in tasks" :key="list.id">
+                        <div class="kanban-list">
+                            <div class="list-header d-flex justify-content-between align-items-center mb-3">
+                                <i class="bi bi-grip-vertical drag-handle list-drag-handle me-2" title="リスト移動"></i>
+                                <input type="text" class="form-control list-header-input flex-grow-1" v-model="list.name" placeholder="リスト名">
+                                <button class="btn btn-outline-secondary btn-xs ms-2" @click="delGroup(listIndex)" title="リスト削除"><i class="bi bi-trash"></i></button>
+                            </div>
+                            <div class="list-content">
+                                <draggable :list="list.cards" ghost-class="ghost" group="cards" handle=".card-drag-handle" class="h-100">
+                                    <div class="kanban-card" v-for="(card, cardIndex) in list.cards" :key="card.id" @click="openTaskModal(card, list.id)" title="詳細表示/編集" :style="{ backgroundColor: getCardBackgroundColor(card.color) }">
+                                        <div class="d-flex justify-content-between align-items-start mb-2">
+                                            <span class="fw-bold flex-grow-1 me-2 fs-sm">{{ card.title || '(無題)' }}</span>
+                                            <div class="d-flex align-items-center flex-shrink-0">
+                                                <i class="bi bi-grip-vertical drag-handle card-drag-handle ms-2" @click.stop title="カード移動"></i>
+                                                <button class="btn btn-outline-secondary btn-xs ms-1" @click.stop="confirmDeleteCard(list.cards, cardIndex, card.title)" title="カード削除"><i class="bi bi-x-lg"></i></button>
+                                            </div>
+                                        </div>
+                                        <div class="mb-1" v-if="card.assignee"><span class="fs-sm text-muted"><i class="bi bi-person"></i> {{ card.assignee }}</span></div>
+                                        <div class="d-flex align-items-center mb-2" v-if="card.dueDate">
+                                            <span class="fs-sm text-muted me-2"><i class="bi bi-calendar-event"></i> 期限:</span>
+                                            <span :class="getDueDateBadgeClass(card.dueDate)" class="due-date-badge" :title="getDueDateTooltip(card.dueDate)">{{ formatDueDate(card.dueDate) }}</span>
+                                        </div>
+                                        <div class="card-labels" v-if="card.labels && card.labels.length > 0">
+                                            <span v-for="(label, idx) in card.labels" :key="idx" class="badge card-label-badge" :style="{ backgroundColor: getLabelColor(label) }">{{ label }}</span>
+                                        </div>
+                                    </div>
+                                </draggable>
+                            </div>
+                            <div class="mt-3 flex-shrink-0">
+                                <button class="btn btn-outline-secondary btn-sm w-100" @click="openNewCardModal(list)"><i class="bi bi-plus-lg"></i> カード追加</button>
+                            </div>
+                        </div>
+                    </div>
+                </draggable>
+            </div>
+            <div v-if="tasks.length === 0 && !isLoading" class="alert alert-light text-center border mt-4">リストがありません...</div>
+            <div v-if="isLoading" class="alert alert-info text-center mt-4"><div class="spinner-border spinner-border-sm me-2"></div>読込中...</div>
+        </div>
+
+        <!-- タスク詳細モーダル -->
+        <div class="modal fade" id="taskDetailModal" tabindex="-1" aria-labelledby="taskDetailModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg modal-dialog-scrollable">
+                <div class="modal-content" :style="{ backgroundColor: editingCard ? getCardBackgroundColor(editingCard.color) : '' }">
+                    <div class="modal-header">
+                        <h5 class="modal-title">{{ isNewCard ? '新規タスク' : 'タスク詳細' }}</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="閉じる"></button>
+                    </div>
+                    <div class="modal-body" v-if="editingCard">
+                        <!-- 基本情報 -->
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">タイトル</label>
+                            <div v-if="!isEditingMode" class="form-control-plaintext-like" :class="{'is-placeholder': !editingCard.title}" @dblclick="!isEditingMode && switchToEditMode()" title="ダブルクリック編集">{{ editingCard.title || '未設定' }}</div>
+                            <input v-else type="text" class="form-control" v-model="editingCard.title" placeholder="タスクタイトル" id="modalTaskTitle">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">詳細</label>
+                            <div v-if="!isEditingMode" class="form-control-plaintext-like form-control-plaintext-like-textarea" @dblclick="!isEditingMode && switchToEditMode()" title="ダブルクリック編集" v-html="linkifiedDescription"></div>
+                            <textarea v-else class="form-control" rows="5" v-model="editingCard.description" placeholder="タスク詳細..."></textarea>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">担当者</label>
+                                    <div v-if="!isEditingMode" class="form-control-plaintext-like" :class="{'is-placeholder': !editingCard.assignee}" @dblclick="!isEditingMode && switchToEditMode()" title="ダブルクリック編集">{{ editingCard.assignee || '未設定' }}</div>
+                                    <input v-else type="text" class="form-control" v-model="editingCard.assignee" placeholder="担当者名">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">期限日</label>
+                                    <div v-if="!isEditingMode" class="form-control-plaintext-like" :class="{'is-placeholder': !editingCard.dueDate}" @dblclick="!isEditingMode && switchToEditMode()" title="ダブルクリック編集">{{ formatDueDate(editingCard.dueDate) }}</div>
+                                    <input v-else type="date" class="form-control" v-model="editingCard.dueDate">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">ステータス</label>
+                                    <div v-if="!isEditingMode" class="form-control-plaintext-like" @dblclick="!isEditingMode && switchToEditMode()" title="ダブルクリック編集">{{ getListNameById(editingCard.targetListId) }}</div>
+                                    <select v-else class="form-select" v-model="editingCard.targetListId">
+                                        <option v-for="list in tasks" :key="list.id" :value="list.id">{{ list.name }}</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold d-block mb-2">カード色 <small v-if="!isEditingMode && !isNewCard" class="text-muted fw-normal">(クリックで変更)</small></label>
+                                    <div class="card-color-selector">
+                                        <span v-for="colorOption in availableCardColors" :key="colorOption.id">
+                                            <input v-if="isEditingMode"
+                                                   type="radio"
+                                                   class="btn-check"
+                                                   name="cardColor"
+                                                   :id="'color-' + colorOption.id"
+                                                   :value="colorOption.id"
+                                                   v-model="editingCard.color"
+                                                   autocomplete="off">
+                                            <input v-else
+                                                   type="radio"
+                                                   class="btn-check"
+                                                   :name="'cardColorView-' + editingCard.id"
+                                                   :id="'color-view-' + colorOption.id + '-' + editingCard.id"
+                                                   :checked="editingCard.color === colorOption.id"
+                                                   disabled
+                                                   autocomplete="off">
+                                            <label :for="isEditingMode ? ('color-' + colorOption.id) : ('color-view-' + colorOption.id + '-' + editingCard.id)"
+                                                   class="color-option-label"
+                                                   :class="{ 'is-selected': editingCard.color === colorOption.id, 'editing-mode': isEditingMode }"
+                                                   :style="{ backgroundColor: colorOption.code }"
+                                                   :title="colorOption.name + (isEditingMode ? '' : ' に変更')"
+                                                   @click="!isEditingMode && !isNewCard && changeCardColorImmediately(colorOption.id)">
+                                                <i v-if="!isEditingMode && editingCard.color === colorOption.id" class="bi bi-check-lg" style="color: #333; font-size: 0.9em;"></i>
+                                            </label>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr>
+
+                        <!-- ラベルセクション -->
+                        <div class="mb-3 labels-section">
+                            <h6 class="fw-bold mb-2"><i class="bi bi-tags me-1"></i>ラベル</h6>
+                            <div class="mb-2" v-if="editingCard.labels && editingCard.labels.length > 0">
+                                <span v-for="(label, index) in editingCard.labels" :key="index" class="badge" :style="{ backgroundColor: getLabelColor(label) }">
+                                    {{ label }}
+                                    <span v-if="isEditingMode" class="btn-close-label" @click="removeLabelFromCard(index)" title="ラベル削除">&times;</span>
+                                </span>
+                            </div>
+                            <p v-else-if="!isEditingMode" class="text-muted small mb-2">ラベル未設定</p>
+
+                            <div v-if="isEditingMode">
+                                <div class="label-input-group mb-2">
+                                    <input type="text" class="form-control form-control-sm" v-model="newLabelInput" @keyup.enter="addLabelToCard" placeholder="新規ラベル名 or 既存ラベル選択" list="availableLabelsList">
+                                    <button class="btn btn-outline-secondary btn-sm" @click="addLabelToCard" :disabled="!newLabelInput.trim()" title="ラベル追加">
+                                        <i class="bi bi-plus-circle"></i>
+                                    </button>
+                                    <datalist id="availableLabelsList">
+                                        <option v-for="label in filteredAvailableLabels" :key="label" :value="label"></option>
+                                    </datalist>
+                                </div>
+                                <div v-if="filteredAvailableLabels.length > 0" class="available-label-list border">
+                                    <span v-for="label in filteredAvailableLabels" :key="label" class="available-label-item" @click="addExistingLabel(label)">
+                                        {{ label }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr>
+
+                        <!-- チェックリスト -->
+                        <div class="mb-3 checklist-section" v-if="editingCard && (editingCard.checklists?.length > 0 || isEditingMode)">
+                            <h6 class="fw-bold mb-2"><i class="bi bi-check2-square me-1"></i>チェックリスト <small class="text-muted fw-normal" v-if="!isEditingMode">(チェックは即時反映)</small></h6>
+                            <div v-for="(cl, clIdx) in editingCard.checklists" :key="cl.id" class="mb-4 p-3 bg-light border rounded">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <input type="text" class="form-control form-control-sm checklist-title-input flex-grow-1" v-model="cl.title" placeholder="タイトル" :disabled="!isEditingMode" v-if="isEditingMode">
+                                    <span class="fw-bold checklist-title-display flex-grow-1" v-else>{{ cl.title || '(無題)' }}</span>
+                                    <button class="btn btn-outline-danger btn-xs ms-2" @click="confirmDeleteChecklist(clIdx)" v-if="isEditingMode" title="削除"><i class="bi bi-trash"></i></button>
+                                </div>
+                                <div v-for="(item, itemIdx) in cl.items" :key="item.id" class="d-flex align-items-center mb-1">
+                                    <input class="form-check-input me-2" type="checkbox" v-model="item.completed" @change="toggleChecklistItemCompletion($event, editingCard.currentListId, editingCard.id, cl.id, item.id)" :id="'item-'+item.id">
+                                    <input type="text" class="form-control form-control-sm checklist-item-input flex-grow-1" v-model="item.text" placeholder="項目" :disabled="!isEditingMode" v-if="isEditingMode">
+                                    <label class="form-check-label flex-grow-1 checklist-item-text" :for="'item-'+item.id" v-else :class="{ 'text-decoration-line-through text-muted': item.completed, 'is-placeholder': !item.text }">{{ item.text || '(未入力)' }}</label>
+                                    <button class="btn btn-outline-secondary btn-xs ms-2" @click="confirmDeleteChecklistItem(cl, itemIdx)" v-if="isEditingMode" title="削除"><i class="bi bi-x-lg"></i></button>
+                                </div>
+                                <button class="btn btn-outline-secondary btn-sm mt-2" @click="addChecklistItem(cl)" v-if="isEditingMode"><i class="bi bi-plus-lg"></i> 項目追加</button>
+                            </div>
+                            <button class="btn btn-secondary btn-sm w-100 mt-2" @click="addChecklist" v-if="isEditingMode"><i class="bi bi-plus-square-dotted"></i> チェックリスト追加</button>
+                        </div>
+
+                        <hr v-if="editingCard && (editingCard.checklists?.length > 0 || isEditingMode) && (editingCard.comments?.length > 0 || !isNewCard)">
+
+                        <!-- コメント -->
+                        <div class="mb-3 comment-section" v-if="editingCard.comments?.length > 0 || !isNewCard || isEditingMode">
+                            <h6 class="fw-bold mb-2"><i class="bi bi-chat-left-text me-1"></i>コメント <small class="text-muted fw-normal" v-if="!isEditingMode && !isNewCard">(コメント/編集/削除は即時反映)</small></h6>
+                            <div class="list-group list-group-flush mb-3" v-if="editingCard.comments?.length > 0">
+                                <div class="list-group-item" v-for="(comment, index) in editingCard.comments" :key="index">
+                                    <div v-if="!comment.isEditing">
+                                        <div class="d-flex justify-content-between align-items-start">
+                                            <div class="comment-timestamp">{{ formatCommentTimestamp(comment.timestamp) }}</div>
+                                            <div class="comment-actions flex-shrink-0" v-if="!isEditingMode && !isNewCard">
+                                                <button class="btn btn-outline-secondary btn-xs" @click="startEditingComment(comment, index)" title="コメント編集"> <i class="bi bi-pencil-fill"></i> </button>
+                                                <button class="btn btn-outline-danger btn-xs" @click="confirmDeleteComment(index)" title="コメント削除"> <i class="bi bi-trash"></i> </button>
+                                            </div>
+                                        </div>
+                                        <div class="comment-text" v-html="linkify(comment.text)"></div>
+                                    </div>
+                                    <div v-else class="comment-edit-area">
+                                        <textarea class="form-control form-control-sm mb-2" v-model="comment.text" rows="3"></textarea>
+                                        <div>
+                                            <button class="btn btn-success btn-sm me-2" @click="saveCommentEdit(comment, index)">保存</button>
+                                            <button class="btn btn-secondary btn-sm" @click="cancelCommentEdit(comment)">キャンセル</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <p v-else-if="!isEditingMode && !isNewCard" class="text-muted small mb-3">コメントはありません。</p>
+                            <div class="mt-2" v-if="!isNewCard">
+                                <textarea class="form-control form-control-sm mb-2" id="newCommentText" rows="2" v-model="newCommentText" placeholder="コメント追加..." @keyup.esc="closeModalOnEsc"></textarea>
+                                <button class="btn btn-outline-primary btn-sm" @click="addComment" :disabled="!newCommentText.trim()">
+                                    <i class="bi bi-send me-1"></i> コメント追加
+                                </button>
+                            </div>
+                        </div>
+                    </div><!-- /.modal-body -->
+                    <div class="modal-footer">
+                        <template v-if="!isEditingMode && !isNewCard">
+                            <button type="button" class="btn btn-info me-auto" @click="duplicateCard" title="コピー"><i class="bi bi-files me-1"></i> コピー</button>
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">閉じる</button>
+                            <button type="button" class="btn btn-primary" @click="switchToEditMode">編集</button>
+                        </template>
+                        <template v-if="isEditingMode && !isNewCard">
+                            <button type="button" class="btn btn-secondary" @click="cancelEdit">キャンセル</button>
+                            <button type="button" class="btn btn-success" @click="saveTaskDetails">保存</button>
+                        </template>
+                        <template v-if="isNewCard">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">閉じる</button>
+                            <button type="button" class="btn btn-success" @click="saveTaskDetails">保存</button>
+                        </template>
+                    </div>
+                </div><!-- /.modal-content -->
+            </div><!-- /.modal-dialog -->
+        </div><!-- /#taskDetailModal -->
+    </div> <!-- /#app -->
+
+    <!-- CDN Scripts -->
+    <script src="https://unpkg.com/vue@2.6.12"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/js/bootstrap.bundle.min.js" integrity="sha384-ygbV9kiqUc6oa4msXn9868pTtWMgiQaeYH7/t7LECLbyPA2x65Kgf80OJFdroafW" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.14.0/Sortable.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Vue.Draggable/2.24.3/vuedraggable.umd.min.js"></script>
+
+    <script>
+        var app = new Vue({
+            el: '#app',
+            data() {
+                return {
+                    boardTitle: 'カンバンボード', isEditingBoardTitle: false, originalBoardTitle: '',
+                    tasks: [], isLoading: false, editingCard: null, taskModalInstance: null,
+                    isEditingMode: false, isNewCard: false, isDataChanged: false,
+                    _isInternalChange: false,
+                    newCommentText: '',
+                    availableLabels: [],
+                    newLabelInput: '',
+                    labelColorCache: {},
+                    lastLoadedTime: null, // 最後にJSONを読み込んだ日時
+                    availableCardColors: [
+                        { id: 'yellow', name: '黄', code: '#fffacd' },
+                        { id: 'blue', name: '水色', code: '#e7f5ff' },
+                        { id: 'green', name: '緑', code: '#e6fcf5' },
+                        { id: 'pink', name: '桃', code: '#fff0f6' },
+                        { id: 'purple', name: '紫', code: '#f3e8ff' },
+                        { id: 'gray', name: '灰', code: '#f8f9fa' }
+                    ]
+                }
+            },
+            computed: {
+                getListNameById() { return (id) => { if(!id) return '（リスト未指定）'; const l=this.tasks.find(l=>l.id===id); return l?l.name:'（不明リスト）'; }; },
+                linkifiedDescription() { if(this.editingCard?.description) return this.linkify(this.editingCard.description); return '<span class="is-placeholder" style="white-space:pre-wrap">未設定</span>'; },
+                filteredAvailableLabels() {
+                    const input = this.newLabelInput.toLowerCase().trim();
+                    const currentLabels = this.editingCard?.labels?.map(l => l.toLowerCase()) || [];
+                    return this.availableLabels.filter(label =>
+                        !currentLabels.includes(label.toLowerCase()) &&
+                        (input === '' || label.toLowerCase().includes(input))
+                    ).sort();
+                },
+                // 最後に読み込んだ日時をフォーマット
+                formattedLastLoadedTime() {
+                    if (!this.lastLoadedTime) return null;
+                    const d = this.lastLoadedTime;
+                    const pad = (n) => String(n).padStart(2, '0');
+                    return `${d.getFullYear()}/${pad(d.getMonth() + 1)}/${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+                }
+            },
+            mounted() {
+                const el = document.getElementById('taskDetailModal');
+                if (el) {
+                    this.taskModalInstance = new bootstrap.Modal(el);
+                    el.addEventListener('hidden.bs.modal', () => {
+                        this.editingCard=null;
+                        this.isEditingMode=false;
+                        this.isNewCard=false;
+                        this.newCommentText='';
+                        this.newLabelInput='';
+                    });
+                }
+                this.updateAvailableLabels();
+            },
+            methods: {
+                // --- 基本ユーティリティ ---
+                generateId() { return '_' + Math.random().toString(36).substr(2, 9); },
+                markDataChanged() { if (!this._isInternalChange) this.isDataChanged = true; },
+
+                // --- データ永続化 (JSON) ---
+                saveDataToFile() {
+                    const data = { title: this.boardTitle, tasks: this.tasks };
+                    if (data.tasks.length === 0 && !(data.title||'').trim()) {
+                        alert("保存するデータがありません。");
+                        return;
+                    }
+                    try {
+                        const now = new Date();
+                        const pad = (n) => String(n).padStart(2, '0');
+                        const timestamp = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
+                        const filename = `KBD${timestamp}.json`;
+                        const dataString = JSON.stringify(data, null, 2);
+                        const blob = new Blob([dataString], {type:"application/json"});
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement("a");
+                        a.style.display="none"; a.href=url; a.download=filename;
+                        document.body.appendChild(a); a.click();
+                        URL.revokeObjectURL(url); document.body.removeChild(a);
+                        this._isInternalChange=true; this.isDataChanged=false;
+                        this.$nextTick(()=>this._isInternalChange=false);
+                    } catch(e) {
+                        console.error("JSONデータの保存中にエラーが発生しました:", e);
+                        alert("データの保存中にエラーが発生しました。");
+                    }
+                },
+                loadDataFromFile(event) {
+                    const file = event.target.files[0];
+                    const inputElement = event.target;
+                    if (!file || !file.type.match('json')) {
+                        alert("JSONファイルを選択してください。");
+                        inputElement.value=''; return;
+                    }
+                    this.isLoading = true;
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        this._isInternalChange = true;
+                        try {
+                            const loadedData = JSON.parse(e.target.result);
+                            let tasks = [], boardTitle = 'カンバンボード';
+                            if(typeof loadedData === 'object' && loadedData !== null && Array.isArray(loadedData.tasks)) {
+                                boardTitle = loadedData.title || boardTitle;
+                                tasks = this.validateTasksData(loadedData.tasks);
+                            } else if(Array.isArray(loadedData)) {
+                                console.warn("古い形式のJSONデータを読み込んでいます。");
+                                tasks = this.validateTasksData(loadedData);
+                            } else {
+                                throw new Error("無効なJSONデータ形式です。");
+                            }
+                            this.boardTitle = boardTitle;
+                            this.$set(this,'tasks', tasks);
+                            this.isDataChanged = false;
+                            this.updateAvailableLabels();
+                            this.lastLoadedTime = new Date(); // 読み込み日時を記録
+                            alert("データの読み込みが完了しました。");
+                        } catch(err) {
+                            console.error("JSONデータの読み込みまたは解析中にエラーが発生しました:", err);
+                            alert("データの読み込みに失敗しました: " + err.message);
+                        } finally {
+                            inputElement.value = ''; this.isLoading = false;
+                            this.$nextTick(() => this._isInternalChange = false);
+                        }
+                    };
+                    reader.onerror = (e) => {
+                        console.error("ファイル読み取りエラー:", e);
+                        alert("ファイルの読み取りに失敗しました。");
+                        inputElement.value = ''; this.isLoading = false; this._isInternalChange = false;
+                    };
+                    reader.readAsText(file);
+                },
+                validateTasksData(tasks) {
+                    const validColorIds = this.availableCardColors.map(c => c.id);
+                    const defaultColorId = this.availableCardColors[0]?.id || 'yellow';
+                    return Array.isArray(tasks) ? tasks.map(list => {
+                        if(!list || typeof list !=='object') return null;
+                        const listId = list.id || this.generateId();
+                        const cards = (Array.isArray(list.cards)?list.cards:[]).map(card => {
+                            if(!card || typeof card !=='object') return null;
+                            let dueDate = (typeof card.dueDate === 'string' && card.dueDate.match(/^\d{4}-\d{2}-\d{2}$/)) ? card.dueDate : null;
+                            if(dueDate === "") dueDate = null;
+                            const checklists = this.validateChecklists(card.checklists);
+                            const comments = this.validateComments(card.comments);
+                            const labels = Array.isArray(card.labels) ? card.labels.filter(lbl => typeof lbl === 'string' && lbl.trim()).map(lbl => lbl.trim()) : [];
+                            let cardColor = card.color;
+                            if (!cardColor || !validColorIds.includes(cardColor)) {
+                                cardColor = defaultColorId;
+                            }
+                            return {
+                                id: card.id || this.generateId(),
+                                title: String(card.title || ''),
+                                assignee: String(card.assignee || ''),
+                                dueDate: dueDate,
+                                description: String(card.description || ''),
+                                checklists: checklists,
+                                comments: comments,
+                                labels: labels,
+                                color: cardColor
+                            };
+                        }).filter(card => card !== null);
+                        return { id: listId, name: String(list.name || '無題'), cards: cards };
+                    }).filter(list => list !== null) : [];
+                },
+                validateChecklists(checklists) {
+                    return Array.isArray(checklists) ? checklists.map(cl => {
+                        if(!cl || typeof cl !=='object') return null;
+                        const clId = cl.id || this.generateId();
+                        const items = (Array.isArray(cl.items)?cl.items:[]).map(item => {
+                            if(!item || typeof item !=='object') return null;
+                            return { id: item.id || this.generateId(), text: String(item.text || ''), completed: Boolean(item.completed || false) };
+                        }).filter(item => item !== null);
+                        return { id: clId, title: String(cl.title || ''), items: items };
+                    }).filter(cl => cl !== null) : [];
+                },
+                validateComments(comments) {
+                    return Array.isArray(comments) ? comments.map(c => {
+                        if(!c || typeof c !=='object' || !c.text || !c.timestamp || isNaN(Date.parse(c.timestamp))) return null;
+                        return { text: String(c.text), timestamp: String(c.timestamp) };
+                    }).filter(c => c !== null) : [];
+                },
+
+                // --- リスト操作 ---
+                addGroup() {
+                    this.tasks.push({ id:this.generateId(), name:'新しいリスト', cards:[] });
+                },
+                delGroup(listIndex) {
+                    const listName = (this.tasks[listIndex]?.name) || '(無題のリスト)';
+                    if(confirm(`リスト「${listName}」を削除しますか？このリスト内のカードもすべて削除されます。`)) {
+                        this.tasks.splice(listIndex, 1);
+                    }
+                },
+
+                // --- カード操作 ---
+                confirmDeleteCard(cardList, cardIndex, cardTitle) {
+                    const title = cardTitle || '(無題のカード)';
+                    if(confirm(`カード「${title}」を削除しますか？`)) {
+                        this.delTask(cardList, cardIndex);
+                    }
+                },
+                delTask(cardList, cardIndex) {
+                    if(Array.isArray(cardList) && cardIndex >= 0 && cardIndex < cardList.length) {
+                        cardList.splice(cardIndex, 1);
+                    } else {
+                        console.error("カード削除エラー: 不正なリストまたはインデックスです。", cardList, cardIndex);
+                    }
+                },
+                duplicateCard() {
+                    if (!this.editingCard?.id || this.isNewCard) return;
+                    const originalListId = this.editingCard.currentListId;
+                    const originalList = this.tasks.find(l => l.id === originalListId);
+                    if (!originalList) { alert("カードのコピー中にエラーが発生しました。"); return; }
+                    const duplicatedChecklists = JSON.parse(JSON.stringify(this.editingCard.checklists || [])).map(cl => {
+                        cl.id = this.generateId();
+                        cl.items.forEach(item => item.id = this.generateId());
+                        return cl;
+                    });
+                    const duplicatedComments = JSON.parse(JSON.stringify(this.editingCard.comments || []));
+                    const duplicatedLabels = JSON.parse(JSON.stringify(this.editingCard.labels || []));
+                    const defaultColorId = this.availableCardColors[0]?.id || 'yellow';
+                    const newCard = {
+                        id: this.generateId(),
+                        title: `${this.editingCard.title || '(無題)'} (コピー)`,
+                        assignee: this.editingCard.assignee || '',
+                        dueDate: this.editingCard.dueDate,
+                        description: this.editingCard.description || '',
+                        checklists: duplicatedChecklists,
+                        comments: duplicatedComments,
+                        labels: duplicatedLabels,
+                        color: this.editingCard.color || defaultColorId
+                    };
+                    originalList.cards.push(newCard);
+                    this.updateAvailableLabels();
+                    if (this.taskModalInstance) this.taskModalInstance.hide();
+                    this.$nextTick(() => alert(`カード「${newCard.title}」をコピーしました。`));
+                },
+
+                // --- テキスト処理 / フォーマット ---
+                linkify(text) {
+                    if (!text) return '';
+                    let escapedText = text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+                    const urlPattern = /(\b(https?|ftp):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])|(\bwww\.[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/ig;
+                    let linkifiedText = escapedText.replace(urlPattern, url => {
+                        let fullUrl = url;
+                        if(url.toLowerCase().startsWith('www.')) {
+                            fullUrl = 'http://' + url;
+                        }
+                        return `<a href="${fullUrl}" target="_blank" rel="noopener noreferrer">${url}</a>`;
+                    });
+                    return linkifiedText.replace(/\n/g, '<br>');
+                },
+                formatDueDate(dateString) {
+                    if(!dateString) return '未設定';
+                    try {
+                        const [year, month, day] = dateString.split('-').map(Number);
+                        const date = new Date(year, month - 1, day);
+                        if(isNaN(date.getTime())) return '無効な日付';
+                        const weekdays = ['日', '月', '火', '水', '木', '金', '土'];
+                        const weekday = weekdays[date.getDay()];
+                        return `${date.getFullYear()}/${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')}(${weekday})`;
+                    } catch(e) {
+                        return '日付フォーマットエラー';
+                    }
+                },
+                getDueDateBadgeClass(dateString) {
+                    if(!dateString) return 'due-date-none';
+                    try {
+                        const today = new Date();
+                        today.setHours(0, 0, 0, 0);
+                        const [year, month, day] = dateString.split('-').map(Number);
+                        const dueDate = new Date(year, month - 1, day);
+                        dueDate.setHours(0, 0, 0, 0);
+                        if(isNaN(dueDate.getTime())) return 'due-date-none';
+                        const diffDays = Math.ceil((dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+                        if(diffDays < 0) return 'due-date-overdue';
+                        else if(diffDays <= 7) return 'due-date-today';
+                        else return 'due-date-far';
+                    } catch(e) {
+                        return 'due-date-none';
+                    }
+                },
+                getDueDateTooltip(dateString) {
+                    if(!dateString) return '期限未設定';
+                    try {
+                        const today = new Date();
+                        today.setHours(0, 0, 0, 0);
+                        const [year, month, day] = dateString.split('-').map(Number);
+                        const dueDate = new Date(year, month - 1, day);
+                        dueDate.setHours(0, 0, 0, 0);
+                        if(isNaN(dueDate.getTime())) return '無効な日付';
+                        const diffDays = Math.ceil((dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+                        if(diffDays < 0) return `${Math.abs(diffDays)}日前が期限でした`;
+                        if(diffDays === 0) return '今日が期限です';
+                        return `あと${diffDays}日`;
+                    } catch(e) {
+                        return '日数計算エラー';
+                    }
+                },
+
+                // --- モーダル関連 ---
+                openTaskModal(card, listId) {
+                    if (!card?.id || !listId) {
+                        console.error("タスクモーダルを開けません: 不正なカードまたはリストIDです。", card, listId);
+                        return;
+                    }
+                    this.isNewCard = false;
+                    this.isEditingMode = false;
+                    const defaultColorId = this.availableCardColors[0]?.id || 'yellow';
+                    // Deep copy card data to avoid modifying original data directly
+                    this.editingCard = JSON.parse(JSON.stringify({
+                        ...card,
+                        dueDate: card.dueDate === "" ? null : card.dueDate,
+                        description: card.description || '',
+                        checklists: Array.isArray(card.checklists) ? card.checklists : [],
+                        comments: Array.isArray(card.comments) ? card.comments : [],
+                        labels: Array.isArray(card.labels) ? card.labels : [],
+                        color: card.color || defaultColorId,
+                        currentListId: listId, // Store original list ID
+                        targetListId: listId   // Initialize target list ID for editing
+                    }));
+                    this.newLabelInput = ''; // Reset label input
+                    if (this.taskModalInstance) this.taskModalInstance.show();
+                },
+                openNewCardModal(list) {
+                    if (!list?.id) {
+                        console.error("新規カードモーダルを開けません: 不正なリストです。", list);
+                        return;
+                    }
+                    this.isNewCard = true;
+                    this.isEditingMode = true;
+                    const defaultColorId = this.availableCardColors[0]?.id || 'yellow';
+                    this.editingCard = {
+                        id: null, title: '', assignee: '', dueDate: null, description: '',
+                        checklists: [], comments: [], labels: [],
+                        color: defaultColorId,
+                        currentListId: list.id, // Store target list ID
+                        targetListId: list.id
+                    };
+                    this.newLabelInput = ''; // Reset label input
+                    if (this.taskModalInstance) {
+                        this.taskModalInstance.show();
+                        // Focus the title input after the modal is shown
+                        this.$nextTick(() => {
+                            document.getElementById('modalTaskTitle')?.focus();
+                        });
+                    }
+                },
+                switchToEditMode() {
+                    if(!this.isEditingMode){
+                        this.isEditingMode = true;
+                        // Focus the title input when switching to edit mode
+                        this.$nextTick(() => {
+                            const titleInput = document.getElementById('modalTaskTitle');
+                            if(titleInput && !titleInput.disabled){
+                                titleInput.focus();
+                                if(titleInput.select) titleInput.select(); // Select text if possible
+                            }
+                        });
+                    }
+                },
+                cancelEdit() {
+                    if(this.isNewCard){
+                        // Just hide the modal for a new card
+                        if(this.taskModalInstance) this.taskModalInstance.hide();
+                    } else if(this.editingCard){
+                        // Re-open the modal with original data
+                        const originalList = this.tasks.find(l => l.id === this.editingCard.currentListId);
+                        const originalCard = originalList?.cards.find(c => c.id === this.editingCard.id);
+                        if(originalCard){
+                            // Preserve scroll position
+                            const modalBody = document.querySelector('#taskDetailModal .modal-body');
+                            const currentScrollTop = modalBody ? modalBody.scrollTop : 0;
+                            this.openTaskModal(originalCard, this.editingCard.currentListId);
+                            // Restore scroll position after modal is re-rendered
+                            this.$nextTick(() => {
+                                if(modalBody) modalBody.scrollTop = currentScrollTop;
+                            });
+                        } else {
+                            // Fallback: just switch back to view mode if original card not found (should not happen normally)
+                            this.isEditingMode = false;
+                        }
+                    }
+                },
+                saveTaskDetails() {
+                    if (!this.editingCard?.targetListId) {
+                        alert("カードの保存先リストが指定されていません。");
+                        return;
+                    }
+
+                    // Handle empty date string
+                    if (this.editingCard.dueDate === "") {
+                        this.editingCard.dueDate = null;
+                    }
+                    const defaultColorId = this.availableCardColors[0]?.id || 'yellow';
+
+                    // Prepare card data, ensuring comments only contain necessary fields
+                    const cardDataToSave = {
+                        id: this.editingCard.id,
+                        title: this.editingCard.title || '',
+                        assignee: this.editingCard.assignee || '',
+                        dueDate: this.editingCard.dueDate,
+                        description: this.editingCard.description || '',
+                        checklists: this.editingCard.checklists || [],
+                        comments: this.editingCard.comments?.map(c => ({ text: c.text, timestamp: c.timestamp })) || [], // Remove temporary 'isEditing' flags
+                        labels: this.editingCard.labels || [],
+                        color: this.editingCard.color || defaultColorId
+                    };
+
+                    const targetListId = this.editingCard.targetListId;
+
+                    if (this.isNewCard) {
+                        // Add new card
+                        cardDataToSave.id = this.generateId(); // Generate ID for the new card
+                        const targetList = this.tasks.find(l => l.id === targetListId);
+                        if (!targetList) {
+                            alert("保存先のリストが見つかりません。");
+                            return;
+                        }
+                        targetList.cards.push(cardDataToSave);
+                    } else {
+                        // Update existing card
+                        const currentListId = this.editingCard.currentListId;
+                        const cardId = this.editingCard.id;
+                        if (!currentListId || !cardId) {
+                             alert("カード情報の更新中にエラーが発生しました。(ID不一致)");
+                             return;
+                        }
+
+                        const originalList = this.tasks.find(l => l.id === currentListId);
+                        if (!originalList) {
+                            alert("元のリストが見つかりません。");
+                            return;
+                        }
+                        const originalCardIndex = originalList.cards.findIndex(c => c.id === cardId);
+                        if (originalCardIndex === -1) {
+                            alert("更新対象のカードが見つかりません。");
+                            return;
+                        }
+
+                        if (currentListId === targetListId) {
+                            // Card stays in the same list, just update data
+                            this.$set(originalList.cards, originalCardIndex, cardDataToSave);
+                        } else {
+                            // Card moved to a different list
+                            const targetList = this.tasks.find(l => l.id === targetListId);
+                            if (!targetList) {
+                                alert("移動先のリストが見つかりません。");
+                                return;
+                            }
+                            // Remove from original list and add to target list
+                            originalList.cards.splice(originalCardIndex, 1);
+                            targetList.cards.push(cardDataToSave);
+                        }
+                    }
+                    this.updateAvailableLabels(); // Update label list after save
+                    if (this.taskModalInstance) this.taskModalInstance.hide();
+                },
+                closeModalOnEsc(event) {
+                    // Example: If you want ESC in comment textarea to close modal
+                    // if (event.target.id === 'newCommentText' && !event.shiftKey) {
+                    //     this.taskModalInstance.hide();
+                    // }
+                },
+
+                // --- ボードタイトル編集 ---
+                startEditingBoardTitle() {
+                    if(!this.isEditingBoardTitle){
+                        this.originalBoardTitle = this.boardTitle; // Store original title
+                        this.isEditingBoardTitle = true;
+                        // Focus the input after it becomes visible
+                        this.$nextTick(()=>{
+                            if(this.$refs.boardTitleInput){
+                                this.$refs.boardTitleInput.focus();
+                                this.$refs.boardTitleInput.select(); // Select text for easy replacement
+                            }
+                        });
+                    }
+                },
+                finishEditingBoardTitle() {
+                    if(this.isEditingBoardTitle){
+                        const trimmedTitle = this.boardTitle.trim();
+                        if(!trimmedTitle) {
+                            this.boardTitle = this.originalBoardTitle || 'カンバンボード'; // Restore original or default if empty
+                        } else if (this.boardTitle !== trimmedTitle) {
+                            this.boardTitle = trimmedTitle; // Update if only whitespace was trimmed
+                        }
+                        this.isEditingBoardTitle = false;
+                    }
+                },
+                cancelEditingBoardTitle() {
+                    if(this.isEditingBoardTitle){
+                        // Restore original title only if it was actually changed
+                        if(this.boardTitle !== this.originalBoardTitle) {
+                            this.boardTitle = this.originalBoardTitle;
+                        }
+                        this.isEditingBoardTitle = false;
+                    }
+                },
+
+                // --- チェックリスト操作 ---
+                addChecklist() {
+                    if(!this.editingCard) return;
+                    // Ensure checklists array exists
+                    if(!Array.isArray(this.editingCard.checklists)) {
+                        this.$set(this.editingCard, 'checklists', []);
+                    }
+                    this.editingCard.checklists.push({id: this.generateId(), title: '', items: []});
+                },
+                confirmDeleteChecklist(checklistIndex) {
+                    const checklistTitle = this.editingCard?.checklists[checklistIndex]?.title || '(無題のチェックリスト)';
+                    if(confirm(`チェックリスト「${checklistTitle}」を削除しますか？`)) {
+                        this.deleteChecklist(checklistIndex);
+                    }
+                },
+                deleteChecklist(checklistIndex) {
+                    if(this.editingCard?.checklists) {
+                        this.editingCard.checklists.splice(checklistIndex, 1);
+                    }
+                },
+                addChecklistItem(checklist) {
+                    if(checklist && Array.isArray(checklist.items)) {
+                        checklist.items.push({id: this.generateId(), text: '', completed: false});
+                    }
+                },
+                confirmDeleteChecklistItem(checklist, itemIndex) {
+                     const itemText = checklist?.items[itemIndex]?.text || '(未入力の項目)';
+                     if(confirm(`チェック項目「${itemText}」を削除しますか？`)) {
+                        this.deleteChecklistItem(checklist, itemIndex);
+                     }
+                },
+                deleteChecklistItem(checklist, itemIndex) {
+                    if(checklist?.items) {
+                        checklist.items.splice(itemIndex, 1);
+                    }
+                },
+                toggleChecklistItemCompletion(event, listId, cardId, checklistId, itemId) {
+                    // This method updates the underlying data directly, even in view mode
+                    const isCompleted = event.target.checked;
+                    const listIndex = this.tasks.findIndex(l => l.id === listId); if(listIndex === -1) return;
+                    const cardIndex = this.tasks[listIndex].cards.findIndex(c => c.id === cardId); if(cardIndex === -1) return;
+                    const card = this.tasks[listIndex].cards[cardIndex];
+                    if(!card.checklists) return;
+                    const checklistIndex = card.checklists.findIndex(cl => cl.id === checklistId); if(checklistIndex === -1) return;
+                    const itemIndex = card.checklists[checklistIndex].items.findIndex(i => i.id === itemId); if(itemIndex === -1) return;
+
+                    // Update the actual task data using $set for reactivity
+                    this.$set(this.tasks[listIndex].cards[cardIndex].checklists[checklistIndex].items[itemIndex], 'completed', isCompleted);
+
+                    // Also update the editingCard if it's the same item (for instant UI update in modal)
+                    if(this.editingCard && this.editingCard.id === cardId){
+                        const editingCl = this.editingCard.checklists?.find(cl => cl.id === checklistId);
+                        const editingItem = editingCl?.items.find(i => i.id === itemId);
+                        if(editingItem) this.$set(editingItem, 'completed', isCompleted);
+                    }
+                    // No need to call saveTaskDetails here, change is applied directly
+                },
+
+                // --- コメント操作 ---
+                addComment() {
+                    if (!this.editingCard || !this.newCommentText.trim()) return;
+                    const text = this.newCommentText.trim();
+                    const timestamp = new Date().toISOString();
+                    const newComment = { text: text, timestamp: timestamp, isEditing: false }; // Add temporary flag for editing state
+
+                    // Ensure comments array exists in editingCard
+                    if (!Array.isArray(this.editingCard.comments)) {
+                        this.$set(this.editingCard, 'comments', []);
+                    }
+                    this.editingCard.comments.push(newComment);
+
+                    // If in view mode, also update the actual card data immediately
+                    if (!this.isEditingMode && !this.isNewCard) {
+                        const { currentListId, id: cardId } = this.editingCard;
+                        if (!currentListId || !cardId) return; // Should not happen
+                        const listIndex = this.tasks.findIndex(l => l.id === currentListId); if (listIndex === -1) return;
+                        const cardIndex = this.tasks[listIndex].cards.findIndex(c => c.id === cardId); if (cardIndex === -1) return;
+                        const card = this.tasks[listIndex].cards[cardIndex];
+                        if (!Array.isArray(card.comments)) {
+                            this.$set(card, 'comments', []); // Ensure array exists in actual data too
+                        }
+                        // Push only the necessary data, not the temporary 'isEditing' flag
+                        card.comments.push({ text: newComment.text, timestamp: newComment.timestamp });
+                        this.markDataChanged(); // Mark data as changed since we modified the main tasks array
+                    }
+
+                    this.newCommentText = ''; // Clear input field
+                },
+                formatCommentTimestamp(timestampString) {
+                    if (!timestampString) return '';
+                    try {
+                        const date = new Date(timestampString);
+                        if (isNaN(date.getTime())) return '無効な日時';
+                        const pad = (n) => String(n).padStart(2, '0');
+                        return `${date.getFullYear()}/${pad(date.getMonth() + 1)}/${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
+                    } catch(e) {
+                        return '日時フォーマットエラー';
+                    }
+                },
+                 startEditingComment(comment, index) {
+                    // Ensure only one comment is edited at a time
+                    this.editingCard.comments.forEach((c, i) => {
+                        if(c.isEditing && i !== index) {
+                            this.cancelCommentEdit(c); // Cancel other edits if any
+                        }
+                    });
+                    // Set editing flag and store original text for cancel
+                    this.$set(comment, 'isEditing', true);
+                    this.$set(comment, 'originalText', comment.text); // Store original text
+                },
+                saveCommentEdit(comment, index) {
+                    if (!comment || !comment.text.trim()) {
+                        alert("コメント本文を入力してください。");
+                        return;
+                    }
+                    // Clear editing flags
+                    this.$set(comment, 'isEditing', false);
+                    delete comment.originalText; // Remove original text copy
+
+                    // If in view mode, update the actual card data immediately
+                    if (!this.isEditingMode && !this.isNewCard) {
+                         const { currentListId, id: cardId } = this.editingCard;
+                         if (!currentListId || !cardId) return;
+                         const listIndex = this.tasks.findIndex(l => l.id === currentListId); if (listIndex === -1) return;
+                         const cardIndex = this.tasks[listIndex].cards.findIndex(c => c.id === cardId); if (cardIndex === -1) return;
+                         const card = this.tasks[listIndex].cards[cardIndex];
+                         if (card?.comments?.[index]) {
+                            // Update using $set for reactivity, only save text and timestamp
+                            this.$set(card.comments, index, { text: comment.text, timestamp: comment.timestamp });
+                            this.markDataChanged();
+                         }
+                    }
+                },
+                cancelCommentEdit(comment) {
+                    // Restore original text if it exists
+                    if (typeof comment.originalText === 'string') {
+                        comment.text = comment.originalText;
+                    }
+                    // Clear editing flags
+                    this.$set(comment, 'isEditing', false);
+                    delete comment.originalText;
+                },
+                confirmDeleteComment(index) {
+                    if (confirm("このコメントを削除しますか？この操作は元に戻せません。")) {
+                        this.deleteComment(index);
+                    }
+                },
+                deleteComment(index) {
+                    if (!this.editingCard?.comments?.[index]) {
+                         console.error("コメント削除エラー: 不正なインデックスまたはコメントデータです。", index);
+                         return;
+                    }
+                    // Remove from editingCard first (for UI update)
+                    this.editingCard.comments.splice(index, 1);
+
+                    // If in view mode, also remove from the actual card data immediately
+                    if (!this.isEditingMode && !this.isNewCard) {
+                        const { currentListId, id: cardId } = this.editingCard;
+                        if (!currentListId || !cardId) return;
+                        const listIndex = this.tasks.findIndex(l => l.id === currentListId); if (listIndex === -1) return;
+                        const cardIndex = this.tasks[listIndex].cards.findIndex(c => c.id === cardId); if (cardIndex === -1) return;
+                        const card = this.tasks[listIndex].cards[cardIndex];
+                        if (card?.comments?.[index]) { // Check if it still exists in actual data
+                            card.comments.splice(index, 1);
+                            this.markDataChanged();
+                        }
+                    }
+                },
+
+                // --- ラベル操作 ---
+                updateAvailableLabels() {
+                    const allLabels = new Set();
+                    this.tasks.forEach(list => {
+                        list.cards.forEach(card => {
+                            if (Array.isArray(card.labels)) {
+                                card.labels.forEach(label => allLabels.add(label));
+                            }
+                        });
+                    });
+                    this.availableLabels = Array.from(allLabels).sort();
+                    this.labelColorCache = {}; // Clear color cache as labels might change
+                },
+                addLabelToCard() {
+                    if (!this.editingCard || !this.newLabelInput.trim()) return;
+                    const newLabel = this.newLabelInput.trim();
+
+                    // Ensure labels array exists
+                    if (!Array.isArray(this.editingCard.labels)) {
+                        this.$set(this.editingCard, 'labels', []);
+                    }
+
+                    // Check if label (case-insensitive) already exists on the card
+                    const labelExists = this.editingCard.labels.some(l => l.toLowerCase() === newLabel.toLowerCase());
+
+                    if (!labelExists) {
+                        // Check if a label with different casing but same meaning exists globally
+                        const existingLabel = this.availableLabels.find(l => l.toLowerCase() === newLabel.toLowerCase());
+                        const labelToAdd = existingLabel || newLabel; // Use existing casing if found
+
+                        this.editingCard.labels.push(labelToAdd);
+                        this.editingCard.labels.sort(); // Keep labels sorted
+
+                        // If it was a truly new label, add it to the global available labels
+                        if (!existingLabel) {
+                            this.availableLabels.push(labelToAdd);
+                            this.availableLabels.sort();
+                        }
+                    } else {
+                        alert(`ラベル「${newLabel}」は既に追加されています。`);
+                    }
+                    this.newLabelInput = ''; // Clear input
+                },
+                addExistingLabel(label) {
+                    // Helper to add label when clicked from the available list
+                    this.newLabelInput = label;
+                    this.addLabelToCard();
+                },
+                removeLabelFromCard(index) {
+                    if (this.editingCard?.labels && index >= 0 && index < this.editingCard.labels.length) {
+                        this.editingCard.labels.splice(index, 1);
+                        // Note: We don't automatically remove the label from availableLabels here.
+                        // It might still be used on other cards.
+                        // A cleanup mechanism could be added if needed.
+                    }
+                },
+                getLabelColor(label) {
+                    // Cache generated colors for consistency
+                    if (this.labelColorCache[label]) {
+                        return this.labelColorCache[label];
+                    }
+                    // Simple hash function to generate a color based on the label string
+                    let hash = 0;
+                    for (let i = 0; i < label.length; i++) {
+                        hash = label.charCodeAt(i) + ((hash << 5) - hash);
+                        hash = hash & hash; // Convert to 32bit integer
+                    }
+                    const hue = Math.abs(hash % 360); // Hue (0-359)
+                    const saturation = 70; // Saturation (keep it consistent)
+                    const lightness = 80; // Lightness (keep it light for readability)
+                    const color = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+                    this.labelColorCache[label] = color; // Store in cache
+                    return color;
+                },
+
+                // --- カード色関連メソッド ---
+                getCardBackgroundColor(colorId) {
+                    const color = this.availableCardColors.find(c => c.id === colorId);
+                    const defaultColorCode = this.availableCardColors[0]?.code || '#fffacd'; // Fallback color
+                    return color ? color.code : defaultColorCode;
+                },
+                getCardColorName(colorId) {
+                    const color = this.availableCardColors.find(c => c.id === colorId);
+                    const defaultColorName = this.availableCardColors[0]?.name || 'デフォルト'; // Fallback name
+                    return color ? color.name : defaultColorName;
+                },
+                // 表示モードでカード色を即時変更
+                changeCardColorImmediately(newColorId) {
+                    if (!this.editingCard || this.isEditingMode || this.isNewCard) {
+                        return; // Only works in view mode for existing cards
+                    }
+                    if (this.editingCard.color === newColorId) {
+                        return; // No change needed
+                    }
+
+                    const cardId = this.editingCard.id;
+                    const listId = this.editingCard.currentListId;
+
+                    // 1. Update editingCard color (for instant modal UI update)
+                    this.editingCard.color = newColorId;
+
+                    // 2. Update the actual card data in the tasks array
+                    const listIndex = this.tasks.findIndex(l => l.id === listId);
+                    if (listIndex !== -1) {
+                        const cardIndex = this.tasks[listIndex].cards.findIndex(c => c.id === cardId);
+                        if (cardIndex !== -1) {
+                            // Use $set to ensure reactivity
+                            this.$set(this.tasks[listIndex].cards[cardIndex], 'color', newColorId);
+                            // 3. Mark data as changed for save indication
+                            this.markDataChanged();
+                        } else {
+                            console.error("色変更エラー: tasks 内のカードが見つかりません。", listId, cardId);
+                            alert("カードの色の変更中にエラーが発生しました。");
+                            // Optionally revert editingCard color here
+                        }
+                    } else {
+                        console.error("色変更エラー: tasks 内のリストが見つかりません。", listId);
+                        alert("カードの色の変更中にエラーが発生しました。");
+                         // Optionally revert editingCard color here
+                    }
+                }
+            },
+            watch: {
+                // Watch for changes in tasks array (deep watch for nested changes)
+                tasks: {
+                    handler(newTasks, oldTasks) {
+                        // Mark data as changed only if the change wasn't internal (like loading)
+                        if (!this.isLoading && !this._isInternalChange) {
+                            this.markDataChanged();
+                        }
+                    },
+                    deep: true
+                },
+                // Watch for changes in board title
+                boardTitle(newValue, oldValue) {
+                     // Mark data as changed only if not currently editing and not an internal change
+                    if (!this._isInternalChange && !this.isEditingBoardTitle && newValue !== oldValue) {
+                        this.markDataChanged();
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>
