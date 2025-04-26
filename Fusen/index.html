@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>付箋アプリ</title>
+    <style>
+        /* 基本スタイル */
+        body { font-family: sans-serif; margin: 0; background-color: #f0f0f0; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+        header { background-color: #333; color: white; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+        header h1 { margin: 0; font-size: 1.5em; }
+        header .controls { display: flex; align-items: center; gap: 10px; }
+        header button { padding: 8px 15px; cursor: pointer; border: none; border-radius: 4px; font-size: 0.9em; }
+        header button#addNoteBtn { background-color: #4CAF50; color: white; }
+        header button#loadJsonBtn { background-color: #008CBA; color: white; }
+        header button#saveJsonBtn { background-color: #f44336; color: white; }
+        header button#alignNotesBtn { background-color: #ff9800; color: white; }
+
+        /* ズームコントロール */
+        header .zoom-controls { display: flex; align-items: center; gap: 5px; border-left: 1px solid #555; padding-left: 10px; margin-left: 10px;}
+        header .zoom-controls button { background-color: #555; color: white; padding: 5px 10px; font-size: 0.9em; }
+        header .zoom-controls input[type="number"] {
+            width: 50px; text-align: right; padding: 4px 2px; border: 1px solid #777; border-radius: 3px;
+            background-color: #444; color: white; font-size: 0.9em; -moz-appearance: textfield;
+        }
+        header .zoom-controls input[type="number"]::-webkit-outer-spin-button,
+        header .zoom-controls input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        header .zoom-controls .percent-sign { margin-left: -2px; font-size: 0.9em; }
+
+        /* ボードとコンテナ */
+        #board { flex-grow: 1; position: relative; overflow: auto; background-color: #e8e8e8; border-top: 1px solid #ccc; cursor: grab; user-select: none; }
+        #board.is-panning { cursor: grabbing; }
+        #notes-container { position: relative; width: 1px; height: 1px; /* 座標計算の基点 */ transform-origin: 0 0; }
+
+        /* 付箋スタイル */
+        .sticky-note {
+            position: absolute;
+            min-width: 150px; min-height: 120px;
+            background-color: #ffffe0; /* デフォルト色 */
+            border: 1px solid #ccc;
+            box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
+            padding: 10px;
+            cursor: grab;
+            display: flex; flex-direction: column;
+            overflow: visible; /* リサイズハンドルやパレット表示のため */
+            user-select: none; /* テキスト選択は個別要素で許可 */
+            border-radius: 3px;
+            box-sizing: border-box; /* ★ 追加: width/height が border/padding を含むように */
+            contain: layout style paint; /* パフォーマンス最適化 */
+        }
+        /* 色クラス */
+        .sticky-note.color-yellow { background-color: #ffffe0; }
+        .sticky-note.color-pink   { background-color: #ffdde1; }
+        .sticky-note.color-blue   { background-color: #e0f7fa; }
+        .sticky-note.color-green  { background-color: #e8f5e9; }
+        .sticky-note.color-purple { background-color: #f3e5f5; }
+        .sticky-note.color-white  { background-color: #ffffff; }
+        /* 状態クラス */
+        .sticky-note.dragging { cursor: grabbing; opacity: 0.8; box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.3); pointer-events: none; z-index: 1000 !important; }
+        .sticky-note.resizing { cursor: nwse-resize; opacity: 0.8; pointer-events: none; }
+        /* 操作要素のポインターイベントを許可 */
+        .sticky-note:not(.dragging):not(.resizing) *[contenteditable="true"],
+        .sticky-note:not(.dragging):not(.resizing) .note-controls button,
+        .sticky-note:not(.dragging):not(.resizing) .resizer,
+        .sticky-note:not(.dragging):not(.resizing) .note-timestamp,
+        .sticky-note:not(.dragging):not(.resizing) .note-body a {
+            pointer-events: auto;
+        }
+        /* 付箋ヘッダー */
+        .sticky-note .note-header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 5px; margin-bottom: 5px; border-bottom: 1px dashed #ccc; flex-shrink: 0; position: relative; }
+        /* 編集可能エリア (タイトル・本文) */
+        .sticky-note .note-title,
+        .sticky-note .note-body {
+            padding: 3px; background-color: transparent; border: none; outline: none;
+            cursor: text; user-select: text; /* テキスト選択を許可 */
+            position: relative;
+        }
+        .sticky-note .note-title { font-weight: bold; flex-grow: 1; margin-right: 5px; min-height: 1.2em; }
+        .sticky-note .note-body {
+            flex-grow: 1; /* 高さを自動調整 */
+            resize: none; /* textareaではないので不要だが念のため */
+            font-family: inherit;
+            overflow-y: auto; /* 内容が多い場合にスクロール */
+            min-height: 50px;
+            word-wrap: break-word; overflow-wrap: break-word; /* 自動改行 */
+            white-space: pre-wrap; /* CSSで改行・スペースを保持 */
+            height: 100%; /* 親要素に追従 */
+            margin-bottom: 5px;
+        }
+        /* プレースホルダー */
+        .sticky-note .note-title.is-empty::before,
+        .sticky-note .note-body.is-empty::before {
+            content: attr(data-placeholder);
+            position: absolute; left: 3px; top: 3px;
+            color: #aaa; pointer-events: none; user-select: none;
+            display: block; width: calc(100% - 6px);
+            overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
+        }
+        .sticky-note .note-title:focus::before,
+        .sticky-note .note-body:focus::before { content: ''; /* フォーカス時は非表示 */ }
+        /* フォーカス時の背景 */
+        .sticky-note .note-title:focus,
+        .sticky-note .note-body:focus { background-color: rgba(0,0,0, 0.05); }
+        /* 本文内のリンクスタイル */
+        .sticky-note .note-body a { color: #0000EE; text-decoration: underline; cursor: pointer; }
+        .sticky-note .note-body a:hover { color: #551A8B; }
+        /* 付箋コントロール */
+        .sticky-note .note-controls { display: flex; align-items: center; }
+        .sticky-note .color-palette-btn { background: none; border: none; color: #aaa; cursor: pointer; font-size: 1em; padding: 0 5px; line-height: 1; margin-right: 5px; position: relative; }
+        .sticky-note .color-palette-btn:hover { color: #555; }
+        .sticky-note .color-palette-btn::before { content: '\25A0'; display: inline-block; margin-right: 2px; }
+        .sticky-note .delete-note { background: none; border: none; color: #aaa; cursor: pointer; font-size: 1.2em; padding: 0 5px; line-height: 1; flex-shrink: 0; }
+        .sticky-note .delete-note:hover { color: #f00; }
+        /* カラーパレット */
+        .color-palette {
+            position: absolute; top: 100%; right: 0;
+            background-color: white; border: 1px solid #ccc; box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            padding: 5px; display: none; z-index: 10; border-radius: 3px; white-space: nowrap;
+        }
+        .color-palette.visible { display: flex; gap: 5px; }
+        .color-swatch { width: 20px; height: 20px; border: 1px solid #ccc; border-radius: 3px; cursor: pointer; box-sizing: border-box; }
+        .color-swatch:hover { border-color: #333; transform: scale(1.1); }
+        /* 色見本の背景色 */
+        .color-swatch[data-color="yellow"] { background-color: #ffffe0; }
+        .color-swatch[data-color="pink"]   { background-color: #ffdde1; }
+        .color-swatch[data-color="blue"]   { background-color: #e0f7fa; }
+        .color-swatch[data-color="green"]  { background-color: #e8f5e9; }
+        .color-swatch[data-color="purple"] { background-color: #f3e5f5; }
+        .color-swatch[data-color="white"]  { background-color: #ffffff; }
+        /* タイムスタンプ */
+        .note-timestamp {
+            font-size: 0.7em; color: #888; text-align: right; flex-shrink: 0;
+            border-top: 1px solid #eee; padding-top: 4px; margin-top: auto; /* 付箋下部に配置 */
+            user-select: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        /* リサイズハンドル */
+        .resizer {
+            position: absolute; bottom: 0; right: 0;
+            width: 15px; height: 15px;
+            background-color: rgba(0, 0, 0, 0.1); border-top: 1px solid #aaa; border-left: 1px solid #aaa;
+            cursor: nwse-resize; pointer-events: auto !important; /* 常に操作可能 */
+            z-index: 1;
+        }
+        .resizer:hover { background-color: rgba(0, 0, 0, 0.3); }
+        /* JSONファイル入力 */
+        #fileInput { display: none; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>付箋アプリ</h1>
+        <div class="controls">
+            <button id="addNoteBtn">付箋を追加</button>
+            <button id="loadJsonBtn">JSON読込</button>
+            <input type="file" id="fileInput" accept=".json">
+            <button id="saveJsonBtn">JSON保存</button>
+            <button id="alignNotesBtn">整列</button>
+            <div class="zoom-controls">
+                <button id="zoomOutBtn" title="ズームアウト (10%減)">-</button>
+                <input type="number" id="zoomLevelInput" min="20" max="300" step="10" title="ズームレベル (%)">
+                <span class="percent-sign">%</span>
+                <button id="zoomInBtn" title="ズームイン (10%増)">+</button>
+                <button id="fitToBoundsBtn" title="全体表示">全体</button>
+            </div>
+        </div>
+    </header>
+
+    <main id="board">
+        <div id="notes-container">
+            <!-- 付箋はここに動的に挿入されます -->
+        </div>
+    </main>
+
+    <script>
+        // --- DOM要素キャッシュ ---
+        const board = document.getElementById('board');
+        const addNoteBtn = document.getElementById('addNoteBtn');
+        const loadJsonBtn = document.getElementById('loadJsonBtn');
+        const saveJsonBtn = document.getElementById('saveJsonBtn');
+        const fileInput = document.getElementById('fileInput');
+        const notesContainer = document.getElementById('notes-container');
+        const zoomInBtn = document.getElementById('zoomInBtn');
+        const zoomOutBtn = document.getElementById('zoomOutBtn');
+        const fitToBoundsBtn = document.getElementById('fitToBoundsBtn');
+        const zoomLevelInput = document.getElementById('zoomLevelInput');
+        const alignNotesBtn = document.getElementById('alignNotesBtn');
+
+        // --- アプリケーション状態 ---
+        let notes = []; // body は \n 改行
+        let maxZ = 0;
+        let zoomLevel = 1.0;
+        let draggedNote = null;
+        let dragOffsetX = 0, dragOffsetY = 0;
+        let resizedNote = null;
+        let resizeStartX = 0, resizeStartY = 0;
+        let resizeStartWidth = 0, resizeStartHeight = 0;
+        let isPanning = false;
+        let panStartX = 0, panStartY = 0;
+        let boardScrollStartX = 0, boardScrollStartY = 0;
+
+        // --- 定数 ---
+        const MIN_ZOOM = 0.2; const MAX_ZOOM = 3.0; const ZOOM_STEP = 0.1;
+        const ZOOM_WHEEL_FACTOR = 1.1; const DEFAULT_NOTE_WIDTH = 200;
+        const DEFAULT_NOTE_HEIGHT = 150; const MIN_NOTE_WIDTH = 150;
+        const MIN_NOTE_HEIGHT = 120; const PLACEHOLDER_TITLE = '無題';
+        const PLACEHOLDER_BODY = '未記入'; const DEFAULT_NOTE_COLOR = 'yellow';
+        const AVAILABLE_COLORS = ['yellow', 'pink', 'blue', 'green', 'purple', 'white'];
+        const ALIGN_MARGIN_X = 20; const ALIGN_MARGIN_Y = 20;
+        const URL_PATTERN = /(https?:\/\/[^\s<>"'{}|\\^`[\]]+)|(\bwww\.[^\s<>"'{}|\\^`[\]]+)/gi;
+
+        // --- Helper Functions ---
+        function formatDateTime(dateInput) {
+            const placeholder = '----/--/-- --:--';
+            if (!dateInput) return placeholder;
+            try {
+                const date = (typeof dateInput === 'string') ? new Date(dateInput) : dateInput;
+                if (isNaN(date.getTime())) return placeholder;
+                const y = date.getFullYear();
+                const m = (date.getMonth() + 1).toString().padStart(2, '0');
+                const d = date.getDate().toString().padStart(2, '0');
+                const h = date.getHours().toString().padStart(2, '0');
+                const min = date.getMinutes().toString().padStart(2, '0');
+                return `${y}/${m}/${d} ${h}:${min}`;
+            } catch (e) { console.error("Date formatting error:", dateInput, e); return placeholder; }
+        }
+        function formatTimestampText(createdAt, updatedAt) { return `作成: ${formatDateTime(createdAt)} | 更新: ${formatDateTime(updatedAt)}`; }
+        function getBackgroundColorForColor(color) {
+            switch (color) {
+                case 'yellow': return '#ffffe0'; case 'pink': return '#ffdde1'; case 'blue': return '#e0f7fa';
+                case 'green': return '#e8f5e9'; case 'purple': return '#f3e5f5'; case 'white': return '#ffffff';
+                default: return '#ffffe0';
+            }
+        }
+
+        // --- Text/HTML Conversion Helpers ---
+        function convertNewlinesToBr(str) {
+            if (typeof str !== 'string') return '';
+            const escapedStr = str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+            return escapedStr.replace(/\n/g, '<br>');
+        }
+        function normalizeNewlines(str) {
+            if (typeof str !== 'string') return '';
+            return str.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+        }
+
+        // --- URL Linkify Functions (DOM-based) ---
+        function linkifyNoteBody(noteElement) {
+            const bodyElement = noteElement.querySelector('.note-body');
+            if (!bodyElement || bodyElement === document.activeElement || !bodyElement.hasChildNodes()) {
+                return;
+            }
+            const walker = document.createTreeWalker( bodyElement, NodeFilter.SHOW_TEXT, {
+                acceptNode: function(node) {
+                    if (node.parentElement.closest('a') || node.parentElement.isContentEditable === false) {
+                        return NodeFilter.FILTER_REJECT;
+                    }
+                    return NodeFilter.FILTER_ACCEPT;
+                }
+            });
+            const nodesToProcess = []; let currentNode;
+            while (currentNode = walker.nextNode()) {
+                if (URL_PATTERN.test(currentNode.nodeValue)) { nodesToProcess.push(currentNode); }
+                 URL_PATTERN.lastIndex = 0; // reset regex state
+            }
+            if (nodesToProcess.length === 0) return;
+            let modified = false;
+            nodesToProcess.forEach(textNode => {
+                const textContent = textNode.nodeValue; const fragment = document.createDocumentFragment();
+                let lastIndex = 0; let nodeModified = false;
+                textContent.replace(URL_PATTERN, (match, httpsUrl, wwwUrl, offset) => {
+                    if (offset > lastIndex) { fragment.appendChild(document.createTextNode(textContent.substring(lastIndex, offset))); }
+                    const url = httpsUrl || wwwUrl; const a = document.createElement('a');
+                    const href = wwwUrl ? `https://${url}` : url; a.href = href; a.target = '_blank';
+                    a.rel = 'noopener noreferrer'; a.setAttribute('contenteditable', 'false'); a.textContent = url;
+                    fragment.appendChild(a); lastIndex = offset + match.length; nodeModified = true;
+                });
+                if (lastIndex < textContent.length) { fragment.appendChild(document.createTextNode(textContent.substring(lastIndex))); }
+                if (nodeModified && fragment.hasChildNodes()) {
+                    if(textNode.parentNode){ textNode.parentNode.replaceChild(fragment, textNode); modified = true; }
+                }
+            });
+             if (modified) { bodyElement.normalize(); }
+        }
+        function unlinkifyNoteBody(noteElement) {
+            const bodyElement = noteElement.querySelector('.note-body'); if (!bodyElement) return;
+            const links = bodyElement.querySelectorAll('a[contenteditable="false"]'); if (links.length === 0) return;
+            Array.from(links).forEach(a => {
+                 if(a.parentNode){ const textNode = document.createTextNode(a.textContent || ''); a.parentNode.replaceChild(textNode, a); }
+            });
+            bodyElement.normalize();
+        }
+
+        // --- Sticky Note Core Functions ---
+        function updateTimestamp(noteData, noteElement) {
+            if (!noteData || !noteElement) return; noteData.updatedAt = new Date().toISOString();
+            const timestampElement = noteElement.querySelector('.note-timestamp');
+            if (timestampElement) { const tsText = formatTimestampText(noteData.createdAt, noteData.updatedAt); timestampElement.textContent = tsText; timestampElement.title = tsText; }
+        }
+        function createNoteObject(id, title = '', body = '', x = 20, y = 20, z = 1, width = DEFAULT_NOTE_WIDTH, height = DEFAULT_NOTE_HEIGHT, color = DEFAULT_NOTE_COLOR) {
+            const now = new Date().toISOString(); const initialTitle = title.trim() === PLACEHOLDER_TITLE ? '' : title.trim();
+            const initialBody = body === PLACEHOLDER_BODY ? '' : normalizeNewlines(body); // \n normalize
+            const validColor = AVAILABLE_COLORS.includes(color) ? color : DEFAULT_NOTE_COLOR;
+            return { id, title, body, x: Math.max(0, x), y: Math.max(0, y), z, width: Math.max(MIN_NOTE_WIDTH, width), height: Math.max(MIN_NOTE_HEIGHT, height), color: validColor, createdAt: now, updatedAt: now };
+        }
+        function updatePlaceholderState(element, noteData, isTitle) {
+            const currentText = element.innerText || ''; const targetProp = isTitle ? 'title' : 'body';
+            const normalizedTextForData = isTitle ? currentText.trim() : normalizeNewlines(currentText); // \n normalize
+            const savedValue = noteData[targetProp]; let changed = false;
+            if (currentText.trim() === '') { element.classList.add('is-empty'); if (savedValue !== '') { noteData[targetProp] = ''; changed = true; } }
+            else { element.classList.remove('is-empty'); if (savedValue !== normalizedTextForData) { noteData[targetProp] = normalizedTextForData; changed = true; } }
+            return changed;
+        }
+        function renderNote(noteData) {
+            if (!noteData || typeof noteData.z !== 'number') { console.error("Invalid data:", noteData); return; }
+            if (noteData.z > maxZ) maxZ = noteData.z;
+            const noteElement = document.createElement('div');
+            noteElement.className = `sticky-note color-${noteData.color || DEFAULT_NOTE_COLOR}`; noteElement.dataset.id = noteData.id;
+            Object.assign(noteElement.style, { left: `${noteData.x}px`, top: `${noteData.y}px`, zIndex: noteData.z, width: `${noteData.width || DEFAULT_NOTE_WIDTH}px`, height: `${noteData.height || DEFAULT_NOTE_HEIGHT}px` });
+            noteElement.innerHTML = `
+                <div class="note-header"> <div class="note-title" contenteditable="true" data-placeholder="${PLACEHOLDER_TITLE}"></div> <div class="note-controls"> <button class="color-palette-btn" title="色を変更"></button> <button class="delete-note" title="削除">&times;</button> </div> <div class="color-palette"> ${AVAILABLE_COLORS.map(color => `<div class="color-swatch" data-color="${color}" title="${color}" style="background-color: ${getBackgroundColorForColor(color)};"></div>`).join('')} </div> </div>
+                <div class="note-body" contenteditable="true" data-placeholder="${PLACEHOLDER_BODY}"></div>
+                <div class="note-timestamp" title=""></div> <div class="resizer"></div>
+            `;
+            const titleElement = noteElement.querySelector('.note-title'); const bodyElement = noteElement.querySelector('.note-body'); const timestampElement = noteElement.querySelector('.note-timestamp');
+            const colorBtn = noteElement.querySelector('.color-palette-btn'); const deleteBtn = noteElement.querySelector('.delete-note'); const resizer = noteElement.querySelector('.resizer'); const colorSwatches = noteElement.querySelectorAll('.color-swatch');
+            titleElement.innerText = noteData.title || ''; bodyElement.innerHTML = convertNewlinesToBr(noteData.body || ''); // \n -> <br>
+            const initialTimestampText = formatTimestampText(noteData.createdAt, noteData.updatedAt); timestampElement.textContent = initialTimestampText; timestampElement.title = initialTimestampText;
+            titleElement.addEventListener('input', (e) => handleContentChange(e, true)); titleElement.addEventListener('blur', (e) => handleContentChange(e, true)); titleElement.addEventListener('focus', (e) => e.target.classList.remove('is-empty')); titleElement.addEventListener('mousedown', (e) => e.stopPropagation());
+            bodyElement.addEventListener('input', (e) => handleContentChange(e, false)); bodyElement.addEventListener('blur', (e) => { handleContentChange(e, false); linkifyNoteBody(noteElement); }); // Blur時にリンク化
+            bodyElement.addEventListener('focus', (e) => { unlinkifyNoteBody(noteElement); e.target.classList.remove('is-empty'); }); // Focus時にリンク解除
+            bodyElement.addEventListener('mousedown', (e) => { if (!(e.target.tagName === 'A' && e.target.closest('.note-body'))) { e.stopPropagation(); } }); bodyElement.addEventListener('click', (e) => { if (e.target.tagName === 'A' && e.target.href && e.target.closest('.note-body')) { /* Link click */ } });
+            colorBtn.addEventListener('click', toggleColorPalette); colorBtn.addEventListener('mousedown', (e) => e.stopPropagation());
+            deleteBtn.addEventListener('click', handleDeleteNote); deleteBtn.addEventListener('mousedown', (e) => e.stopPropagation());
+            colorSwatches.forEach(swatch => { swatch.addEventListener('click', handleColorChange); swatch.addEventListener('mousedown', (e) => e.stopPropagation()); });
+            resizer.addEventListener('mousedown', handleResizeMouseDown); noteElement.addEventListener('mousedown', handleDragMouseDown);
+            updatePlaceholderState(titleElement, noteData, true); updatePlaceholderState(bodyElement, noteData, false);
+            notesContainer.appendChild(noteElement);
+            linkifyNoteBody(noteElement); // 初期リンク化
+        }
+        function renderAllNotes() {
+            notesContainer.innerHTML = ''; maxZ = 0;
+            notes.forEach(note => {
+                if (!AVAILABLE_COLORS.includes(note.color)) note.color = DEFAULT_NOTE_COLOR; const now = new Date().toISOString();
+                if (!note.createdAt || isNaN(new Date(note.createdAt).getTime())) note.createdAt = now;
+                if (!note.updatedAt || isNaN(new Date(note.updatedAt).getTime()) || new Date(note.updatedAt) < new Date(note.createdAt)) note.updatedAt = note.createdAt;
+                if (note.title === PLACEHOLDER_TITLE) note.title = ''; if (note.body === PLACEHOLDER_BODY) note.body = '';
+                note.body = normalizeNewlines(note.body); // \n normalize
+                if (typeof note.z === 'number' && note.z > maxZ) maxZ = note.z;
+            });
+            notes.sort((a, b) => (a.z || 0) - (b.z || 0)); notes.forEach(noteData => renderNote(noteData));
+        }
+        function addNote() {
+            maxZ++; const newNoteData = createNoteObject( `note-${Date.now()}-${Math.random().toString(16).slice(2)}`, '', '', 20, 20, maxZ );
+            notes.push(newNoteData); renderNote(newNoteData);
+        }
+        function handleDeleteNote(event) {
+            const noteElement = event.target.closest('.sticky-note'); if (!noteElement) return;
+            const noteId = noteElement.dataset.id; notes = notes.filter(note => note.id !== noteId);
+            noteElement.remove(); closeAllColorPalettes();
+        }
+        function handleContentChange(event, isTitle) {
+            const element = event.target; const noteElement = element.closest('.sticky-note'); if (!noteElement) return;
+            const noteId = noteElement.dataset.id; const noteData = notes.find(note => note.id === noteId); if (!noteData) return;
+            const dataChanged = updatePlaceholderState(element, noteData, isTitle);
+            if (event.type === 'blur' && dataChanged) {
+                updateTimestamp(noteData, noteElement);
+                 if (!isTitle) { linkifyNoteBody(noteElement); } // Blur時に本文リンク更新
+            } else if (event.type === 'input') {
+                 updatePlaceholderState(element, noteData, isTitle); // 入力中はクラス更新のみ
+            }
+        }
+
+        // --- Color Palette, Zoom, Drag/Drop, Resize functions (変更なし) ---
+        function toggleColorPalette(event){const palette=event.target.closest('.note-header')?.querySelector('.color-palette');if(!palette)return;const isVisible=palette.classList.contains('visible');closeAllColorPalettes(palette);palette.classList.toggle('visible',!isVisible);if(!isVisible){setTimeout(()=>{document.addEventListener('click',closePaletteOnClickOutside,{capture:true,once:true});},0);}}
+        function closeAllColorPalettes(excludePalette=null){board.querySelectorAll('.color-palette.visible').forEach(p=>{if(p!==excludePalette){p.classList.remove('visible');}});document.removeEventListener('click',closePaletteOnClickOutside,{capture:true});}
+        function closePaletteOnClickOutside(event){const clickedElement=event.target;const isClickInsidePaletteOrButton=clickedElement.closest('.color-palette.visible')||clickedElement.closest('.color-palette-btn');if(!isClickInsidePaletteOrButton){closeAllColorPalettes();}else if(clickedElement.closest('.color-palette.visible')&&!clickedElement.classList.contains('color-swatch')){setTimeout(()=>{document.addEventListener('click',closePaletteOnClickOutside,{capture:true,once:true});},0);}}
+        function handleColorChange(event){const swatch=event.currentTarget;const newColor=swatch.dataset.color;const noteElement=swatch.closest('.sticky-note');if(!newColor||!noteElement)return;const noteId=noteElement.dataset.id;const noteData=notes.find(note=>note.id===noteId);if(!noteData||noteData.color===newColor)return;noteData.color=newColor;AVAILABLE_COLORS.forEach(c=>noteElement.classList.remove(`color-${c}`));noteElement.classList.add(`color-${newColor}`);updateTimestamp(noteData,noteElement);const palette=swatch.closest('.color-palette');if(palette){palette.classList.remove('visible');document.removeEventListener('click',closePaletteOnClickOutside,{capture:true});}}
+        function setZoom(newZoomLevel,adjustScroll=true,originX=board.clientWidth/2,originY=board.clientHeight/2){if(isNaN(newZoomLevel))return;const clampedZoom=Math.max(MIN_ZOOM,Math.min(MAX_ZOOM,newZoomLevel));if(clampedZoom===zoomLevel)return;const pointXBeforeZoom=(board.scrollLeft+originX)/zoomLevel;const pointYBeforeZoom=(board.scrollTop+originY)/zoomLevel;zoomLevel=clampedZoom;applyZoomVisuals();if(adjustScroll){const newScrollLeft=pointXBeforeZoom*zoomLevel-originX;const newScrollTop=pointYBeforeZoom*zoomLevel-originY;if(!isNaN(newScrollLeft)&&!isNaN(newScrollTop)){board.scrollLeft=Math.max(0,newScrollLeft);board.scrollTop=Math.max(0,newScrollTop);}}}
+        function applyZoomVisuals(){notesContainer.style.transform=`scale(${zoomLevel})`;zoomLevelInput.value=Math.round(zoomLevel*100);}
+        function zoomIn(){const currentPercent=Math.round(zoomLevel*100);const nextPercent=Math.min(MAX_ZOOM*100,Math.floor(currentPercent/10)*10+10);setZoom(nextPercent/100);}
+        function zoomOut(){const currentPercent=Math.round(zoomLevel*100);const prevPercent=Math.max(MIN_ZOOM*100,Math.ceil(currentPercent/10)*10-10);setZoom(prevPercent/100);}
+        function handleWheelZoom(event){if(!event.ctrlKey&&!event.metaKey)return;event.preventDefault();const rect=board.getBoundingClientRect();const mouseX=event.clientX-rect.left;const mouseY=event.clientY-rect.top;const zoomFactor=event.deltaY<0?ZOOM_WHEEL_FACTOR:1/ZOOM_WHEEL_FACTOR;const newZoomLevel=zoomLevel*zoomFactor;setZoom(newZoomLevel,true,mouseX,mouseY);}
+        function handleZoomInputChange(){const inputPercent=parseFloat(zoomLevelInput.value);const minPercent=MIN_ZOOM*100;const maxPercent=MAX_ZOOM*100;if(!isNaN(inputPercent)&&inputPercent>=minPercent&&inputPercent<=maxPercent){setZoom(inputPercent/100,true);}else{applyZoomVisuals();}}
+        function fitToBounds(){if(notes.length===0){setZoom(1.0,false);board.scrollLeft=0;board.scrollTop=0;return;}let minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity;notes.forEach(n=>{const noteWidth=n.width||DEFAULT_NOTE_WIDTH;const noteHeight=n.height||DEFAULT_NOTE_HEIGHT;minX=Math.min(minX,n.x);minY=Math.min(minY,n.y);maxX=Math.max(maxX,n.x+noteWidth);maxY=Math.max(maxY,n.y+noteHeight);});const contentWidth=maxX-minX;const contentHeight=maxY-minY;if(contentWidth<=0||contentHeight<=0){setZoom(1.0,false);const singleNote=notes[0];const targetX=singleNote.x+(singleNote.width||DEFAULT_NOTE_WIDTH)/2;const targetY=singleNote.y+(singleNote.height||DEFAULT_NOTE_HEIGHT)/2;board.scrollLeft=Math.max(0,targetX*zoomLevel-board.clientWidth/2);board.scrollTop=Math.max(0,targetY*zoomLevel-board.clientHeight/2);return;}const viewWidth=board.clientWidth;const viewHeight=board.clientHeight;const padding=50;const zoomX=viewWidth/(contentWidth+padding*2);const zoomY=viewHeight/(contentHeight+padding*2);let newZoom=Math.min(zoomX,zoomY);newZoom=Math.max(MIN_ZOOM,Math.min(MAX_ZOOM,newZoom));setZoom(newZoom,false);const contentCenterX=minX+contentWidth/2;const contentCenterY=minY+contentHeight/2;board.scrollLeft=Math.max(0,contentCenterX*zoomLevel-viewWidth/2);board.scrollTop=Math.max(0,contentCenterY*zoomLevel-viewHeight/2);}
+        function handleDragMouseDown(event){if(event.target.closest('.resizer, [contenteditable="true"], .note-controls, .color-palette'))return;if(event.button!==0||resizedNote||isPanning)return;draggedNote=event.currentTarget;draggedNote.classList.add('dragging');maxZ++;draggedNote.style.zIndex=maxZ;const noteData=notes.find(n=>n.id===draggedNote.dataset.id);if(noteData)noteData.z=maxZ;const rect=draggedNote.getBoundingClientRect();dragOffsetX=(event.clientX-rect.left)/zoomLevel;dragOffsetY=(event.clientY-rect.top)/zoomLevel;document.addEventListener('mousemove',handleDragMouseMove);document.addEventListener('mouseup',handleDragMouseUp,{once:true});}
+        function handleDragMouseMove(event){if(!draggedNote)return;const rect=board.getBoundingClientRect();const pointerXInBoard=(event.clientX-rect.left)/zoomLevel+board.scrollLeft/zoomLevel;const pointerYInBoard=(event.clientY-rect.top)/zoomLevel+board.scrollTop/zoomLevel;const newX=pointerXInBoard-dragOffsetX;const newY=pointerYInBoard-dragOffsetY;draggedNote.style.left=`${Math.max(0,newX)}px`;draggedNote.style.top=`${Math.max(0,newY)}px`;}
+        function handleDragMouseUp(){if(!draggedNote)return;const noteElement=draggedNote;const noteId=noteElement.dataset.id;const noteData=notes.find(n=>n.id===noteId);try{if(noteData){const finalX=parseInt(noteElement.style.left,10);const finalY=parseInt(noteElement.style.top,10);if((!isNaN(finalX)&&noteData.x!==finalX)||(!isNaN(finalY)&&noteData.y!==finalY)){if(!isNaN(finalX))noteData.x=finalX;if(!isNaN(finalY))noteData.y=finalY;updateTimestamp(noteData,noteElement);}}}catch(error){console.error("Error updating note position:",error);}finally{noteElement.classList.remove('dragging');draggedNote=null;document.removeEventListener('mousemove',handleDragMouseMove);}}
+        function handleResizeMouseDown(event){if(event.button!==0||draggedNote||isPanning)return;event.stopPropagation();resizedNote=event.target.closest('.sticky-note');if(!resizedNote)return;resizedNote.classList.add('resizing');maxZ++;resizedNote.style.zIndex=maxZ;const noteData=notes.find(n=>n.id===resizedNote.dataset.id);if(noteData)noteData.z=maxZ;resizeStartX=event.clientX;resizeStartY=event.clientY;resizeStartWidth=resizedNote.offsetWidth;resizeStartHeight=resizedNote.offsetHeight;document.addEventListener('mousemove',handleResizeMouseMove);document.addEventListener('mouseup',handleResizeMouseUp,{once:true});}
+        function handleResizeMouseMove(event){if(!resizedNote)return;const dx=(event.clientX-resizeStartX)/zoomLevel;const dy=(event.clientY-resizeStartY)/zoomLevel;const newWidth=Math.max(MIN_NOTE_WIDTH,resizeStartWidth+dx);const newHeight=Math.max(MIN_NOTE_HEIGHT,resizeStartHeight+dy);resizedNote.style.width=`${newWidth}px`;resizedNote.style.height=`${newHeight}px`;}
+        function handleResizeMouseUp(){if(!resizedNote)return;const noteElement=resizedNote;const noteId=noteElement.dataset.id;const noteData=notes.find(n=>n.id===noteId);try{if(noteData){const finalWidth=parseInt(noteElement.style.width,10);const finalHeight=parseInt(noteElement.style.height,10);let sizeChanged=false;if(!isNaN(finalWidth)&&noteData.width!==finalWidth){noteData.width=finalWidth;sizeChanged=true;}if(!isNaN(finalHeight)&&noteData.height!==finalHeight){noteData.height=finalHeight;sizeChanged=true;}if(sizeChanged){updateTimestamp(noteData,noteElement);}}}catch(error){console.error("Error updating note size:",error);}finally{noteElement.classList.remove('resizing');resizedNote=null;document.removeEventListener('mousemove',handleResizeMouseMove);}}
+
+        // --- JSON Save/Load Functions ---
+        function saveToJson() {
+            if (notes.length === 0) { alert('保存する付箋がありません。'); return; }
+            document.querySelectorAll('.sticky-note').forEach(noteElement => {
+                const noteId = noteElement.dataset.id; const noteData = notes.find(n => n.id === noteId);
+                if (noteData) {
+                    const titleEl = noteElement.querySelector('.note-title'); const bodyEl = noteElement.querySelector('.note-body');
+                    if (titleEl) { noteData.title = (titleEl.innerText || '').trim(); }
+                    if (bodyEl) { noteData.body = normalizeNewlines(bodyEl.innerText || ''); } // \n normalize
+                    if (!AVAILABLE_COLORS.includes(noteData.color)) noteData.color = DEFAULT_NOTE_COLOR;
+                    if (titleEl) updatePlaceholderState(titleEl, noteData, true); if (bodyEl) updatePlaceholderState(bodyEl, noteData, false);
+                }
+            });
+            const now=new Date(); const ts=now.getFullYear()+ (now.getMonth()+1).toString().padStart(2,'0')+ now.getDate().toString().padStart(2,'0')+ now.getHours().toString().padStart(2,'0')+ now.getMinutes().toString().padStart(2,'0')+ now.getSeconds().toString().padStart(2,'0');
+            const filename=`FSN${ts}.json`; const jsonString=JSON.stringify(notes,null,2);
+            const blob=new Blob([jsonString],{type:'application/json'}); const url=URL.createObjectURL(blob);
+            const a=document.createElement('a'); a.href=url; a.download=filename;
+            document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+        }
+        function triggerLoadJson() { fileInput.click(); }
+        function handleFileLoad(event) {
+            const file = event.target.files[0]; if (!file) return; const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const content = e.target.result; const loadedData = JSON.parse(content);
+                    if (!Array.isArray(loadedData)) throw new Error('Invalid JSON format.');
+                    notes = loadedData.map(item => {
+                        if (!item || typeof item !== 'object') return null;
+                        const id = typeof item.id === 'string' ? item.id : `loaded-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+                        const loadedNote = createNoteObject( id, item.title, item.body, item.x, item.y, item.z, item.width, item.height, item.color ); // \n normalize
+                        if(typeof item.createdAt==='string'&&!isNaN(new Date(item.createdAt).getTime()))loadedNote.createdAt=item.createdAt;
+                        if(typeof item.updatedAt==='string'&&!isNaN(new Date(item.updatedAt).getTime())&&new Date(item.updatedAt)>=new Date(loadedNote.createdAt))loadedNote.updatedAt=item.updatedAt;else loadedNote.updatedAt=loadedNote.createdAt;
+                        return loadedNote;
+                    }).filter(note => note !== null);
+                    renderAllNotes(); fitToBounds(); alert(`${file.name} loaded (${notes.length} notes).`);
+                } catch (error) { console.error('JSON load/parse error:', error); alert(`Failed to load or parse JSON file.\nError: ${error.message}`); }
+                finally { event.target.value = null; }
+            };
+            reader.onerror = (e) => { console.error('File reading error:', e); alert('Error reading file.'); event.target.value = null; };
+            reader.readAsText(file);
+        }
+
+        // --- Board Panning Functions ---
+        function handleBoardMouseDown(event){if(event.target!==board&&event.target!==notesContainer)return;if(event.button!==0||draggedNote||resizedNote)return;isPanning=true;board.classList.add('is-panning');panStartX=event.clientX;panStartY=event.clientY;boardScrollStartX=board.scrollLeft;boardScrollStartY=board.scrollTop;document.addEventListener('mousemove',handleBoardMouseMove);document.addEventListener('mouseup',handleBoardMouseUp);document.addEventListener('mouseleave',handleBoardMouseUp);}
+        function handleBoardMouseMove(event){if(!isPanning)return;const dx=event.clientX-panStartX;const dy=event.clientY-panStartY;board.scrollLeft=boardScrollStartX-dx;board.scrollTop=boardScrollStartY-dy;}
+        function handleBoardMouseUp(){if(!isPanning)return;isPanning=false;board.classList.remove('is-panning');document.removeEventListener('mousemove',handleBoardMouseMove);document.removeEventListener('mouseup',handleBoardMouseUp);document.removeEventListener('mouseleave',handleBoardMouseUp);}
+
+        // --- Align Notes Function ---
+        function alignNotes() {
+            if (notes.length === 0) return;
+            try {
+                const now = new Date().toISOString(); let currentX = ALIGN_MARGIN_X; let globalZ = 0;
+                notes.forEach(note => { // Get current state (\n normalized) before align
+                    const noteElement = notesContainer.querySelector(`.sticky-note[data-id="${note.id}"]`);
+                    if (noteElement) {
+                        note.width = noteElement.offsetWidth; note.height = noteElement.offsetHeight;
+                        const titleEl = noteElement.querySelector('.note-title'); const bodyEl = noteElement.querySelector('.note-body');
+                        if (titleEl) note.title = (titleEl.innerText || '').trim();
+                        if (bodyEl) note.body = normalizeNewlines(bodyEl.innerText || ''); // \n normalize
+                    }
+                });
+                AVAILABLE_COLORS.forEach(color => {
+                    const notesInColor = notes.filter(note => note.color === color); if (notesInColor.length === 0) return;
+                    notesInColor.sort((a, b) => { const timeA = new Date(a.createdAt).getTime(); const timeB = new Date(b.createdAt).getTime(); if (isNaN(timeA)) return 1; if (isNaN(timeB)) return -1; return timeA - timeB; });
+                    let currentY = ALIGN_MARGIN_Y; let maxWidthInColumn = 0;
+                    notesInColor.forEach(note => {
+                        if (!note || typeof note.width !== 'number' || typeof note.height !== 'number') return;
+                        globalZ++; note.x = currentX; note.y = currentY; note.z = globalZ; note.updatedAt = now;
+                        currentY += note.height + ALIGN_MARGIN_Y; maxWidthInColumn = Math.max(maxWidthInColumn, note.width);
+                    });
+                    currentX += maxWidthInColumn + ALIGN_MARGIN_X;
+                });
+                maxZ = globalZ; renderAllNotes(); // Rerender with new positions (\n-><br>, linkify)
+                // fitToBounds();
+            } catch (error) { console.error("Error during note alignment:", error); alert("Error aligning notes."); }
+        }
+
+        // --- Initialization ---
+        function initializeApp(){addNoteBtn.addEventListener('click',addNote);saveJsonBtn.addEventListener('click',saveToJson);loadJsonBtn.addEventListener('click',triggerLoadJson);fileInput.addEventListener('change',handleFileLoad);alignNotesBtn.addEventListener('click',alignNotes);board.addEventListener('click',(event)=>{if(event.target===board||event.target===notesContainer){closeAllColorPalettes();}});board.addEventListener('mousedown',handleBoardMouseDown);board.addEventListener('wheel',handleWheelZoom,{passive:false});zoomInBtn.addEventListener('click',zoomIn);zoomOutBtn.addEventListener('click',zoomOut);fitToBoundsBtn.addEventListener('click',fitToBounds);zoomLevelInput.addEventListener('change',handleZoomInputChange);zoomLevelInput.addEventListener('blur',()=>{const currentPercent=parseFloat(zoomLevelInput.value);const minPercent=MIN_ZOOM*100;const maxPercent=MAX_ZOOM*100;if(isNaN(currentPercent)||currentPercent<minPercent||currentPercent>maxPercent){applyZoomVisuals();}});zoomLevelInput.addEventListener('keydown',(event)=>{if(event.key==='Enter'){handleZoomInputChange();zoomLevelInput.blur();}else if(event.key==='Escape'){applyZoomVisuals();zoomLevelInput.blur();}});applyZoomVisuals();}
+
+        initializeApp();
+    </script>
+
+</body>
+</html>
