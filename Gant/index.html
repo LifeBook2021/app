@@ -413,35 +413,42 @@
 
         /**
          * タイムラインの表示期間 (chartStartDate, chartEndDate) を計算します。
+         * タスク全体の期間に基づいて、前後にパディングを加え、ビューに合わせて調整します。
          */
         const calculateDateRange = () => {
+            // タスクデータがない場合のデフォルト表示範囲
             if (tasks.length === 0) {
                 const todayUTC = new Date(); todayUTC.setUTCHours(0,0,0,0);
-                chartStartDate = addDays(todayUTC, -7);
+                chartStartDate = addDays(todayUTC, -7); // 今日から1週間前
                 const twoMonthsLater = new Date(Date.UTC(todayUTC.getUTCFullYear(), todayUTC.getUTCMonth() + 2, 1));
-                chartEndDate = addDays(twoMonthsLater, -1);
+                chartEndDate = addDays(twoMonthsLater, -1); // 約2ヶ月後
             } else {
+                // タスクデータから最小開始日と最大終了日を検索
                 let minTaskDate = null, maxTaskDate = null;
                 tasks.forEach(task => {
                     const start = parseDate(task.start); const end = parseDate(task.end);
                     if (start && (!minTaskDate || start < minTaskDate)) minTaskDate = start;
                     if (end && (!maxTaskDate || end > maxTaskDate)) maxTaskDate = end;
                 });
+                // 有効な日付が見つからない場合のフォールバック
                 if (!minTaskDate || !maxTaskDate) {
                     const todayUTC = new Date(); todayUTC.setUTCHours(0,0,0,0);
                     minTaskDate = minTaskDate || addDays(todayUTC, -7);
-                    maxTaskDate = maxTaskDate || addDays(getStartOfMonth(addDays(todayUTC, 60)), -1);
+                    maxTaskDate = maxTaskDate || addDays(getStartOfMonth(addDays(todayUTC, 60)), -1); // 約2ヶ月後
                 }
+                // 最も早いタスクの1週間前から表示開始
                 chartStartDate = addDays(minTaskDate, -7);
+                // 最も遅いタスクの2週間後まで表示
                 chartEndDate = addDays(maxTaskDate, 14);
             }
+            // ビューに合わせて期間を調整 (週/月の開始・終了に合わせる)
             if (currentView === 'daily' || currentView === 'weekly') {
-                chartStartDate = getStartOfWeek(chartStartDate, 1);
-                chartEndDate = addDays(getStartOfWeek(addDays(chartEndDate, 7), 1), 6);
+                chartStartDate = getStartOfWeek(chartStartDate, 1); // 週の月曜日に調整
+                chartEndDate = addDays(getStartOfWeek(addDays(chartEndDate, 7), 1), 6); // 週の日曜日に調整
             } else if (currentView === 'monthly') {
-                chartStartDate = getStartOfMonth(chartStartDate);
+                chartStartDate = getStartOfMonth(chartStartDate); // 月の1日に調整
                 const nextMonthStart = new Date(Date.UTC(chartEndDate.getUTCFullYear(), chartEndDate.getUTCMonth() + 1, 1));
-                chartEndDate = addDays(nextMonthStart, -1);
+                chartEndDate = addDays(nextMonthStart, -1); // 月の末日に調整
             }
         };
 
@@ -451,27 +458,31 @@
         const renderTaskList = () => {
             const taskListBody = document.getElementById('task-list-body');
             if (!taskListBody) return;
-            taskListBody.innerHTML = '';
-            const fragment = document.createDocumentFragment();
+            taskListBody.innerHTML = ''; // 既存の内容をクリア
+            const fragment = document.createDocumentFragment(); // 高速化のためフラグメントを使用
             tasks.forEach(task => {
                 const row = document.createElement('div');
                 row.className = 'task-row'; row.dataset.taskId = task.id;
                 const progressDisplay = formatCellContent('progress', task.progress);
+                // 各セルを作成
                 row.innerHTML = `
                     <div data-field="name" title="編集">${task.name || ''}</div>
                     <div data-field="assignee" title="編集">${task.assignee || ''}</div>
                     <div data-field="start" title="編集">${formatCellContent('start', task.start)}</div>
                     <div data-field="end" title="編集">${formatCellContent('end', task.end)}</div>
                     <div data-field="progress" title="編集">${progressDisplay}</div>`;
+                // 削除ボタンセルを作成
                 const deleteCell = document.createElement('div'); deleteCell.className = 'delete-button-cell';
                 const deleteButton = document.createElement('button'); deleteButton.className = 'delete-task-button'; deleteButton.dataset.taskId = task.id; deleteButton.title = `タスク「${task.name}」を削除`;
-                deleteButton.innerHTML = '<i class="bi bi-trash"></i>';
-                deleteButton.addEventListener('click', handleDeleteTaskClick); deleteCell.appendChild(deleteButton); row.appendChild(deleteCell);
+                deleteButton.innerHTML = '<i class="bi bi-trash"></i>'; // アイコン設定
+                deleteButton.addEventListener('click', handleDeleteTaskClick); // イベントリスナー登録
+                deleteCell.appendChild(deleteButton); row.appendChild(deleteCell);
                 fragment.appendChild(row);
+                // 編集可能なセルにクリックイベントリスナーを登録
                 row.querySelectorAll('div[data-field]').forEach(cell => cell.addEventListener('click', handleCellClick));
             });
             taskListBody.appendChild(fragment);
-            syncScroll();
+            syncScroll(); // スクロール同期イベントを再設定
         };
 
         /**
@@ -481,97 +492,132 @@
         const renderTimelineHeader = () => {
             const timelineHeader = document.getElementById('timeline-header');
             if (!timelineHeader || !chartStartDate || !chartEndDate) return 0;
-            timelineHeader.innerHTML = '';
-            const topRow = document.createElement('div'); topRow.className = 'timeline-header-row';
-            const bottomRow = document.createElement('div'); bottomRow.className = 'timeline-header-row';
+            timelineHeader.innerHTML = ''; // クリア
+            const topRow = document.createElement('div'); topRow.className = 'timeline-header-row'; // 年月行
+            const bottomRow = document.createElement('div'); bottomRow.className = 'timeline-header-row'; // 日付/週行
             let totalWidth = 0; let currentDate = new Date(chartStartDate); let currentTopUnit = null; let topUnits = [];
             const todayStr = getTodayString();
+            // --- 日表示 ---
             if (currentView === 'daily') {
                 dayWidth = 35; document.documentElement.style.setProperty('--dayWidth', `${dayWidth}px`);
-                const weekdayFmt = new Intl.DateTimeFormat('ja-JP', { weekday: 'short' }); let currentMonthWidth = 0;
+                const weekdayFmt = new Intl.DateTimeFormat('ja-JP', { weekday: 'short' }); let currentMonthWidth = 0; // 現在の月の合計幅
                 while (currentDate <= chartEndDate) {
                     const year = currentDate.getUTCFullYear(); const month = currentDate.getUTCMonth(); const day = currentDate.getUTCDate(); const weekday = currentDate.getUTCDay(); const monthYearKey = `${year}-${month}`;
+                    // トップ行（年月）ユニットの処理
                     if (!currentTopUnit || currentTopUnit.key !== monthYearKey) { if (currentTopUnit) { currentTopUnit.width = currentMonthWidth; topUnits.push(currentTopUnit); } currentTopUnit = { key: monthYearKey, width: 0, element: document.createElement('div') }; currentTopUnit.element.className = 'header-unit header-unit-top'; currentTopUnit.element.textContent = `${year}年 ${month + 1}月`; currentMonthWidth = 0; }
+                    // ボトム行（日付）ユニットの作成
                     const bottomUnit = document.createElement('div'); bottomUnit.className = 'header-unit header-unit-bottom'; bottomUnit.style.width = `${dayWidth}px`; const holidayName = isHoliday(currentDate); const dateStr = formatDate(currentDate, '-'); bottomUnit.innerHTML = `${day}<br>${weekdayFmt.format(currentDate)}`;
+                    // 背景色・スタイル設定
                     if (holidayName) { bottomUnit.title = holidayName; bottomUnit.classList.add('holiday-header'); } else if (weekday === 6) { bottomUnit.classList.add('saturday-header'); } else if (weekday === 0) { bottomUnit.classList.add('sunday-header'); } if (dateStr === todayStr) { bottomUnit.classList.add('today-header'); }
-                    bottomRow.appendChild(bottomUnit); totalWidth += dayWidth; currentMonthWidth += dayWidth; currentDate = addDays(currentDate, 1);
-                } if (currentTopUnit) { currentTopUnit.width = currentMonthWidth; topUnits.push(currentTopUnit); }
-            } else {
-                dayWidth = (currentView === 'weekly') ? 12 : 5; document.documentElement.style.setProperty('--dayWidth', `${dayWidth}px`); let currentYearWidth = 0;
+                    bottomRow.appendChild(bottomUnit); totalWidth += dayWidth; currentMonthWidth += dayWidth; currentDate = addDays(currentDate, 1); // 次の日へ
+                } if (currentTopUnit) { currentTopUnit.width = currentMonthWidth; topUnits.push(currentTopUnit); } // 最後のトップ行ユニット
+            }
+            // --- 週・月表示 ---
+            else {
+                dayWidth = (currentView === 'weekly') ? 12 : 5; document.documentElement.style.setProperty('--dayWidth', `${dayWidth}px`); let currentYearWidth = 0; // 現在の年の合計幅
                 while (currentDate <= chartEndDate) {
                     const year = currentDate.getUTCFullYear(); let unitStart, unitEnd, unitDays, unitWidthPx, topLabel, bottomLabel, nextDate;
+                    // 週表示 / 月表示 でユニット情報を計算
                     if (currentView === 'weekly') { unitStart = getStartOfWeek(currentDate, 1); unitEnd = addDays(unitStart, 6); const effectiveEnd = unitEnd > chartEndDate ? chartEndDate : unitEnd; unitDays = getDaysDiff(unitStart, effectiveEnd) + 1; unitWidthPx = unitDays * dayWidth; topLabel = `${year}年`; bottomLabel = `${unitStart.getUTCMonth() + 1}月 第${getWeekOfMonth(unitStart)}週`; nextDate = addDays(unitStart, 7); }
                     else { unitStart = getStartOfMonth(currentDate); const nextMonthStart = new Date(Date.UTC(year, unitStart.getUTCMonth() + 1, 1)); unitEnd = addDays(nextMonthStart, -1); const effectiveEnd = unitEnd > chartEndDate ? chartEndDate : unitEnd; unitDays = getDaysDiff(unitStart, effectiveEnd) + 1; unitWidthPx = unitDays * dayWidth; topLabel = `${year}年`; bottomLabel = `${unitStart.getUTCMonth() + 1}月`; nextDate = nextMonthStart; }
+                    // トップ行（年）ユニットの処理
                     if (!currentTopUnit || currentTopUnit.key !== topLabel) { if (currentTopUnit) { currentTopUnit.width = currentYearWidth; topUnits.push(currentTopUnit); } currentTopUnit = { key: topLabel, width: 0, element: document.createElement('div') }; currentTopUnit.element.className = 'header-unit header-unit-top'; currentTopUnit.element.textContent = topLabel; currentYearWidth = 0; }
-                    const bottomUnit = document.createElement('div'); bottomUnit.className = 'header-unit header-unit-bottom'; bottomUnit.style.width = `${unitWidthPx}px`; bottomUnit.textContent = bottomLabel; bottomRow.appendChild(bottomUnit); totalWidth += unitWidthPx; currentYearWidth += unitWidthPx; currentDate = nextDate;
-                } if (currentTopUnit) { currentTopUnit.width = currentYearWidth; topUnits.push(currentTopUnit); }
+                    // ボトム行（週/月）ユニットの作成
+                    const bottomUnit = document.createElement('div'); bottomUnit.className = 'header-unit header-unit-bottom'; bottomUnit.style.width = `${unitWidthPx}px`; bottomUnit.textContent = bottomLabel; bottomRow.appendChild(bottomUnit);
+                    totalWidth += unitWidthPx; currentYearWidth += unitWidthPx; currentDate = nextDate; // 次のユニットへ
+                } if (currentTopUnit) { currentTopUnit.width = currentYearWidth; topUnits.push(currentTopUnit); } // 最後のトップ行ユニット
             }
+            // 計算されたトップ行ユニットをヘッダーに追加
             topUnits.forEach(unit => { unit.element.style.width = `${unit.width}px`; topRow.appendChild(unit.element); });
+            // ヘッダーDOMを組み立て
             timelineHeader.appendChild(topRow); timelineHeader.appendChild(bottomRow); timelineHeader.style.width = `${totalWidth}px`;
+            // タイムライン本体の幅も同期
             const timelineBody = document.getElementById('timeline-body'); if (timelineBody) timelineBody.style.width = `${totalWidth}px`;
             return totalWidth;
         };
 
         /**
          * タイムライン本体（グリッド、今日のマーカー、ガントバー）のDOMを描画します。
-         * @param {number} totalWidth - タイムライン全体の幅 (px)。
+         * @param {number} totalWidth - タイムライン全体の幅 (px)。renderTimelineHeaderから受け取る。
          */
         const renderTimelineBody = (totalWidth) => {
             const timelineBody = document.getElementById('timeline-body');
             if (!timelineBody || !chartStartDate || !chartEndDate) return;
-            timelineBody.innerHTML = '';
-            const totalDays = getDaysDiff(chartStartDate, chartEndDate) + 1; if (totalDays <= 0) return;
+            timelineBody.innerHTML = ''; // クリア
+            const totalDays = getDaysDiff(chartStartDate, chartEndDate) + 1; if (totalDays <= 0) return; // 表示期間がない場合
             const rowHeight = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--row-height'));
-            const totalHeightPx = tasks.length * rowHeight; timelineBody.style.height = `${totalHeightPx}px`;
+            const totalHeightPx = tasks.length * rowHeight; timelineBody.style.height = `${totalHeightPx}px`; // 全体の高さを設定
+            // --- グリッドと背景を描画 ---
             renderGridLines(totalWidth);
+            // --- 横グリッド線を描画 ---
             const hLinesFragment = document.createDocumentFragment();
             for (let i = 0; i < tasks.length; i++) { const line = document.createElement('div'); line.className = 'timeline-horizontal-grid-line'; line.style.top = `${(i + 1) * rowHeight - 1}px`; hLinesFragment.appendChild(line); }
             timelineBody.appendChild(hLinesFragment);
+            // --- 今日のマーカーを描画 (日表示のみ) ---
             if (currentView === 'daily') { const todayStr = getTodayString(); let current = new Date(chartStartDate); for (let i = 0; i < totalDays; i++) { if (formatDate(current, '-') === todayStr) { const marker = document.createElement('div'); marker.className = 'today-marker'; marker.style.left = `${i * dayWidth}px`; marker.style.height = `${totalHeightPx}px`; timelineBody.appendChild(marker); break; } current = addDays(current, 1); } }
+            // --- タスクバーを描画 ---
             const barsFragment = document.createDocumentFragment();
             tasks.forEach((task, index) => {
+                // 各タスクに対応する行コンテナを作成
                 const rowContainer = document.createElement('div'); rowContainer.className = 'timeline-row'; rowContainer.dataset.taskId = task.id; rowContainer.style.position = 'absolute'; rowContainer.style.top = `${index * rowHeight}px`; rowContainer.style.height = `${rowHeight}px`; rowContainer.style.width = '100%';
                 const start = parseDate(task.start); const end = parseDate(task.end);
+                // タスク期間が有効で、表示範囲内にあるかチェック
                 if (start && end && end >= start && end >= chartStartDate && start <= chartEndDate) {
+                    // バーの開始位置と幅を計算
                     const startOffset = Math.max(0, getDaysDiff(chartStartDate, start)); const endOffset = Math.min(totalDays, getDaysDiff(chartStartDate, end) + 1); const duration = Math.max(1, endOffset - startOffset); const barLeft = startOffset * dayWidth; const barWidth = duration * dayWidth;
                     if (barWidth > 0) {
+                        // バー要素を作成
                         const bar = document.createElement('div'); bar.className = 'gantt-bar'; bar.style.left = `${barLeft}px`; bar.style.width = `${barWidth}px`; bar.dataset.taskId = task.id; bar.title = `${task.name} (${task.assignee||''})\n期間: ${formatDate(start)} - ${formatDate(end)}\n進捗: ${task.progress}%`;
+                        // 進捗バーを作成
                         const progress = document.createElement('div'); progress.className = 'gantt-bar-progress'; progress.style.width = `${task.progress}%`; bar.appendChild(progress);
+                        // ラベルを作成 (幅に応じて表示内容調整)
                         const label = document.createElement('div'); label.className = 'gantt-bar-label'; label.textContent = `${task.name} ${task.assignee ? '('+task.assignee+')' : ''}`; if (barWidth < 100) label.textContent = task.name; if (barWidth < 30) label.textContent = ''; bar.appendChild(label);
+                        // ドラッグ用ハンドルを追加 (日表示のみ)
                         if (currentView === 'daily') {
                             const hLeft = document.createElement('div'); hLeft.className = 'resize-handle resize-handle-left'; hLeft.dataset.taskId = task.id; hLeft.addEventListener('mousedown', handleMouseDown); bar.appendChild(hLeft);
                             const hRight = document.createElement('div'); hRight.className = 'resize-handle resize-handle-right'; hRight.dataset.taskId = task.id; hRight.addEventListener('mousedown', handleMouseDown); bar.appendChild(hRight);
                             if (barWidth >= MIN_BAR_WIDTH_FOR_PROGRESS_HANDLE) { const pHandle = document.createElement('div'); pHandle.className = 'progress-handle'; pHandle.dataset.taskId = task.id; pHandle.title = '進捗率を変更 (ドラッグ)'; pHandle.style.left = calculateProgressHandleLeft(task.progress, barWidth) + 'px'; pHandle.addEventListener('mousedown', handleMouseDown); bar.appendChild(pHandle); }
                         }
-                        bar.addEventListener('mousedown', handleMouseDown); rowContainer.appendChild(bar);
+                        // バー自体にもドラッグ開始イベントを設定 (移動用)
+                        bar.addEventListener('mousedown', handleMouseDown);
+                        rowContainer.appendChild(bar); // 行コンテナにバーを追加
                     }
-                } barsFragment.appendChild(rowContainer);
+                } barsFragment.appendChild(rowContainer); // フラグメントに行コンテナを追加
             });
-            timelineBody.appendChild(barsFragment);
-            syncScroll();
+            timelineBody.appendChild(barsFragment); // タイムライン本体にバー群を追加
+            syncScroll(); // スクロール同期イベント再設定
         };
 
         /**
-         * タイムラインの縦グリッド線と背景色を描画します。
+         * タイムラインの縦グリッド線と背景色（土日祝、今日）を描画します。
          * @param {number} totalWidth - タイムライン全体の幅 (px)。
          */
         const renderGridLines = (totalWidth) => {
             const timelineBody = document.getElementById('timeline-body'); if (!timelineBody || !chartStartDate || !chartEndDate) return;
+            // 既存のグリッド関連要素をクリア
             timelineBody.querySelectorAll('.day-column-bg, .vertical-grid-line, .today-marker, .timeline-horizontal-grid-line').forEach(el => el.remove());
-            const rowHeight = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--row-height')); const totalHeightPx = tasks.length * rowHeight; if (totalHeightPx <= 0) return;
-            const totalDays = getDaysDiff(chartStartDate, chartEndDate) + 1; const fragment = document.createDocumentFragment(); const todayStr = getTodayString(); let current = new Date(chartStartDate);
+            const rowHeight = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--row-height')); const totalHeightPx = tasks.length * rowHeight; if (totalHeightPx <= 0) return; // タスクがない場合は描画しない
+            const totalDays = getDaysDiff(chartStartDate, chartEndDate) + 1; const fragment = document.createDocumentFragment(); // 高速化
+            const todayStr = getTodayString(); let current = new Date(chartStartDate);
+            // --- 日表示のグリッド ---
             if (currentView === 'daily') {
                 for (let i = 0; i < totalDays; i++) {
                     const weekday = current.getUTCDay(); const holidayName = isHoliday(current); const dateStr = formatDate(current, '-');
+                    // 縦グリッド線 (初日以外)
                     if (i > 0) { const vLine = document.createElement('div'); vLine.className = 'vertical-grid-line'; vLine.style.left = `${i * dayWidth}px`; vLine.style.height = `${totalHeightPx}px`; fragment.appendChild(vLine); }
+                    // 背景色
                     let bgClass = ''; if (dateStr === todayStr) { bgClass = 'today-bg'; } else if (holidayName) { bgClass = 'holiday-bg'; } else if (weekday === 0) { bgClass = 'sunday-bg'; } else if (weekday === 6) { bgClass = 'saturday-bg'; }
                     if (bgClass) { const bgCol = document.createElement('div'); bgCol.className = `day-column-bg ${bgClass}`; bgCol.style.left = `${i * dayWidth}px`; bgCol.style.width = `${dayWidth}px`; bgCol.style.height = `${totalHeightPx}px`; fragment.appendChild(bgCol); }
                     current = addDays(current, 1);
                 }
-            } else {
+            }
+            // --- 週・月表示のグリッド ---
+            else {
+                // ヘッダーの区切りに合わせて縦線を描画
                 let currentLeft = 0; const timelineHeader = document.getElementById('timeline-header');
                 if (timelineHeader) { const bottomUnits = timelineHeader.querySelectorAll('.timeline-header-row:last-child .header-unit'); bottomUnits.forEach((unit, index) => { const unitWidth = parseFloat(unit.style.width); if (index > 0) { const vLine = document.createElement('div'); vLine.className = 'vertical-grid-line'; vLine.style.left = `${currentLeft}px`; vLine.style.height = `${totalHeightPx}px`; fragment.appendChild(vLine); } currentLeft += unitWidth; }); }
-            } timelineBody.insertBefore(fragment, timelineBody.firstChild);
+            } // グリッド要素を timelineBody の最初の子要素として挿入
+            timelineBody.insertBefore(fragment, timelineBody.firstChild);
         };
 
         /**
@@ -579,12 +625,22 @@
          * @param {boolean} [recalculateRange=true] - タイムラインの表示範囲を再計算するかどうか。
          */
         const renderGanttChart = (recalculateRange = true) => {
+            // 編集中なら先に保存を試みる
             if (activeEditingElement) { saveCellEdit(activeEditingElement); if (activeEditingElement) return; }
             const loadingStatus = document.getElementById('loading-status'); if(loadingStatus) loadingStatus.textContent = '描画中...';
+            // ブラウザの描画タイミングに合わせる
             requestAnimationFrame(() => {
-                try { if (recalculateRange) { calculateDateRange(); } renderTaskList(); const totalTimelineWidth = renderTimelineHeader(); renderTimelineBody(totalTimelineWidth); }
-                catch (error) { console.error("ガントチャート描画エラー:", error); if(loadingStatus) loadingStatus.textContent = '描画エラー'; }
-                finally { if (loadingStatus && loadingStatus.textContent === '描画中...') { loadingStatus.textContent = ''; } }
+                try {
+                    // 必要なら表示範囲を計算
+                    if (recalculateRange) { calculateDateRange(); }
+                    // 各パーツを描画
+                    renderTaskList(); const totalTimelineWidth = renderTimelineHeader(); renderTimelineBody(totalTimelineWidth);
+                } catch (error) {
+                    console.error("ガントチャート描画エラー:", error); if(loadingStatus) loadingStatus.textContent = '描画エラー';
+                } finally {
+                    // 描画完了後、ステータス表示をクリア
+                    if (loadingStatus && loadingStatus.textContent === '描画中...') { loadingStatus.textContent = ''; }
+                }
             });
         };
 
@@ -594,10 +650,15 @@
          * @param {MouseEvent} event - クリックイベント。
          */
         const handleDeleteTaskClick = (event) => {
-            event.stopPropagation(); const button = event.target.closest('button'); if (!button) return; const taskId = parseInt(button.dataset.taskId); const task = tasks.find(t => t.id === taskId); if (!task) return;
+            event.stopPropagation(); // 親要素へのイベント伝播を停止
+            const button = event.target.closest('button'); if (!button) return; const taskId = parseInt(button.dataset.taskId); const task = tasks.find(t => t.id === taskId); if (!task) return;
             if (confirm(`タスク「${task.name}」を削除してもよろしいですか？`)) {
+                // 削除対象タスクが編集中だった場合はキャンセル
                 if (activeEditingElement && activeEditingElement.taskId === taskId) { revertCellEdit(activeEditingElement); activeEditingElement = null; }
-                tasks = tasks.filter(t => t.id !== taskId); hasUnsavedChanges = true; updateSaveButtonState(); renderGanttChart(true);
+                // タスク配列から削除
+                tasks = tasks.filter(t => t.id !== taskId); hasUnsavedChanges = true; updateSaveButtonState();
+                renderGanttChart(true); // 範囲再計算して再描画
+                // ステータス表示
                 const loadingStatus = document.getElementById('loading-status'); if(loadingStatus) { loadingStatus.textContent = 'タスク削除完了'; setTimeout(() => { if(loadingStatus.textContent === 'タスク削除完了') loadingStatus.textContent = ''; }, 2000); }
             }
         };
@@ -608,19 +669,24 @@
          * @param {MouseEvent} event - クリックイベント。
          */
         const handleCellClick = (event) => {
-            const cell = event.target.closest('div[data-field]'); if (!cell || cell.querySelector('input') || isDragging || isScrolling) return;
+            const cell = event.target.closest('div[data-field]'); if (!cell || cell.querySelector('input') || isDragging || isScrolling) return; // クリック対象がセルでない、または編集中/ドラッグ中/スクロール中は無視
             const field = cell.dataset.field; const taskId = parseInt(cell.closest('.task-row').dataset.taskId);
-            if (activeEditingElement && activeEditingElement.cell !== cell) { saveCellEdit(activeEditingElement); if (activeEditingElement) return; } if (activeEditingElement && activeEditingElement.cell === cell) return;
+            // 他のセルを編集中なら、先にそれを保存/キャンセル
+            if (activeEditingElement && activeEditingElement.cell !== cell) { saveCellEdit(activeEditingElement); if (activeEditingElement) return; } if (activeEditingElement && activeEditingElement.cell === cell) return; // 同じセルを再度クリックしても何もしない
             const task = tasks.find(t => t.id === taskId); if (!task) return;
+            // --- 編集用input要素を作成 ---
             const originalDisplay = cell.innerHTML; let currentValue = task[field]; if (field === 'start' || field === 'end') { currentValue = formatDate(parseDate(currentValue), '-'); } cell.innerHTML = ''; let input;
             if (field === 'start' || field === 'end') { input = document.createElement('input'); input.type = 'date'; input.value = currentValue || ''; } else if (field === 'progress') { input = document.createElement('input'); input.type = 'number'; input.min = 0; input.max = 100; input.value = currentValue !== undefined ? currentValue : 0; } else { input = document.createElement('input'); input.type = 'text'; input.value = currentValue || ''; }
-            input.dataset.originalValue = task[field] !== undefined ? task[field] : ''; input.dataset.originalDisplay = originalDisplay; cell.appendChild(input); input.focus(); input.select(); activeEditingElement = { cell, input, taskId, field }; input.addEventListener('blur', handleInputBlur); input.addEventListener('keydown', handleInputKeyDown);
+            input.dataset.originalValue = task[field] !== undefined ? task[field] : ''; input.dataset.originalDisplay = originalDisplay; cell.appendChild(input); input.focus(); input.select();
+            activeEditingElement = { cell, input, taskId, field }; // グローバル変数に編集中の情報を保持
+            // イベントリスナーを設定
+            input.addEventListener('blur', handleInputBlur); input.addEventListener('keydown', handleInputKeyDown);
         };
         /**
          * 編集中のinput要素からフォーカスが外れた時の処理。
          * @param {FocusEvent} event - フォーカスイベント。
          */
-        const handleInputBlur = (event) => { setTimeout(() => { if (activeEditingElement && document.activeElement !== activeEditingElement.input) { saveCellEdit(activeEditingElement); } }, 150); };
+        const handleInputBlur = (event) => { setTimeout(() => { if (activeEditingElement && document.activeElement !== activeEditingElement.input) { saveCellEdit(activeEditingElement); } }, 150); }; // 少し遅延させて判定
         /**
          * 編集中のinput要素でのキー入力処理 (Enter:保存, Escape:キャンセル)。
          * @param {KeyboardEvent} event - キーボードイベント。
@@ -632,15 +698,22 @@
          */
         const saveCellEdit = (editingInfo) => {
             if (!editingInfo) return; const { cell, input, taskId, field } = editingInfo; const newValue = input.value; const task = tasks.find(t => t.id === taskId); if (!task) { revertCellEdit(editingInfo); return; } let isValid = true; let errorMsg = ''; let valueToSave = newValue;
+            // --- フィールドに応じたバリデーションと値の整形 ---
             if (field === 'start' || field === 'end') { const newDate = parseDate(newValue); if (!newValue && (task[field] === null || task[field] === '')) { valueToSave = null; } else if (!newDate) { isValid = false; errorMsg = '日付形式が無効です (YYYY-MM-DD)'; valueToSave = task[field]; } else { valueToSave = formatDate(newDate, '-'); if (field === 'start') { const end = parseDate(task.end); if (end && newDate > end) { isValid = false; errorMsg = '開始日は終了日より後に設定できません。'; valueToSave = task[field]; } } else { const start = parseDate(task.start); if (start && newDate < start) { isValid = false; errorMsg = '終了日は開始日より前に設定できません。'; valueToSave = task[field]; } } } } else if (field === 'progress') { const num = parseInt(newValue, 10); if (newValue === '' || newValue === null) { valueToSave = 0; } else if (isNaN(num) || num < 0 || num > 100) { isValid = false; errorMsg = '進捗率は0から100の間で入力してください。'; valueToSave = task[field]; } else { valueToSave = num; } } else { valueToSave = newValue.trim(); }
-            if (!isValid) { alert(errorMsg); input.focus(); return; } const originalValue = task[field]; let hasChanged = false; if(field === 'progress') { hasChanged = Number(originalValue) !== Number(valueToSave); } else { hasChanged = String(originalValue ?? '') !== String(valueToSave ?? ''); }
-            revertCellEdit(editingInfo); if (hasChanged) { task[field] = valueToSave; hasUnsavedChanges = true; updateSaveButtonState(); renderGanttChart(false); }
+            // バリデーションエラーがあれば警告して中断
+            if (!isValid) { alert(errorMsg); input.focus(); return; }
+            // 元の値と比較して変更があったか確認
+            const originalValue = task[field]; let hasChanged = false; if(field === 'progress') { hasChanged = Number(originalValue) !== Number(valueToSave); } else { hasChanged = String(originalValue ?? '') !== String(valueToSave ?? ''); }
+            // まず編集状態を解除 (表示を元に戻す)
+            revertCellEdit(editingInfo);
+            // 変更があった場合のみデータを更新して再描画
+            if (hasChanged) { task[field] = valueToSave; hasUnsavedChanges = true; updateSaveButtonState(); renderGanttChart(false); }
         };
         /**
          * インライン編集をキャンセルし、表示を元に戻します。
          * @param {object} editingInfo - 編集中の情報 { cell, input }。
          */
-        const revertCellEdit = (editingInfo) => { if (!editingInfo) return; const { cell, input } = editingInfo; if (input && input.parentNode === cell) { cell.innerHTML = input.dataset.originalDisplay; cell.title = cell.textContent || '編集'; } activeEditingElement = null; };
+        const revertCellEdit = (editingInfo) => { if (!editingInfo) return; const { cell, input } = editingInfo; if (input && input.parentNode === cell) { cell.innerHTML = input.dataset.originalDisplay; cell.title = cell.textContent || '編集'; } activeEditingElement = null; }; // 編集状態を解除
         /**
          * タスクリストのセル表示用にデータをフォーマットします。
          * @param {string} field - フィールド名。
@@ -667,7 +740,7 @@
         /**
          * holidays-jp API から祝日データを非同期で取得し、`holidaysData` に格納後、チャートを初期描画します。
          */
-        const fetchHolidays = async () => { const loading = document.getElementById('loading-status'); if(loading) loading.textContent = '祝日取得中...'; try { const res = await fetch('https://holidays-jp.github.io/api/v1/date.json'); if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`); holidaysData = await res.json(); if(loading) loading.textContent = ''; } catch (error) { console.error('祝日データの取得に失敗:', error); if(loading) loading.textContent = '祝日取得失敗'; } finally { renderGanttChart(true); } };
+        const fetchHolidays = async () => { const loading = document.getElementById('loading-status'); if(loading) loading.textContent = '祝日取得中...'; try { const res = await fetch('https://holidays-jp.github.io/api/v1/date.json'); if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`); holidaysData = await res.json(); if(loading) loading.textContent = ''; } catch (error) { console.error('祝日データの取得に失敗:', error); if(loading) loading.textContent = '祝日取得失敗'; } finally { renderGanttChart(true); } }; // 取得成否に関わらず初期描画
 
         // --- 進捗ハンドルのLeft位置計算 ---
         /**
@@ -677,7 +750,7 @@
          * @param {number} [handleWidth=8] - ハンドルの幅 (px)。
          * @returns {number} ハンドルの `left` 値 (px)。
          */
-        const calculateProgressHandleLeft = (progressPercent, barWidthPx, handleWidth = 8) => { const progWidth = barWidthPx * (progressPercent / 100); let left = progWidth - (handleWidth / 2); left = Math.max(0, Math.min(left, barWidthPx - handleWidth)); return left; };
+        const calculateProgressHandleLeft = (progressPercent, barWidthPx, handleWidth = 8) => { const progWidth = barWidthPx * (progressPercent / 100); let left = progWidth - (handleWidth / 2); left = Math.max(0, Math.min(left, barWidthPx - handleWidth)); return left; }; // ハンドルがバーの範囲外にはみ出ないように調整
 
         // --- ドラッグ＆ドロップ (バー/ハンドル) ---
         /**
@@ -738,47 +811,59 @@
 
              // --- イベントリスナー設定 ---
 
-             // 表示モード切り替え (スクロール位置維持のロジック追加)
+             // 表示モード切り替え (左端の日付を維持するロジック)
              if (viewSwitch && timelineContainer) {
                  viewSwitch.addEventListener('change', (e) => {
                      if (e.target.type === 'radio') {
-                         let previousCenterDate = null; // 切り替え前の中心日付を保持
+                         let previousLeftmostDate = null; // 切り替え前の左端日付を保持
 
-                         // 1. 切り替え前の中心日付を計算
-                         if (chartStartDate && dayWidth > 0 && timelineContainer.clientWidth > 0) {
+                         // --- 1. 切り替え前の表示領域の左端日付を計算 ---
+                         if (chartStartDate && dayWidth > 0) { // 基準となる日付と幅が存在する場合
                              try {
-                                 const viewportWidthDays = timelineContainer.clientWidth / dayWidth;
-                                 const scrollOffsetDays = timelineContainer.scrollLeft / dayWidth;
-                                 const centerOffsetDays = scrollOffsetDays + viewportWidthDays / 2;
-                                 previousCenterDate = addDays(chartStartDate, Math.round(centerOffsetDays));
+                                 // 現在のスクロールピクセル数を日数に変換 (小数点以下切り上げで余裕をもたせる)
+                                 const scrollOffsetDays = Math.ceil(timelineContainer.scrollLeft / dayWidth);
+                                 // 開始日からオフセットを加算して左端日付を計算
+                                 previousLeftmostDate = addDays(chartStartDate, scrollOffsetDays);
                              } catch (error) {
-                                 console.error("ビュー切り替え前の中心日付計算に失敗:", error);
-                                 previousCenterDate = null;
+                                 console.error("ビュー切り替え前の左端日付計算に失敗:", error);
+                                 previousLeftmostDate = null; // 失敗したらnull
                              }
                          }
 
-                         // 2. ビューを切り替え、範囲再計算して描画
+                         // --- 2. ビューを切り替え、範囲再計算して描画 ---
                          currentView = e.target.value;
-                         renderGanttChart(true);
+                         renderGanttChart(true); // 範囲を再計算して再描画 (chartStartDate, dayWidth などが更新される)
 
-                         // 3. 描画完了後にスクロール位置を復元
+                         // --- 3. 描画完了後にスクロール位置を調整 ---
+                         // renderGanttChart は requestAnimationFrame を使うため、
+                         // その描画が完了するのを待ってからスクロール位置を設定する
                          requestAnimationFrame(() => {
-                            setTimeout(() => {
-                                if (previousCenterDate && chartStartDate && dayWidth > 0 && timelineContainer.clientWidth > 0) {
-                                    try {
-                                        const daysDiff = getDaysDiff(chartStartDate, previousCenterDate);
-                                        const newScrollLeftTarget = (daysDiff * dayWidth) - (timelineContainer.clientWidth / 2);
-                                        const maxScrollLeft = timelineContainer.scrollWidth - timelineContainer.clientWidth;
-                                        timelineContainer.scrollLeft = Math.max(0, Math.min(newScrollLeftTarget, maxScrollLeft));
-                                    } catch (error) {
-                                        console.error("スクロール位置の復元に失敗:", error);
-                                    } finally {
-                                        previousCenterDate = null;
-                                    }
-                                } else if (previousCenterDate === null && timelineContainer) {
-                                    timelineContainer.scrollLeft = 0; // フォールバック
-                                }
-                             }, 0);
+                             // さらに setTimeout 0 を挟むことで、
+                             // DOMの更新やコンテナのサイズ計算が完了するのを確実に待つ
+                             setTimeout(() => {
+                                 // 保存した左端日付と、新しい表示情報が有効な場合
+                                 if (previousLeftmostDate && chartStartDate && dayWidth > 0) {
+                                     try {
+                                         // 新しい開始日から、元々左端にあった日付までの日数を計算
+                                         const daysDiff = getDaysDiff(chartStartDate, previousLeftmostDate);
+                                         // 新しい1日あたりの幅で、元々の左端日付が再び左端に来るような scrollLeft を計算
+                                         // 日数差が負(=新しい開始日の方が後)の場合は 0 とする
+                                         const newScrollLeftTarget = Math.max(0, daysDiff * dayWidth);
+
+                                         // 計算結果がスクロール可能な範囲 (0 ～ 最大スクロール量) に収まるように調整
+                                         const maxScrollLeft = timelineContainer.scrollWidth - timelineContainer.clientWidth;
+                                         timelineContainer.scrollLeft = Math.min(newScrollLeftTarget, maxScrollLeft);
+                                     } catch (error) {
+                                         console.error("スクロール位置の復元に失敗:", error);
+                                         // エラー発生時はフォールバックとして左端にスクロール
+                                         timelineContainer.scrollLeft = 0;
+                                     }
+                                 } else if (timelineContainer) {
+                                     // previousLeftmostDate が計算できなかった場合や、
+                                     // 必要な情報が不足している場合は、フォールバックとして左端にスクロール
+                                     timelineContainer.scrollLeft = 0;
+                                 }
+                             }, 0); // 描画とレイアウト計算の完了を待つための遅延
                          });
                      }
                  });
@@ -793,10 +878,11 @@
                      const endDt = new Date(today); endDt.setDate(today.getDate() + 7); const endStr = formatLocalDate(endDt, '-');
                      const newTask = { id: newId, name: "新規タスク", assignee: "", start: startStr, end: endStr, progress: 0 };
                      tasks.push(newTask); hasUnsavedChanges = true; updateSaveButtonState(); renderGanttChart(true);
+                     // 追加された行までスクロールし、名前編集を開始
                      requestAnimationFrame(() => {
                         const listBody = document.getElementById('task-list-body'); if(!listBody) return;
                         const newRow = listBody.querySelector(`.task-row[data-task-id="${newId}"]`);
-                        if (newRow) { newRow.scrollIntoView({ behavior: 'smooth', block: 'center' }); const nameCell = newRow.querySelector('div[data-field="name"]'); if (nameCell) setTimeout(() => nameCell.click(), 100); }
+                        if (newRow) { newRow.scrollIntoView({ behavior: 'smooth', block: 'center' }); const nameCell = newRow.querySelector('div[data-field="name"]'); if (nameCell) setTimeout(() => nameCell.click(), 100); } // 少し遅らせて編集開始
                     });
                  });
              }
@@ -810,10 +896,11 @@
                          try {
                              if (activeEditingElement) revertCellEdit(activeEditingElement);
                              const data = JSON.parse(e.target.result);
-                             if (Array.isArray(data) && data.every(item => typeof item.id !== 'undefined' && item.name && item.start && item.end)) {
+                             if (Array.isArray(data) && data.every(item => typeof item.id !== 'undefined' && item.name && item.start && item.end)) { // 簡単なデータ形式チェック
                                  tasks = data; hasUnsavedChanges = false; updateSaveButtonState();
                                  if (jsonLoadTimestampSpan) { jsonLoadTimestampSpan.textContent = `読込日時: ${formatLocalDateTime(new Date())}`; jsonLoadTimestampSpan.title = `ファイル名: ${file.name}`; }
-                                 renderGanttChart(true); alert('読込が完了しました。');
+                                 renderGanttChart(true); // 範囲再計算して再描画
+                                 alert('読込が完了しました。');
                              } else { throw new Error('JSON形式が無効か必須フィールドが不足しています。'); }
                          } catch (error) { console.error("JSON解析エラー:", error); alert(`読込失敗: ${error.message}`); if(loadingStatus) loadingStatus.textContent = '読込失敗'; if (jsonLoadTimestampSpan) jsonLoadTimestampSpan.textContent = ''; }
                          finally { jsonFileInput.value = ''; if (loadingStatus && loadingStatus.textContent === 'JSON読込中...') loadingStatus.textContent = ''; }
@@ -849,9 +936,9 @@
              }
 
              // --- 初期表示設定 ---
-             const initialViewRadio = document.querySelector(`.view-switch input[value="${currentView}"]`); if (initialViewRadio) initialViewRadio.checked = true; else { const dailyRadio = document.querySelector(`.view-switch input[value="daily"]`); if(dailyRadio) dailyRadio.checked = true; }
-             updateSaveButtonState();
-             fetchHolidays(); // この中で renderGanttChart(true) が呼ばれる
+             const initialViewRadio = document.querySelector(`.view-switch input[value="${currentView}"]`); if (initialViewRadio) initialViewRadio.checked = true; else { const dailyRadio = document.querySelector(`.view-switch input[value="daily"]`); if(dailyRadio) dailyRadio.checked = true; } // フォールバックで日表示
+             updateSaveButtonState(); // 保存ボタンの初期状態を設定
+             fetchHolidays(); // 祝日データを取得し、完了後に初期描画
          });
     </script>
 
