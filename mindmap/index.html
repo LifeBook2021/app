@@ -17,10 +17,10 @@
     background-color: #f8f9fa;
   }
 
-  /* --- モダンなヘッダー --- */
+  /* --- ヘッダー --- */
   #controls {
     padding: 12px 20px;
-    background-color: #343a40; /* 黒背景 */
+    background-color: #343a40;
     border-bottom: 1px solid #495057;
     display: flex;
     gap: 10px;
@@ -45,48 +45,219 @@
   #controls button:hover { background-color: #6c757d; }
   #controls button:active { transform: scale(0.98); background-color: #5a6268; }
   #save-json-btn { background-color: #0d6efd; color: white; }
-   #save-json-btn:hover { background-color: #0b5ed7; }
-   #expand-all-btn, #collapse-all-btn {
-       padding: 8px 12px;
-       font-size: 13px;
-   }
+  #save-json-btn:hover { background-color: #0b5ed7; }
+  #expand-all-btn, #collapse-all-btn {
+    padding: 8px 12px;
+    font-size: 13px;
+  }
 
-  /* Zoom Controls Styles */
-  .zoom-controls { display: flex; align-items: center; gap: 5px; margin-left: 15px; }
-  .zoom-controls button { background-color: #495057; color: #f8f9fa; padding: 5px 10px; font-size: 16px; font-weight: bold; min-width: 30px; justify-content: center; }
-   .zoom-controls button:hover { background-color: #6c757d; }
-   #fit-to-screen-btn { padding: 5px 12px; font-size: 13px; font-weight: 500; }
-  .zoom-controls input[type="number"] { width: 60px; padding: 6px 8px; background-color: #495057; color: #f8f9fa; border: 1px solid #6c757d; border-radius: 4px; font-size: 13px; text-align: right; -moz-appearance: textfield; }
-  .zoom-controls input[type="number"]::-webkit-outer-spin-button, .zoom-controls input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-  .zoom-controls input[type="number"]:focus { outline: none; border-color: #86b7fe; box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25); }
-  .zoom-controls span { font-size: 14px; margin-left: 2px; color: #ced4da; }
-  /* End Zoom Controls Styles */
-  /* --- ヘッダー終わり --- */
+  /* --- ズームコントロール --- */
+  .zoom-controls {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-left: 15px;
+  }
+  .zoom-controls button {
+    background-color: #495057;
+    color: #f8f9fa;
+    padding: 5px 10px;
+    font-size: 16px;
+    font-weight: bold;
+    min-width: 30px;
+    justify-content: center;
+  }
+  .zoom-controls button:hover { background-color: #6c757d; }
+  #fit-to-screen-btn {
+    padding: 5px 12px;
+    font-size: 13px;
+    font-weight: 500;
+  }
+  .zoom-controls input[type="number"] {
+    width: 60px;
+    padding: 6px 8px;
+    background-color: #495057;
+    color: #f8f9fa;
+    border: 1px solid #6c757d;
+    border-radius: 4px;
+    font-size: 13px;
+    text-align: right;
+    -moz-appearance: textfield;
+  }
+  .zoom-controls input[type="number"]::-webkit-outer-spin-button,
+  .zoom-controls input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  .zoom-controls input[type="number"]:focus {
+    outline: none;
+    border-color: #86b7fe;
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+  }
+  .zoom-controls span {
+    font-size: 14px;
+    margin-left: 2px;
+    color: #ced4da;
+  }
 
-  #mindmap-container { position: relative; width: 100%; flex-grow: 1; overflow: auto; background-color: #f8f9fa; outline: none; cursor: grab; }
-  #mindmap-container.panning { cursor: grabbing; }
-  #mindmap-canvas { position: absolute; top: 0; left: 0; width: 4000px; height: 3000px; transform-origin: 0 0; pointer-events: auto; }
-  #mindmap-svg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; overflow: visible; }
-  #mindmap-svg path { stroke-width: 1.8; fill: none; transition: stroke 0.3s ease; }
-  #mindmap-nodes { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; }
-  .node { position: absolute; border-width: 1.5px; border-style: solid; border-radius: 8px; padding: 10px 15px; cursor: grab; user-select: none; min-width: 70px; text-align: left; box-shadow: 0 2px 5px rgba(0,0,0,0.1); z-index: 2; white-space: pre-wrap; word-wrap: break-word; font-size: 14px; color: #212529; transition: box-shadow 0.2s ease, border-color 0.2s ease, background-color 0.2s ease, transform 0.1s ease, outline 0.2s ease; pointer-events: auto; }
-   .node.root-node { padding: 12px 18px; font-size: 15px; }
-   .node.dragging { cursor: grabbing; box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
-  .node.selected { box-shadow: 0 0 0 4px rgba(0, 123, 255, 0.3); }
-  .node:active:not(.dragging) { transform: scale(1.02); }
-  .node .edit-input { display: block; width: calc(100% - 12px); min-height: 32px; border: 1px solid #adb5bd; font: inherit; padding: 6px; box-sizing: border-box; resize: none; margin: 0; border-radius: 5px; box-shadow: inset 0 1px 2px rgba(0,0,0,0.1); background-color: rgba(255, 255, 255, 0.9); color: #212529; pointer-events: auto; z-index: 3; }
-  .delete-button { position: absolute; top: -10px; right: -10px; width: 20px; height: 20px; background-color: #dc3545; color: white; border: none; border-radius: 50%; cursor: pointer; font-size: 12px; line-height: 20px; text-align: center; z-index: 4; font-weight: bold; box-shadow: 0 1px 3px rgba(0,0,0,0.2); pointer-events: auto; display: none; align-items: center; justify-content: center; }
+  /* --- マインドマップコンテナ & キャンバス --- */
+  #mindmap-container {
+    position: relative;
+    width: 100%;
+    flex-grow: 1;
+    overflow: auto;
+    background-color: #f8f9fa;
+    outline: none; /* キーボード操作のためにフォーカス可能にする */
+    cursor: grab;
+  }
+  #mindmap-container.panning {
+    cursor: grabbing;
+  }
+  #mindmap-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4000px; /* 十分な広さのキャンバス */
+    height: 3000px;
+    transform-origin: 0 0;
+    pointer-events: auto; /* ドラッグ等を可能に */
+  }
+
+  /* --- SVG (接続線) --- */
+  #mindmap-svg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none; /* 下のノード要素のイベントを妨げない */
+    z-index: 0;
+    overflow: visible; /* 線がはみ出ても表示 */
+  }
+  #mindmap-svg path {
+    stroke-width: 1.8;
+    fill: none;
+    transition: stroke 0.3s ease;
+  }
+
+  /* --- ノードコンテナ & ノード共通スタイル --- */
+  #mindmap-nodes {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+    pointer-events: none; /* ノード自体が pointer-events: auto なので不要 */
+  }
+  .node {
+    position: absolute;
+    border-width: 1.5px;
+    border-style: solid;
+    border-radius: 8px;
+    padding: 10px 15px;
+    cursor: grab;
+    user-select: none;
+    min-width: 70px;
+    text-align: left;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    z-index: 2;
+    white-space: pre-wrap; /* 改行をそのまま表示 */
+    word-wrap: break-word; /* 長い単語を折り返す */
+    font-size: 14px;
+    color: #212529;
+    transition: box-shadow 0.2s ease, border-color 0.2s ease, background-color 0.2s ease, outline 0.2s ease;
+    pointer-events: auto; /* ノード上でのイベントを有効に */
+  }
+  .node.root-node {
+    padding: 12px 18px;
+    font-size: 15px;
+    font-weight: 500;
+  }
+  .node.dragging {
+    cursor: grabbing;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    z-index: 10; /* ドラッグ中は最前面に */
+  }
+  .node.selected {
+    box-shadow: 0 0 0 4px rgba(0, 123, 255, 0.3); /* 青いハイライト */
+  }
+
+  /* --- ノード内要素 --- */
+  .node .edit-input {
+    display: block;
+    width: calc(100% - 12px); /* padding考慮 */
+    min-height: 32px;
+    border: 1px solid #adb5bd;
+    font: inherit; /* 親要素のフォントを継承 */
+    padding: 6px;
+    box-sizing: border-box;
+    resize: none; /* サイズ変更不可 */
+    margin: 0;
+    border-radius: 5px;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
+    background-color: rgba(255, 255, 255, 0.9);
+    color: #212529;
+    pointer-events: auto; /* 入力可能に */
+    z-index: 3; /* テキスト編集エリアは前面に */
+  }
+  .delete-button {
+    position: absolute;
+    top: -10px;
+    right: -10px;
+    width: 20px;
+    height: 20px;
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 12px;
+    line-height: 20px;
+    text-align: center;
+    z-index: 4;
+    font-weight: bold;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    pointer-events: auto;
+    display: none; /* 通常は非表示 */
+    align-items: center;
+    justify-content: center;
+  }
   .delete-button:hover { background-color: #c82333; }
-  .node.selected .delete-button { display: inline-flex; }
-  .toggle-button { position: absolute; bottom: -10px; left: 50%; transform: translateX(-50%); width: 20px; height: 20px; background-color: #fff; color: #495057; border: 1px solid #ced4da; border-radius: 50%; cursor: pointer; font-size: 14px; z-index: 4; font-weight: bold; box-shadow: 0 1px 3px rgba(0,0,0,0.1); pointer-events: auto; display: none; align-items: center; justify-content: center; }
-  .toggle-button:hover { background-color: #f1f3f5; border-color: #adb5bd; }
-  .node.has-children .toggle-button { display: inline-flex; }
+  .node.selected .delete-button { display: inline-flex; } /* 選択中に表示 */
 
-  /* ドロップターゲットハイライト用CSS */
+  .toggle-button {
+    position: absolute;
+    bottom: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 20px;
+    height: 20px;
+    background-color: #fff;
+    color: #495057;
+    border: 1px solid #ced4da;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 14px;
+    z-index: 4;
+    font-weight: bold;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    pointer-events: auto;
+    display: none; /* 通常は非表示 */
+    align-items: center;
+    justify-content: center;
+  }
+  .toggle-button:hover {
+    background-color: #f1f3f5;
+    border-color: #adb5bd;
+  }
+  .node.has-children .toggle-button { display: inline-flex; } /* 子を持つ場合に表示 */
+
+  /* --- ドロップターゲットハイライト --- */
   .node.drop-target-highlight {
-    outline: 3px solid #ffc107; /* 黄色いアウトライン */
-    outline-offset: 2px;        /* アウトラインを少し外側に */
-    box-shadow: 0 4px 12px rgba(255, 193, 7, 0.4); /* 少し強調された影 */
+    outline: 3px solid #ffc107;
+    outline-offset: 2px;
+    box-shadow: 0 4px 12px rgba(255, 193, 7, 0.4);
   }
 
 </style>
@@ -117,7 +288,7 @@
 
 <script>
   // ========================================
-  // === グローバル変数 & DOM要素参照 ===
+  // === グローバル変数 & 定数 ===
   // ========================================
   const container = document.getElementById('mindmap-container');
   const canvas = document.getElementById('mindmap-canvas');
@@ -133,91 +304,109 @@
   const zoomInput = document.getElementById('zoom-input');
   const fitToScreenBtn = document.getElementById('fit-to-screen-btn');
 
-  let nodes = []; // ノードデータを格納する配列
-  let nextNodeId = 1; // 次に採番するノードID
-  let selectedNodeId = null; // 現在選択されているノードのID
-  let draggingNode = null; // ドラッグ中のノード情報
-  let isEditing = false; // 編集モード中かどうかのフラグ
+  let nodes = []; // 全ノードのデータ配列
+  let nextNodeId = 1; // 次に割り当てるノードID
+  let selectedNodeId = null; // 現在選択中のノードID
+  let draggingNode = null; // ドラッグ中のノード情報 { id, element, startX, startY, isDragging, ... }
+  let isEditing = false; // ノード編集中かどうかのフラグ
   let rootNodeId = null; // ルートノードのID
-  let highlightedDropTargetId = null; // ドラッグ中にハイライトされているドロップターゲットノードのID
-  let isPanning = false; // キャンバスをパン（移動）中かどうかのフラグ
-  let panStartX = 0, panStartY = 0; // パン開始時のマウス座標
+  let highlightedDropTargetId = null; // ドラッグ中にハイライト表示するドロップ先候補のノードID
+  let isPanning = false; // キャンバスをパン操作中かどうかのフラグ
+  let panStartX = 0, panStartY = 0; // パン開始時のマウスポインタ座標
   let panInitialScrollLeft = 0, panInitialScrollTop = 0; // パン開始時のスクロール位置
   let currentScale = 1.0; // 現在のズーム倍率
+
+  // 動作関連の定数
+  const DBL_CLICK_DELAY = 300; // ダブルクリックと判定する時間 (ミリ秒)
+  const CLICK_MOVE_THRESHOLD = 3; // クリックと判定する最大移動ピクセル数
   const minScale = 0.1; // 最小ズーム倍率
   const maxScale = 2.0; // 最大ズーム倍率
   const scaleStep = 0.1; // ズームの刻み幅
 
-  // ノードの色設定
+  // クリック/ダブルクリック判定用
+  let lastClickTime = 0;
+  let lastClickedNodeId = null;
+
+  // 配色設定
   const colorPalette = [
-    { bg: '#e3f2fd', border: '#90caf9', line: '#90caf9' }, { bg: '#e8f5e9', border: '#a5d6a7', line: '#a5d6a7' },
-    { bg: '#fff3e0', border: '#ffcc80', line: '#ffcc80' }, { bg: '#fce4ec', border: '#f8bbd0', line: '#f8bbd0' },
-    { bg: '#ede7f6', border: '#d1c4e9', line: '#d1c4e9' }, { bg: '#e0f7fa', border: '#80deea', line: '#80deea' },
-    { bg: '#f9fbe7', border: '#e6ee9c', line: '#e6ee9c' }, { bg: '#fffde7', border: '#fff59d', line: '#fff59d' },
+    { bg: '#e3f2fd', border: '#90caf9', line: '#90caf9' }, // Blue
+    { bg: '#e8f5e9', border: '#a5d6a7', line: '#a5d6a7' }, // Green
+    { bg: '#fff3e0', border: '#ffcc80', line: '#ffcc80' }, // Orange
+    { bg: '#fce4ec', border: '#f8bbd0', line: '#f8bbd0' }, // Pink
+    { bg: '#ede7f6', border: '#d1c4e9', line: '#d1c4e9' }, // Purple
+    { bg: '#e0f7fa', border: '#80deea', line: '#80deea' }, // Cyan
+    { bg: '#f9fbe7', border: '#e6ee9c', line: '#e6ee9c' }, // Lime
+    { bg: '#fffde7', border: '#fff59d', line: '#fff59d' }, // Yellow
   ];
-  const defaultColor = { bg: '#e9ecef', border: '#adb5bd', line: '#adb5bd' }; // デフォルトの色 (ルートノードや配色対象外)
-  const selectedBorderColor = '#007bff'; // 選択中ノードの枠線色
+  const defaultColor = { bg: '#e9ecef', border: '#adb5bd', line: '#adb5bd' }; // Default/Root
+  const selectedBorderColor = '#007bff'; // Bootstrap primary blue
 
   // ========================================
   // === 初期化処理 ===
   // ========================================
   /**
-   * アプリケーションの初期化を行う
+   * アプリケーションを初期化する
    */
   function init() {
-    // ノードデータが空の場合、初期ノードを作成
     if (nodes.length === 0) {
-      const initialX = canvas.offsetWidth / 2 - 70;
+      // 初回起動時、またはデータがない場合は中心トピックを作成
+      const initialX = canvas.offsetWidth / 2 - 70; // 中央付近に配置
       const initialY = canvas.offsetHeight / 2 - 100;
       const root = createNodeObject(null, '中心トピック', initialX, initialY);
       nodes.push(root);
       selectedNodeId = root.id;
       rootNodeId = root.id;
     } else {
-      // 既存データがある場合はルートノードIDを設定
+      // データがある場合はルートノードを探して設定
       const root = nodes.find(n => n.parentId === null);
       rootNodeId = root ? root.id : null;
-      if (rootNodeId) {
-        selectedNodeId = rootNodeId; // ルートを選択状態に
-      } else if (nodes.length > 0) {
-        selectedNodeId = nodes[0].id; // ルートがない場合は最初のノードを選択
-      }
+      selectedNodeId = rootNodeId || (nodes.length > 0 ? nodes[0].id : null);
     }
-    render(); // 最初の描画
+    render(); // マインドマップを描画
     setupEventListeners(); // イベントリスナーを設定
-    updateScale(currentScale, false); // 初期スケールを設定
+    updateScale(currentScale, false); // スケールを初期化
     if (rootNodeId) {
-      centerViewOnNode(rootNodeId, false); // ルートノードに視点を合わせる
+      centerViewOnNode(rootNodeId, false); // ルートノードを表示中央に
     } else {
-      container.focus(); // コンテナにフォーカス
+      container.focus(); // ルートがない場合はコンテナにフォーカス
     }
   }
 
   // ========================================
-  // === データ構造 & ユーティリティ関数 ===
+  // === データ操作ユーティリティ ===
   // ========================================
   /**
    * 新しいノードオブジェクトを作成する
-   * @param {number|null} parentId 親ノードのID (ルートの場合はnull)
-   * @param {string} text ノードのテキスト
-   * @param {number} x X座標
-   * @param {number} y Y座標
-   * @returns {object} ノードオブジェクト
+   * @param {number|null} parentId - 親ノードのID (ルートの場合は null)
+   * @param {string} text - ノードのテキスト
+   * @param {number} x - X座標
+   * @param {number} y - Y座標
+   * @returns {object} 新しいノードオブジェクト
    */
   function createNodeObject(parentId, text, x, y) {
     return { id: nextNodeId++, parentId: parentId, text: text, x: x, y: y, isCollapsed: false };
   }
 
   /**
-   * ノードの配色情報を取得する
-   * @param {number} nodeId ノードID
-   * @returns {object} { bg, border, line } を含む配色情報オブジェクト
+   * ノードIDに基づいてノードオブジェクトを取得する
+   * @param {number|null} id - 取得したいノードのID
+   * @returns {object|undefined} ノードオブジェクト（見つからない場合は undefined）
+   */
+  function getNodeById(id) {
+    if (id === null || id === undefined) return undefined;
+    return nodes.find(node => node.id === id);
+  }
+
+  /**
+   * 指定されたノードの配色情報を取得する
+   * @param {number} nodeId - 配色を知りたいノードのID
+   * @returns {object} { bg, border, line } を含むオブジェクト
    */
   function getNodeColorInfo(nodeId) {
     const node = getNodeById(nodeId);
     if (!node || node.parentId === null) return defaultColor; // ルートノードはデフォルト色
 
-    // ルート直下の子ノード（主トピック）を見つける
+    // 属している主トピック（ルート直下の子）を見つける
     let current = node;
     let mainTopicNode = null;
     while (current && current.parentId !== null) {
@@ -228,47 +417,36 @@
       current = getNodeById(current.parentId);
     }
 
-    // 主トピックが見つかった場合、その兄弟順に基づいて色を決定
+    // 主トピックの兄弟順で色を決定（パレットを循環利用）
     if (mainTopicNode) {
-      const mainTopics = nodes.filter(n => n.parentId === rootNodeId).sort((a, b) => a.id - b.id); // ID順でソート
+      const mainTopics = nodes.filter(n => n.parentId === rootNodeId).sort((a, b) => a.id - b.id);
       const index = mainTopics.findIndex(n => n.id === mainTopicNode.id);
       if (index !== -1) {
-        const colorIndex = index % colorPalette.length; // パレットを循環利用
-        return colorPalette[colorIndex];
+        return colorPalette[index % colorPalette.length];
       }
     }
     return defaultColor; // 主トピックが見つからない場合などもデフォルト色
   }
 
   /**
-   * IDに基づいてノードオブジェクトを取得する
-   * @param {number} id ノードID
-   * @returns {object|undefined} ノードオブジェクト、見つからなければundefined
-   */
-  function getNodeById(id) {
-    if (id === null || id === undefined) return undefined;
-    return nodes.find(node => node.id === id);
-  }
-
-  /**
    * 指定された親IDを持つ子ノードのリストを取得する
-   * @param {number} parentId 親ノードID
-   * @param {boolean} [includeCollapsed=false] 親が折りたたまれていても子を取得するかどうか
+   * @param {number} parentId - 親ノードのID
+   * @param {boolean} [includeCollapsed=false] - 親が折りたたまれていても子を取得するかどうか
    * @returns {array} 子ノードオブジェクトの配列
    */
   function getChildren(parentId, includeCollapsed = false) {
     if (!includeCollapsed) {
       const parentNode = getNodeById(parentId);
       if (parentNode && parentNode.isCollapsed) {
-        return []; // 親が折りたたまれていれば空配列を返す
+        return []; // 親が折りたたまれていたら子は取得しない
       }
     }
     return nodes.filter(node => node.parentId === parentId);
   }
 
   /**
-   * 指定されたノードの全ての子孫ノードのIDリストを取得する（再帰的）
-   * @param {number} nodeId 親ノードID
+   * 指定されたノードの全ての子孫ノードのIDリストを再帰的に取得する
+   * @param {number} nodeId - 起点となるノードのID
    * @returns {array} 子孫ノードIDの配列
    */
   function getDescendantIds(nodeId) {
@@ -276,145 +454,117 @@
     const children = nodes.filter(node => node.parentId === nodeId);
     children.forEach(child => {
       ids.push(child.id);
-      ids = ids.concat(getDescendantIds(child.id)); // 再帰呼び出し
+      ids = ids.concat(getDescendantIds(child.id));
     });
     return ids;
   }
 
   /**
    * 現在画面に表示される可能性のあるノードのリストを取得する（BFSベース）
-   * @returns {array} 表示可能性のあるノードオブジェクトの配列
+   * isCollapsed=true のノードの子孫は含まない
+   * @returns {array} 表示される可能性のあるノードオブジェクトの配列
    */
   function getVisibleNodes() {
     const visible = [];
     const rootNodes = nodes.filter(n => n.parentId === null);
     if (rootNodes.length === 0) return [];
 
-    const queue = [...rootNodes];
+    const queue = [...rootNodes]; // ルートノードから探索開始
 
     while (queue.length > 0) {
       const node = queue.shift();
-      visible.push(node); // 表示可能性リストに追加
+      visible.push(node); // 表示リストに追加
 
-      if (!node.isCollapsed) { // ノードが展開されていれば子をキューに追加
+      // 折りたたまれていないノードの子を探索対象に追加
+      if (!node.isCollapsed) {
         const children = nodes.filter(n => n.parentId === node.id);
         children.forEach(child => queue.push(child));
       }
     }
-    // console.log('getVisibleNodes returning IDs:', visible.map(n => n.id));
     return visible;
   }
 
   // ========================================
-  // === レンダリング関連関数 ===
+  // === レンダリング関連 ===
   // ========================================
-
   /**
    * マインドマップ全体を再描画する
    */
   function render() {
-    nodesContainer.innerHTML = ''; // ノードコンテナをクリア
-    svg.innerHTML = ''; // SVG（接続線）をクリア
-    const potentialVisibleNodes = getVisibleNodes(); // 表示可能性のある全ノードを取得
+    const previouslySelected = selectedNodeId; // 描画前の選択ID保持
+    nodesContainer.innerHTML = ''; svg.innerHTML = ''; // コンテナとSVGをクリア
+    const actualVisibleNodes = getVisibleNodes(); // 表示すべきノードリスト取得
+    const actualVisibleNodeIds = new Set(actualVisibleNodes.map(n => n.id));
 
-    // 実際に描画するノードをフィルタリングする
-    const actualVisibleNodeIds = new Set(); // 描画するノードIDを管理
-    const actualVisibleNodes = []; // 描画するノードオブジェクトを管理
+    // 描画前に選択状態が有効か（表示されているか）確認し、必要なら選択先を調整
+    if (selectedNodeId !== null && !actualVisibleNodeIds.has(selectedNodeId)) {
+        const node = getNodeById(selectedNodeId);
+        if (node && node.parentId !== null && actualVisibleNodeIds.has(node.parentId)) { selectedNodeId = node.parentId; } // 親を選択
+        else if (rootNodeId && actualVisibleNodeIds.has(rootNodeId)) { selectedNodeId = rootNodeId; } // ルートを選択
+        else if (actualVisibleNodes.length > 0) { selectedNodeId = actualVisibleNodes[0].id; } // 最初の表示ノードを選択
+        else { selectedNodeId = null; } // 選択解除
+    }
 
-    // 1. ルートノードは常に描画対象
-    const rootNodes = potentialVisibleNodes.filter(n => n.parentId === null);
-    rootNodes.forEach(root => {
-        actualVisibleNodeIds.add(root.id);
-        actualVisibleNodes.push(root);
-    });
-
-    // 2. その他のノードについて、親が描画対象かつ展開されているかチェック
-    potentialVisibleNodes.forEach(node => {
-        if (node.parentId === null) return; // ルートは処理済み
-
-        const parentNode = getNodeById(node.parentId);
-        // 親が存在し、親が実際に描画対象であり、かつ親が展開されている場合
-        if (parentNode && actualVisibleNodeIds.has(parentNode.id) && !parentNode.isCollapsed) {
-            actualVisibleNodeIds.add(node.id); // このノードも描画対象
-            actualVisibleNodes.push(node);
-        }
-    });
-
-    // フィルタリングされたノードを描画
-    actualVisibleNodes.forEach(node => {
-      renderSingleNode(node);
-    });
-
-    // フィルタリングされたノード間に線を描画
+    // 各ノード要素と接続線を描画
+    actualVisibleNodes.forEach(node => renderSingleNode(node));
     renderLines(actualVisibleNodes);
+
+    // 描画によってドラッグ中の要素参照が変わる可能性があるので更新
+    if (draggingNode && draggingNode.element && !document.contains(draggingNode.element)) {
+        const newElement = nodesContainer.querySelector(`.node[data-id='${draggingNode.id}']`);
+        if (newElement) draggingNode.element = newElement;
+    }
   }
 
   /**
    * 単一のノード要素を描画する
-   * @param {object} node 描画するノードオブジェクト
+   * @param {object} node - 描画するノードオブジェクト
    */
   function renderSingleNode(node) {
-    // console.log('renderSingleNode called for ID:', node.id);
     const nodeEl = document.createElement('div');
     nodeEl.classList.add('node');
-    const colorInfo = getNodeColorInfo(node.id); // 色情報を取得
+    const colorInfo = getNodeColorInfo(node.id);
 
-    if (node.parentId === null) {
-      nodeEl.classList.add('root-node'); // ルートノード用クラス
-    }
-    nodeEl.dataset.id = node.id; // data属性にIDを設定
-    nodeEl.style.left = `${node.x}px`; // 位置設定
-    nodeEl.style.top = `${node.y}px`;
-    nodeEl.style.backgroundColor = colorInfo.bg; // 背景色設定
-    nodeEl.style.borderColor = colorInfo.border; // 枠線色設定
+    // クラス、データ属性、スタイル設定
+    if (node.parentId === null) nodeEl.classList.add('root-node');
+    nodeEl.dataset.id = node.id;
+    nodeEl.style.left = `${node.x}px`; nodeEl.style.top = `${node.y}px`;
+    nodeEl.style.backgroundColor = colorInfo.bg; nodeEl.style.borderColor = colorInfo.border;
+    if (draggingNode && draggingNode.id === node.id && draggingNode.isDragging) { nodeEl.classList.add('dragging'); } // ドラッグ中のスタイル
 
-    // テキスト表示 (編集モードでない場合)
+    // テキスト表示（編集中以外）
     if (!isEditing || selectedNodeId !== node.id) {
       const textSpan = document.createElement('span');
-      textSpan.innerHTML = node.text.replace(/\n/g, '<br>'); // 改行を<br>に変換
+      textSpan.innerHTML = node.text.replace(/\n/g, '<br>');
       nodeEl.appendChild(textSpan);
     }
 
-    // 選択状態の処理
+    // 選択状態の表示と削除ボタン
     if (node.id === selectedNodeId) {
-      nodeEl.classList.add('selected'); // 選択中クラス
-      nodeEl.style.borderColor = selectedBorderColor; // 選択中枠線色
-      // 削除ボタン (編集モードでない場合)
+      nodeEl.classList.add('selected');
+      nodeEl.style.borderColor = selectedBorderColor;
       if (!isEditing) {
-        const deleteBtn = document.createElement('button');
-        deleteBtn.classList.add('delete-button');
-        deleteBtn.innerHTML = '&times;'; // ×記号
-        deleteBtn.title = '削除 (Del/BS)';
-        deleteBtn.onclick = (e) => {
-          e.stopPropagation(); // 親要素へのイベント伝播を阻止
-          deleteSelectedNode();
-        };
+        const deleteBtn = document.createElement('button'); deleteBtn.classList.add('delete-button'); deleteBtn.innerHTML = '&times;'; deleteBtn.title = '削除 (Del/BS)';
+        deleteBtn.onclick = (e) => { e.stopPropagation(); deleteSelectedNode(); };
         nodeEl.appendChild(deleteBtn);
       }
     }
 
-    // 折りたたみ/展開ボタン (子ノードを持つ場合)
-    const allChildren = nodes.filter(n => n.parentId === node.id); // 全ての子（非表示含む）
+    // 折りたたみ/展開ボタン（子が存在する場合）
+    const allChildren = nodes.filter(n => n.parentId === node.id);
     if (allChildren.length > 0) {
-      nodeEl.classList.add('has-children'); // 子持ちクラス
-      const toggleBtn = document.createElement('button');
-      toggleBtn.classList.add('toggle-button');
-      toggleBtn.innerHTML = node.isCollapsed ? '➕' : '➖'; // 状態に応じてアイコン変更
-      toggleBtn.title = node.isCollapsed ? '展開' : '折りたたむ';
-      toggleBtn.onclick = (e) => {
-        e.stopPropagation();
-        toggleNodeCollapse(node.id);
-      };
+      nodeEl.classList.add('has-children');
+      const toggleBtn = document.createElement('button'); toggleBtn.classList.add('toggle-button'); toggleBtn.innerHTML = node.isCollapsed ? '➕' : '➖'; toggleBtn.title = node.isCollapsed ? '展開' : '折りたたむ';
+      toggleBtn.onclick = (e) => { e.stopPropagation(); toggleNodeCollapse(node.id); };
       nodeEl.appendChild(toggleBtn);
     }
 
-    // イベントリスナーを設定
+    // イベントリスナー設定
     nodeEl.addEventListener('mousedown', handleNodeMouseDown);
-    nodeEl.addEventListener('click', handleNodeClick);
-    nodeEl.addEventListener('dblclick', handleNodeDblClick);
-    nodesContainer.appendChild(nodeEl); // DOMに追加
+    // clickイベントはmouseupで処理するため不要
+    nodesContainer.appendChild(nodeEl);
 
-    // 編集モードの場合、入力欄を追加
+    // 編集中ならテキストエリアを追加
     if (isEditing && selectedNodeId === node.id) {
       appendEditInputToNode(nodeEl, node);
     }
@@ -422,162 +572,102 @@
 
   /**
    * ノード要素に編集用のtextareaを追加する
-   * @param {HTMLElement} nodeEl ノードのDOM要素
-   * @param {object} node ノードデータオブジェクト
+   * @param {HTMLElement} nodeEl - ノードのDOM要素
+   * @param {object} node - ノードデータオブジェクト
    */
   function appendEditInputToNode(nodeEl, node) {
-    const existingSpan = nodeEl.querySelector('span:not(.delete-button):not(.toggle-button)');
-    if(existingSpan) existingSpan.remove(); // 既存のテキストspanがあれば削除
-
-    const input = document.createElement('textarea');
-    input.classList.add('edit-input');
-    input.value = node.text; // 現在のテキストを設定
-    input.dataset.editingId = node.id; // 編集中のIDを保持
-    input.style.height = 'auto'; // 自動高さ調整用
-    input.style.overflowY = 'hidden'; // 縦スクロールバー非表示
-
-    // 入力内容に合わせて高さを自動調整する関数
-    const setHeight = () => {
-      input.style.height = 'auto';
-      input.style.height = `${input.scrollHeight}px`;
-    };
-
-    // イベントリスナー設定
-    input.addEventListener('blur', handleEditBlur); // フォーカスが外れたら編集終了
-    input.addEventListener('keydown', handleEditKeyDown); // キー入力処理
-    input.addEventListener('input', setHeight); // 入力時に高さ調整
-
-    // 削除/トグルボタンの前に挿入
-    const deleteBtn = nodeEl.querySelector('.delete-button');
-    const toggleBtn = nodeEl.querySelector('.toggle-button');
-    const referenceNode = deleteBtn || toggleBtn || null;
+    const existingSpan = nodeEl.querySelector('span:not(.delete-button):not(.toggle-button)'); if(existingSpan) existingSpan.remove();
+    const input = document.createElement('textarea'); input.classList.add('edit-input'); input.value = node.text; input.dataset.editingId = node.id;
+    input.style.height = 'auto'; input.style.overflowY = 'hidden';
+    const setHeight = () => { if(document.contains(input)){ input.style.height = 'auto'; input.style.height = `${input.scrollHeight}px`; } };
+    input.addEventListener('blur', handleEditBlur); input.addEventListener('keydown', handleEditKeyDown); input.addEventListener('input', setHeight);
+    const deleteBtn = nodeEl.querySelector('.delete-button'); const toggleBtn = nodeEl.querySelector('.toggle-button'); const referenceNode = deleteBtn || toggleBtn || null;
     nodeEl.insertBefore(input, referenceNode);
-
-    input.focus(); // 自動フォーカス
-    input.select(); // テキスト全選択
-    setTimeout(setHeight, 0); // 初期描画後に高さを設定
+    // フォーカスや高さ調整は startEditingNode の requestAnimationFrame で行う
   }
 
   /**
    * ノード間の接続線をSVGで描画する
-   * @param {array} actualVisibleNodes 実際に表示されているノードオブジェクトの配列
+   * @param {array} actualVisibleNodes - 現在表示されているノードオブジェクトの配列
    */
   function renderLines(actualVisibleNodes) {
-    svg.innerHTML = ''; // SVG内容をクリア
+    svg.innerHTML = ''; const actualVisibleNodeIds = new Set(actualVisibleNodes.map(n => n.id));
     actualVisibleNodes.forEach(node => {
-      if (node.parentId !== null) { // ルートノード以外
-        const parentNode = getNodeById(node.parentId);
-        // 親が描画リストに含まれているか確認
-        if (parentNode && actualVisibleNodes.some(vn => vn.id === parentNode.id)) {
-          const parentEl = nodesContainer.querySelector(`.node[data-id='${parentNode.id}']`);
-          const childEl = nodesContainer.querySelector(`.node[data-id='${node.id}']`);
-          // 親・子両方のDOM要素が存在する場合のみ線を描画
-          if (parentEl && childEl) {
-            const colorInfo = getNodeColorInfo(node.id); // 子ノードの色に合わせる
-            const path = drawCurvedLine(parentEl, childEl); // 線を描画
-            if (path) {
-              path.setAttribute('data-from-node-id', parentNode.id); // 接続元ID
-              path.setAttribute('data-to-node-id', node.id);     // 接続先ID
-              path.style.stroke = colorInfo.line; // 線の色設定
-              svg.appendChild(path); // SVGに追加
-            }
-          }
+      // 親ノードも表示されている場合のみ線を描画
+      if (node.parentId !== null && actualVisibleNodeIds.has(node.parentId)) {
+        const parentEl = nodesContainer.querySelector(`.node[data-id='${node.parentId}']`); const childEl = nodesContainer.querySelector(`.node[data-id='${node.id}']`);
+        if (parentEl && childEl) {
+          const colorInfo = getNodeColorInfo(node.id); const path = drawCurvedLine(parentEl, childEl);
+          if (path) { path.setAttribute('data-from-node-id', node.parentId); path.setAttribute('data-to-node-id', node.id); path.style.stroke = colorInfo.line; svg.appendChild(path); }
         }
       }
     });
   }
 
   /**
-   * 2つの要素間にカーブした線（SVGパス）を描画する
-   * @param {HTMLElement} el1 開始要素
-   * @param {HTMLElement} el2 終了要素
-   * @returns {SVGPathElement} 描画されたパス要素
+   * 2つの要素間にカーブしたSVGパスを描画する
+   * @param {HTMLElement} el1 - 開始要素
+   * @param {HTMLElement} el2 - 終了要素
+   * @returns {SVGPathElement|null} 描画されたパス要素、または要素が見つからない場合はnull
    */
   function drawCurvedLine(el1, el2) {
-    const x1 = el1.offsetLeft + el1.offsetWidth / 2; // 開始点X (要素中心)
-    const y1 = el1.offsetTop + el1.offsetHeight / 2; // 開始点Y
-    const x2 = el2.offsetLeft + el2.offsetWidth / 2; // 終了点X
-    const y2 = el2.offsetTop + el2.offsetHeight / 2; // 終了点Y
-    const dx = x2 - x1;
-    const curveFactor = 0.5; // カーブの曲がり具合を調整
-    // ベジェ曲線の制御点を計算
-    const ctrlX1 = x1 + dx * curveFactor;
-    const ctrlY1 = y1;
-    const ctrlX2 = x1 + dx * (1 - curveFactor);
-    const ctrlY2 = y2;
-    // SVGパスデータ文字列を作成
-    const pathData = `M ${x1} ${y1} C ${ctrlX1} ${ctrlY1}, ${ctrlX2} ${ctrlY2}, ${x2} ${y2}`;
-    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-    path.setAttribute('d', pathData);
-    return path;
+    if (!el1 || !el2) return null; // 要素がない場合は描画しない
+    const x1 = el1.offsetLeft + el1.offsetWidth / 2; const y1 = el1.offsetTop + el1.offsetHeight / 2; const x2 = el2.offsetLeft + el2.offsetWidth / 2; const y2 = el2.offsetTop + el2.offsetHeight / 2;
+    const dx = x2 - x1; const curveFactor = 0.5; const ctrlX1 = x1 + dx * curveFactor; const ctrlY1 = y1; const ctrlX2 = x1 + dx * (1 - curveFactor); const ctrlY2 = y2;
+    const pathData = `M ${x1} ${y1} C ${ctrlX1} ${ctrlY1}, ${ctrlX2} ${ctrlY2}, ${x2} ${y2}`; const path = document.createElementNS('http://www.w3.org/2000/svg', 'path'); path.setAttribute('d', pathData); return path;
   }
 
   // ========================================
   // === イベントリスナー設定 ===
   // ========================================
   /**
-   * 各種UI要素にイベントリスナーを設定する
+   * 主要なイベントリスナーを設定する
    */
   function setupEventListeners() {
-    // ボタン類
+    // --- ボタン操作 ---
     saveJsonBtn.addEventListener('click', handleSaveJson);
-    loadJsonBtn.addEventListener('click', () => loadJsonInput.click()); // ファイル選択ダイアログを開く
+    loadJsonBtn.addEventListener('click', () => loadJsonInput.click());
     loadJsonInput.addEventListener('change', handleLoadJsonFile);
     expandAllBtn.addEventListener('click', handleExpandAll);
     collapseAllBtn.addEventListener('click', handleCollapseAll);
     zoomInBtn.addEventListener('click', handleZoomIn);
     zoomOutBtn.addEventListener('click', handleZoomOut);
     fitToScreenBtn.addEventListener('click', handleFitToScreen);
-    zoomInput.addEventListener('change', handleZoomInputChange); // 値変更時
-    zoomInput.addEventListener('blur', handleZoomInputChange);   // フォーカスが外れた時
+    zoomInput.addEventListener('change', handleZoomInputChange);
+    zoomInput.addEventListener('blur', handleZoomInputChange); // フォーカスが外れても適用
 
-    // キーボード・マウス操作
-    window.addEventListener('keydown', handleKeyDown); // グローバルなキーダウン
-    container.addEventListener('mousedown', handlePanStart); // コンテナ上でのマウスダウン (パン開始)
-    container.addEventListener('wheel', handleWheelZoom, { passive: false }); // Ctrl+ホイールでズーム
-    window.addEventListener('mousemove', handlePanOrDragMove); // マウス移動 (パン or ドラッグ)
-    window.addEventListener('mouseup', handlePanOrDragEnd);   // マウスアップ (パン or ドラッグ終了)
+    // --- マウス・キーボード操作 ---
+    window.addEventListener('keydown', handleKeyDown); // 全体のキー操作
+    container.addEventListener('mousedown', handlePanStart); // キャンバス背景でのパン開始
+    container.addEventListener('wheel', handleWheelZoom, { passive: false }); // Ctrl+ホイールズーム
+    window.addEventListener('mousemove', handlePanOrDragMove); // マウス移動（パン or ドラッグ）
+    window.addEventListener('mouseup', handlePanOrDragEnd);   // マウスボタンアップ（パン終了 or ドラッグ終了 / クリック判定）
   }
 
   // ========================================
-  // === イベントハンドラ ===
+  // === イベントハンドラ: ノード操作 ===
   // ========================================
-
-  // --- トピック操作 ---
-
   /**
    * 選択中のノードに子ノードを追加する (Tabキー)
    */
   function addChildNode() {
-    if (selectedNodeId === null || isEditing) return; // 選択中ノードがない、または編集中は不可
+    if (selectedNodeId === null || isEditing) return; // 選択中ノードなし or 編集中は無視
     const parentNode = getNodeById(selectedNodeId);
     if (parentNode) {
-      const children = nodes.filter(n => n.parentId === parentNode.id);
-      const topicCounter = children.length + 1;
+      const children = nodes.filter(n => n.parentId === parentNode.id); const topicCounter = children.length + 1;
       let defaultText = (parentNode.parentId === null) ? `主トピック ${topicCounter}` : `サブトピック ${topicCounter}`;
-
-      // 新しいノードの位置を計算
-      const parentEl = nodesContainer.querySelector(`.node[data-id='${parentNode.id}']`);
-      const parentWidth = parentEl ? parentEl.offsetWidth : 100;
-      const parentHeight = parentEl ? parentEl.offsetHeight : 40;
-      const offsetX = parentWidth + 70 + Math.random() * 30; // 親の右側にランダム性を加えて配置
-      const lastChild = children.length > 0 ? getNodeById(children[children.length-1].id) : null;
+      const parentEl = nodesContainer.querySelector(`.node[data-id='${parentNode.id}']`); // 親要素のサイズ取得用
+      const parentWidth = parentEl ? parentEl.offsetWidth : 100; const parentHeight = parentEl ? parentEl.offsetHeight : 40;
+      const offsetX = parentWidth + 70 + Math.random() * 30; // 親の右側に少しランダムに配置
+      const lastChild = children.length > 0 ? getNodeById(children[children.length-1].id) : null; // 最後の兄弟取得
       const lastChildEl = lastChild ? nodesContainer.querySelector(`.node[data-id='${lastChild.id}']`) : null;
-      let newY = lastChildEl ? (lastChild.y + lastChildEl.offsetHeight + 25) : (parentNode.y + parentHeight * 0.1); // 最後の兄弟の下、または親の少し下
+      let newY = lastChildEl ? (lastChild.y + lastChildEl.offsetHeight + 25) : (parentNode.y + parentHeight * 0.1); // 最後の兄弟の下 or 親の少し下
       const newX = parentNode.x + offsetX;
-
-      const newNode = createNodeObject(selectedNodeId, defaultText, newX, newY);
-      nodes.push(newNode);
-
-      // 親が折りたたまれていたら展開してから再描画
-      if (parentNode.isCollapsed) {
-        parentNode.isCollapsed = false;
-        render();
-      } else {
-        render(); // 通常の再描画
-      }
-      selectedNodeId = newNode.id; // 新しく追加したノードを選択
-      startEditingNode(newNode.id); // 新規ノードを編集モードに
+      const newNode = createNodeObject(selectedNodeId, defaultText, newX, newY); nodes.push(newNode);
+      if (parentNode.isCollapsed) parentNode.isCollapsed = false; // 親が閉じていたら開く
+      selectedNodeId = newNode.id; // 新しいノードを選択
+      render(); // 再描画
+      startEditingNode(newNode.id); // 編集モード開始
     }
   }
 
@@ -585,31 +675,23 @@
    * 選択中のノードと同じ階層に兄弟ノードを追加する (Enterキー)
    */
   function addSiblingNode() {
-    if (selectedNodeId === null || isEditing) return; // 選択中ノードがない、または編集中は不可
+    if (selectedNodeId === null || isEditing) return;
     const selectedNode = getNodeById(selectedNodeId);
-    if (selectedNode && selectedNode.parentId !== null) { // ルートノード以外の場合
-      const parentId = selectedNode.parentId;
-      const parentNode = getNodeById(parentId);
+    if (selectedNode && selectedNode.parentId !== null) { // ルートノードでなければ兄弟を追加
+      const parentId = selectedNode.parentId; const parentNode = getNodeById(parentId);
       if (parentNode) {
-        const siblings = nodes.filter(n => n.parentId === parentId);
-        const topicCounter = siblings.length + 1;
+        const siblings = nodes.filter(n => n.parentId === parentId); const topicCounter = siblings.length + 1;
         let defaultText = (parentNode.parentId === null) ? `主トピック ${topicCounter}` : `サブトピック ${topicCounter}`;
-
-        // 新しいノードの位置を計算 (選択中ノードの下)
-        const selectedNodeEl = nodesContainer.querySelector(`.node[data-id='${selectedNode.id}']`);
+        const selectedNodeEl = nodesContainer.querySelector(`.node[data-id='${selectedNode.id}']`); // 選択中ノードの高さ取得用
         const nodeHeight = selectedNodeEl ? selectedNodeEl.offsetHeight : 40;
-        const newX = selectedNode.x;
-        const newY = selectedNode.y + nodeHeight + 25; // 選択ノードの下に配置
-
-        const newNode = createNodeObject(parentId, defaultText, newX, newY);
-        nodes.push(newNode);
-        selectedNodeId = newNode.id; // 新しく追加したノードを選択
-        render();
-        startEditingNode(newNode.id); // 新規ノードを編集モードに
+        const newX = selectedNode.x; const newY = selectedNode.y + nodeHeight + 25; // 選択中ノードの下に配置
+        const newNode = createNodeObject(parentId, defaultText, newX, newY); nodes.push(newNode);
+        selectedNodeId = newNode.id; // 新しいノードを選択
+        render(); // 再描画
+        startEditingNode(newNode.id); // 編集モード開始
       }
     } else if (selectedNode && selectedNode.parentId === null) {
-      // ルートノードが選択されている場合は、子ノードを追加する動作にする
-      addChildNode();
+      addChildNode(); // ルートノード選択時は子ノードを追加する動作
     }
   }
 
@@ -617,64 +699,34 @@
    * 選択中のノード（およびその子孫）を削除する (Delete/Backspaceキー)
    */
   function deleteSelectedNode() {
-    if (selectedNodeId === null || isEditing) return; // 選択中ノードがない、または編集中は不可
-    const nodeToDelete = getNodeById(selectedNodeId);
-    if (!nodeToDelete) return;
+    if (selectedNodeId === null || isEditing) return;
+    const nodeToDelete = getNodeById(selectedNodeId); if (!nodeToDelete) return;
 
-    // ルートノードの削除制限
-    if (nodeToDelete.parentId === null && nodes.length > 1) {
-      alert('中心トピックは削除できません。');
-      return;
-    }
-    // 最後のノード削除時の確認
-    if (nodeToDelete.parentId === null && nodes.length === 1) {
-      if (!confirm('最後のトピックを削除しますか？マップが初期化されます。')) return;
-    } else {
-      // 子孫がいる場合の確認
-      const descendantIds = getDescendantIds(nodeToDelete.id);
-      const hasChildren = descendantIds.length > 0;
-      if (hasChildren) {
-        if (!confirm(`'${nodeToDelete.text}' とその全てのサブトピックを削除しますか？`)) return;
-      }
-    }
+    // 削除確認
+    if (nodeToDelete.parentId === null && nodes.length > 1) { alert('中心トピックは削除できません。'); return; }
+    if (nodeToDelete.parentId === null && nodes.length === 1) { if (!confirm('最後のトピックを削除しますか？マップが初期化されます。')) return; }
+    else { const descendantIds = getDescendantIds(nodeToDelete.id); if (descendantIds.length > 0) { if (!confirm(`'${nodeToDelete.text}' とその全てのサブトピックを削除しますか？`)) return; } }
 
-    // 削除対象のIDリスト（自身 + 子孫）
+    // 削除対象IDリスト作成 (自身 + 子孫)
     const idsToDelete = [nodeToDelete.id].concat(getDescendantIds(nodeToDelete.id));
-
-    // 削除後の選択ノードを決定
-    let nextSelectedId = null;
-    const parentId = nodeToDelete.parentId;
-    if (parentId !== null) { // ルートノード以外の場合
-      const siblings = nodes.filter(n => n.parentId === parentId);
-      const index = siblings.findIndex(n => n.id === nodeToDelete.id);
-      if (index > 0) { // 前の兄弟を選択
-        nextSelectedId = siblings[index - 1].id;
-      } else if (siblings.length > 1 && index === 0) { // 最初の兄弟で、他に兄弟がいれば次を選択
-        nextSelectedId = siblings[1].id;
-      } else { // 兄弟がいない場合は親を選択
-        nextSelectedId = parentId;
-      }
-    } else {
-      nextSelectedId = null; // ルートノード削除後は選択なし
-    }
+    // 削除後の選択ノードを決定 (兄弟 or 親)
+    let nextSelectedId = null; const parentId = nodeToDelete.parentId;
+    if (parentId !== null) {
+      const originalSiblings = nodes.filter(n => n.parentId === parentId); const index = originalSiblings.findIndex(n => n.id === nodeToDelete.id);
+      let prevSibling = null; for(let i = index - 1; i >= 0; i--) { if (!idsToDelete.includes(originalSiblings[i].id)) { prevSibling = originalSiblings[i]; break; } } // 前の兄弟を探す
+      if(prevSibling) nextSelectedId = prevSibling.id;
+      if (nextSelectedId === null && index < originalSiblings.length - 1) { let nextSibling = null; for(let i = index + 1; i < originalSiblings.length; i++) { if (!idsToDelete.includes(originalSiblings[i].id)) { nextSibling = originalSiblings[i]; break; } } if(nextSibling) nextSelectedId = nextSibling.id; } // 次の兄弟を探す
+      if (nextSelectedId === null) nextSelectedId = parentId; // 兄弟がいなければ親を選択
+    } else { nextSelectedId = null; } // ルート削除後は選択なし
 
     // ノード配列から削除
     nodes = nodes.filter(node => !idsToDelete.includes(node.id));
     selectedNodeId = nextSelectedId;
 
-    // 全ノード削除後の処理
-    if (nodes.length === 0) {
-      nextNodeId = 1;
-      selectedNodeId = null;
-      rootNodeId = null;
-      init(); // 初期化
-    } else {
-      // 選択ノードがなくなった場合の再設定
-      if (selectedNodeId === null && nodes.length > 0) {
-        const newRoot = nodes.find(n => n.parentId === null);
-        selectedNodeId = newRoot ? newRoot.id : nodes[0].id;
-        rootNodeId = newRoot ? newRoot.id : null;
-      }
+    // 削除後の状態チェック
+    if (nodes.length === 0) { init(); } // 全削除なら初期化
+    else { // 選択IDが無効なら再設定
+      if (selectedNodeId === null || !getNodeById(selectedNodeId)) { const newRoot = nodes.find(n => n.parentId === null); selectedNodeId = newRoot ? newRoot.id : (nodes.length > 0 ? nodes[0].id : null); rootNodeId = newRoot ? newRoot.id : null; }
       render(); // 再描画
       container.focus();
     }
@@ -682,18 +734,13 @@
 
   /**
    * 指定したノードの折りたたみ状態をトグルする
-   * @param {number} nodeId トグルするノードのID
+   * @param {number} nodeId - トグルするノードのID
    */
   function toggleNodeCollapse(nodeId) {
     const node = getNodeById(nodeId);
     if (node) {
-      node.isCollapsed = !node.isCollapsed; // 状態を反転
-      const descendantIds = getDescendantIds(nodeId);
-      // 閉じた時に選択中のノードが非表示になる場合、親を選択状態にする
-      if (node.isCollapsed && descendantIds.includes(selectedNodeId)) {
-        selectedNodeId = nodeId;
-      }
-      render(); // 再描画
+      node.isCollapsed = !node.isCollapsed;
+      render(); // 再描画 (render内で選択状態は調整される)
       container.focus();
     }
   }
@@ -712,16 +759,15 @@
    */
   function handleCollapseAll() {
     if (!rootNodeId) return;
-    nodes.forEach(node => {
-      node.isCollapsed = true; // ルートも含め一旦全て閉じる
-    });
+    nodes.forEach(node => { node.isCollapsed = true; }); // 全て閉じる
     selectedNodeId = rootNodeId; // ルートを選択
-    render(); // 再描画（render関数内でルートは表示される）
+    render(); // render -> getVisibleNodes でルートのみが描画される
     container.focus();
   }
 
-  // --- 編集関連 ---
-
+  // ========================================
+  // === イベントハンドラ: 編集関連 ===
+  // ========================================
   /**
    * 選択中のノードを編集モードにする (F2キー)
    */
@@ -732,65 +778,35 @@
   }
 
   /**
-   * ノードクリック時の処理 (選択状態の変更)
-   */
-  function handleNodeClick(event) {
-    // パン操作中や、ボタン・入力欄クリック時は何もしない
-    if (isPanning || event.target.closest('.delete-button, .toggle-button, .edit-input')) {
-      return;
-    }
-    const targetNodeEl = event.target.closest('.node');
-    if (targetNodeEl) {
-      const nodeId = parseInt(targetNodeEl.dataset.id, 10);
-      // 編集中に別のノードをクリックしたら、編集を完了させる
-      if (isEditing && selectedNodeId !== nodeId) {
-        finishEditing(true); // 変更を保存して終了
-      }
-      selectedNodeId = nodeId; // クリックしたノードを選択
-      render(); // 再描画
-      container.focus();
-    }
-  }
-
-  /**
-   * ノードダブルクリック時の処理 (編集モード開始)
-   */
-  function handleNodeDblClick(event) {
-    // パン操作中や、ボタン・入力欄ダブルクリック時は何もしない
-    if (isPanning || event.target.closest('.edit-input, .delete-button, .toggle-button')) {
-      return;
-    }
-    const targetNodeEl = event.target.closest('.node');
-    if (targetNodeEl) {
-      const nodeId = parseInt(targetNodeEl.dataset.id, 10);
-      // 編集中に別のノードをダブルクリックしたら、編集を完了させる
-      if (isEditing && selectedNodeId !== nodeId) {
-        finishEditing(true);
-      }
-      selectedNodeId = nodeId; // ダブルクリックしたノードを選択
-      startEditingNode(nodeId); // 編集モード開始
-    }
-  }
-
-  /**
    * 指定したノードの編集を開始する
-   * @param {number} nodeId 編集するノードのID
+   * @param {number} nodeId - 編集を開始するノードのID
    */
   function startEditingNode(nodeId) {
-    isEditing = true; // 編集モードフラグを立てる
-    selectedNodeId = nodeId; // 編集対象を選択
-    render(); // 再描画して編集用textareaを表示
-    // console.log(`ノード ${nodeId} の編集を開始`);
+    if(isEditing && selectedNodeId === nodeId) return; // 既に編集中なら何もしない
+    isEditing = true; selectedNodeId = nodeId;
+    render(); // テキストエリアを表示させるために再描画
+
+    // 次のフレームでテキストエリアにフォーカス
+    requestAnimationFrame(() => {
+      const inputElement = nodesContainer.querySelector(`.node.selected[data-id='${nodeId}'] .edit-input`);
+      if (inputElement) {
+        inputElement.focus(); inputElement.select();
+        // 初期高さを設定
+        const setHeight = () => { if(document.contains(inputElement)){ inputElement.style.height = 'auto'; inputElement.style.height = `${inputElement.scrollHeight}px`; } };
+        setHeight();
+      }
+    });
   }
 
   /**
    * 編集用textareaからフォーカスが外れた時の処理
    */
   function handleEditBlur(event) {
-    // 少し遅延させて、他の要素へのクリック等による意図しないblurを回避
+    // 少し遅延させて、意図しないblurでの終了を防ぐ
     setTimeout(() => {
-      if (isEditing && event.target.classList.contains('edit-input')) {
-        finishEditing(true); // 変更を保存して編集終了
+      // フォーカスがtextarea以外に移っていたら編集終了
+      if (isEditing && document.activeElement !== event.target) {
+        finishEditing(true); // 変更を保存
       }
     }, 100);
   }
@@ -800,110 +816,72 @@
    */
   function handleEditKeyDown(event) {
     if (!isEditing) return;
-    const input = event.target;
-    if (event.key === 'Enter' && !event.shiftKey) { // Enter (Shiftなし) で編集完了
-      event.preventDefault(); // デフォルトの改行動作を抑制
-      event.stopPropagation(); // 親要素へのイベント伝播を阻止
-      finishEditing(true); // 変更を保存
-    } else if (event.key === 'Escape') { // Escで編集キャンセル
-      event.preventDefault();
-      event.stopPropagation();
-      finishEditing(false); // 変更を破棄
-    } else if (event.key === 'Tab') { // Tabキーのデフォルト動作（フォーカス移動）を抑制
-      event.preventDefault();
-    }
+    if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); event.stopPropagation(); finishEditing(true); } // Enterで保存終了
+    else if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); finishEditing(false); } // Escでキャンセル終了
+    else if (event.key === 'Tab') { event.preventDefault(); } // Tabでのフォーカス移動を抑制
   }
 
   /**
    * 編集モードを終了する
-   * @param {boolean} saveChanges 変更を保存するかどうか
+   * @param {boolean} saveChanges - 変更を保存するかどうか (true: 保存, false: キャンセル)
    */
   function finishEditing(saveChanges) {
     if (!isEditing) return;
-    const editingInput = nodesContainer.querySelector('.edit-input');
-    if (!editingInput) { // 稀に起こるかもしれない入力欄消失ケース
-      isEditing = false;
-      return;
-    }
-    const nodeId = parseInt(editingInput.dataset.editingId, 10);
+    const editingInput = nodesContainer.querySelector(`.node.selected[data-id='${selectedNodeId}'] .edit-input`); // 確実に編集中ノードのinputを取得
+    if (!editingInput) { isEditing = false; return; } // inputが見つからない場合は終了
+
+    const nodeId = selectedNodeId; // 編集中ID
     const node = getNodeById(nodeId);
-    if (node && saveChanges) { // 変更を保存する場合
-      const newText = editingInput.value;
-      if (node.text !== newText) { // テキストが変更されていれば更新
-        node.text = newText;
+    isEditing = false; // 編集モードフラグを先に解除
+
+    if (node && saveChanges) {
+      const newText = editingInput.value.trim(); // 前後の空白を除去
+      if (node.text !== newText) {
+        node.text = newText || "（空）"; // 空の場合はプレースホルダ
       }
     }
-    isEditing = false; // 編集モードフラグ解除
-    selectedNodeId = nodeId; // 編集していたノードを選択状態に
-    render(); // 再描画
-    container.focus(); // コンテナにフォーカスを戻す
+    // 変更有無に関わらず、textareaを消すために再描画
+    render();
+    // コンテナにフォーカスを戻す
+    setTimeout(() => { if (!isEditing) container.focus(); }, 0);
   }
 
-  // --- ドラッグ＆ドロップ / パン関連 ---
-
+  // ========================================
+  // === イベントハンドラ: ドラッグ＆ドロップ / パン ===
+  // ========================================
   /**
-   * ノード要素上でマウスボタンが押された時の処理 (ドラッグ開始)
+   * ノード要素上でマウスボタンが押された時の処理 (ドラッグ開始準備)
    */
   function handleNodeMouseDown(event) {
-    // パン操作中、編集中、左ボタン以外、ボタン類クリック時は無視
-    if (isPanning || isEditing || event.button !== 0 || event.target.closest('.delete-button, .toggle-button, .edit-input')) {
-      return;
-    }
-    const targetNodeEl = event.target.closest('.node');
-    if (!targetNodeEl) return;
-
+    if (isPanning || isEditing || event.button !== 0 || event.target.closest('.delete-button, .toggle-button, .edit-input')) { return; }
+    const targetNodeEl = event.target.closest('.node'); if (!targetNodeEl) return;
     const nodeId = parseInt(targetNodeEl.dataset.id, 10);
-    // クリックしたノードが選択されていなかった場合、まず選択状態にしてからドラッグ開始
+
+    // 選択状態を更新 (renderはmouseupのクリック判定後)
     if (selectedNodeId !== nodeId) {
-      selectedNodeId = nodeId;
-      render(); // 選択状態を反映させるために再描画
-      const currentTargetEl = nodesContainer.querySelector(`.node[data-id='${nodeId}']`); // 再描画後の要素を取得
-      if (!currentTargetEl) return; // 要素が見つからない場合は中断
-      startDragging(event, nodeId, currentTargetEl);
-    } else {
-      // 既に選択されているノードであれば、そのままドラッグ開始
-      startDragging(event, nodeId, targetNodeEl);
+        selectedNodeId = nodeId;
+        const previouslySelected = nodesContainer.querySelector('.node.selected');
+        if (previouslySelected) previouslySelected.classList.remove('selected');
+        targetNodeEl.classList.add('selected');
+        targetNodeEl.style.borderColor = selectedBorderColor; // 直接スタイル適用
+        renderLines(getVisibleNodes()); // 線だけ更新
     }
+
+    // ドラッグ情報初期化
+    draggingNode = { id: nodeId, element: targetNodeEl, startX: event.clientX, startY: event.clientY, isDragging: false };
+    targetNodeEl.classList.add('dragging'); // ドラッグ中の視覚フィードバックをすぐ開始
+    event.preventDefault(); // テキスト選択などを防ぐ
   }
 
   /**
-   * ノードのドラッグ処理を開始する
-   * @param {MouseEvent} event mousedownイベント
-   * @param {number} nodeId ドラッグするノードID
-   * @param {HTMLElement} nodeEl ドラッグするノード要素
-   */
-  function startDragging(event, nodeId, nodeEl) {
-    if (isPanning) return; // パン操作中はドラッグしない
-    const nodeRect = nodeEl.getBoundingClientRect(); // ノードの画面上での位置とサイズ
-    const canvasRect = canvas.getBoundingClientRect(); // キャンバスの画面上での位置とサイズ
-    // ドラッグに必要な情報を保持
-    draggingNode = {
-      id: nodeId,
-      element: nodeEl,
-      offsetX: event.clientX - nodeRect.left, // マウスダウン位置のノード内オフセットX
-      offsetY: event.clientY - nodeRect.top, // マウスダウン位置のノード内オフセットY
-      // ドラッグ中の座標計算用に、スケール適用前のキャンバス座標系でのオフセットも計算
-      initialOffsetX: (event.clientX - canvasRect.left) / currentScale - nodeEl.offsetLeft,
-      initialOffsetY: (event.clientY - canvasRect.top) / currentScale - nodeEl.offsetTop,
-    };
-    nodeEl.style.zIndex = 10; // ドラッグ中は最前面に
-    nodeEl.classList.add('dragging'); // ドラッグ中スタイル適用
-  }
-
-  /**
-   * コンテナ上でマウスボタンが押された時の処理 (パン開始)
+   * コンテナ背景でマウスボタンが押された時の処理 (パン開始)
    */
   function handlePanStart(event) {
-    // 左ボタン以外、編集中、ノードやUI要素上でのクリックは無視
-    if (event.button !== 0 || isEditing || event.target.closest('.node, button, input, textarea, .delete-button, .toggle-button')) {
-      return;
-    }
-    isPanning = true; // パンモード開始
-    panStartX = event.clientX; // パン開始座標記録
-    panStartY = event.clientY;
-    panInitialScrollLeft = container.scrollLeft; // パン開始スクロール位置記録
-    panInitialScrollTop = container.scrollTop;
-    container.classList.add('panning'); // パン中カーソルスタイル適用
+    if (event.button !== 0 || isEditing || event.target.closest('.node, button, input, textarea, .delete-button, .toggle-button')) { return; }
+    if (draggingNode) return; // ノードドラッグ中はパンしない
+    isPanning = true; panStartX = event.clientX; panStartY = event.clientY;
+    panInitialScrollLeft = container.scrollLeft; panInitialScrollTop = container.scrollTop;
+    container.classList.add('panning'); container.focus();
   }
 
   /**
@@ -912,8 +890,24 @@
   function handlePanOrDragMove(event) {
     if (isPanning) {
       handlePanMove(event); // パン処理
-    } else if (draggingNode) {
-      handleNodeDragMove(event); // ドラッグ処理
+    } else if (draggingNode) { // ドラッグ中の可能性がある場合
+        // まだドラッグ確定していない場合、移動距離で判定
+        if (!draggingNode.isDragging) {
+            const dx = Math.abs(event.clientX - draggingNode.startX); const dy = Math.abs(event.clientY - draggingNode.startY);
+            if (dx > CLICK_MOVE_THRESHOLD || dy > CLICK_MOVE_THRESHOLD) {
+                draggingNode.isDragging = true; // ドラッグ確定
+                // ドラッグ開始時のオフセットを計算
+                const nodeEl = draggingNode.element; const canvasRect = canvas.getBoundingClientRect(); const nodeRect = nodeEl.getBoundingClientRect();
+                draggingNode.offsetX = event.clientX - nodeRect.left; draggingNode.offsetY = event.clientY - nodeRect.top;
+                draggingNode.initialOffsetX = (event.clientX - canvasRect.left) / currentScale - nodeEl.offsetLeft;
+                draggingNode.initialOffsetY = (event.clientY - canvasRect.top) / currentScale - nodeEl.offsetTop;
+                nodeEl.classList.add('dragging'); // 念のためクラス再付与
+            }
+        }
+        // ドラッグ確定後ならノード移動処理
+        if (draggingNode.isDragging) {
+            handleNodeDragMove(event);
+        }
     }
   }
 
@@ -921,357 +915,214 @@
    * パン（キャンバス移動）中のマウス移動処理
    */
   function handlePanMove(event) {
-    if (!isPanning) return;
-    event.preventDefault(); // デフォルトのドラッグ動作（テキスト選択など）を抑制
-    const dx = event.clientX - panStartX; // 移動量X
-    const dy = event.clientY - panStartY; // 移動量Y
-    // スクロール位置を更新
-    container.scrollLeft = panInitialScrollLeft - dx;
-    container.scrollTop = panInitialScrollTop - dy;
+    if (!isPanning) return; event.preventDefault();
+    const dx = event.clientX - panStartX; const dy = event.clientY - panStartY;
+    container.scrollLeft = panInitialScrollLeft - dx; container.scrollTop = panInitialScrollTop - dy;
   }
 
   /**
    * ノードドラッグ中のマウス移動処理
-   * @param {MouseEvent} event - mousemoveイベントオブジェクト
    */
   function handleNodeDragMove(event) {
-    if (!draggingNode) return;
-    event.preventDefault();
+    if (!draggingNode || !draggingNode.isDragging) return; event.preventDefault();
+    const draggedNodeId = draggingNode.id; const draggedNodeElement = draggingNode.element;
+    if (!draggedNodeElement) return; // 要素がなければ処理中断
 
-    const draggedNodeId = draggingNode.id;
-    const draggedNodeElement = draggingNode.element;
-
-    // --- ノード位置の更新 ---
+    // ノード座標更新
     const canvasRect = canvas.getBoundingClientRect();
-    const mouseXInCanvas = (event.clientX - canvasRect.left) / currentScale; // スケール適用前のX座標
-    const mouseYInCanvas = (event.clientY - canvasRect.top) / currentScale; // スケール適用前のY座標
-    // 新しい左上座標を計算
-    let newX = mouseXInCanvas - draggingNode.initialOffsetX;
-    let newY = mouseYInCanvas - draggingNode.initialOffsetY;
-    // キャンバス境界内への制限
-    const nodeWidth = draggedNodeElement.offsetWidth;
-    const nodeHeight = draggedNodeElement.offsetHeight;
-    const canvasWidth = canvas.offsetWidth;
-    const canvasHeight = canvas.offsetHeight;
-    newX = Math.max(0, Math.min(newX, canvasWidth - nodeWidth));
-    newY = Math.max(0, Math.min(newY, canvasHeight - nodeHeight));
-    // ノードデータとDOM要素のスタイルを更新
-    const node = getNodeById(draggedNodeId);
-    if (node) { node.x = newX; node.y = newY; }
-    draggedNodeElement.style.left = `${newX}px`;
-    draggedNodeElement.style.top = `${newY}px`;
-    updateConnectedLinesForNode(draggedNodeId); // 接続線の更新
+    const mouseXInCanvas = (event.clientX - canvasRect.left) / currentScale; const mouseYInCanvas = (event.clientY - canvasRect.top) / currentScale;
+    let newX = mouseXInCanvas - draggingNode.initialOffsetX; let newY = mouseYInCanvas - draggingNode.initialOffsetY;
+    const nodeWidth = draggedNodeElement.offsetWidth; const nodeHeight = draggedNodeElement.offsetHeight; const canvasWidth = canvas.offsetWidth; const canvasHeight = canvas.offsetHeight;
+    newX = Math.max(0, Math.min(newX, canvasWidth - nodeWidth)); newY = Math.max(0, Math.min(newY, canvasHeight - nodeHeight));
+    const node = getNodeById(draggedNodeId); if (node) { node.x = newX; node.y = newY; } // データ更新
+    draggedNodeElement.style.left = `${newX}px`; draggedNodeElement.style.top = `${newY}px`; // スタイル直接更新
+    updateConnectedLinesForNode(draggedNodeId); // 接続線更新
 
-    // --- ドロップターゲットのハイライト処理 ---
-    let potentialTargetId = null;
-    // マウス直下の要素を取得するために、一時的にドラッグ中ノードのポインターイベントを無効化
-    draggedNodeElement.style.pointerEvents = 'none';
-    const elementUnderMouse = document.elementFromPoint(event.clientX, event.clientY);
-    draggedNodeElement.style.pointerEvents = 'auto'; // 元に戻す
-
+    // ドロップターゲットハイライト処理
+    let potentialTargetId = null; draggedNodeElement.style.pointerEvents = 'none'; const elementUnderMouse = document.elementFromPoint(event.clientX, event.clientY); draggedNodeElement.style.pointerEvents = 'auto';
     if (elementUnderMouse) {
-      const potentialTargetElement = elementUnderMouse.closest('.node'); // マウス直下のノード要素を探す
-      // 自分自身以外のノードか？
+      const potentialTargetElement = elementUnderMouse.closest('.node');
       if (potentialTargetElement && potentialTargetElement.dataset.id !== String(draggedNodeId)) {
-        const targetId = parseInt(potentialTargetElement.dataset.id, 10);
-        const draggedNodeData = getNodeById(draggedNodeId);
-        const targetNodeData = getNodeById(targetId);
-        // ドロップ可能かチェック (現在の親と同じでない、ルートでない、自分や子孫でない)
-        if (
-          draggedNodeData && targetNodeData &&
-          draggedNodeData.parentId !== targetId &&
-          draggedNodeData.parentId !== null &&
-          !getDescendantIds(draggedNodeId).includes(targetId)
-        ) {
-          potentialTargetId = targetId; // ドロップターゲット候補とする
-        }
+        const targetId = parseInt(potentialTargetElement.dataset.id, 10); const draggedNodeData = getNodeById(draggedNodeId); const targetNodeData = getNodeById(targetId);
+        if ( draggedNodeData && targetNodeData && draggedNodeData.parentId !== targetId && draggedNodeData.parentId !== null && targetId !== rootNodeId && !getDescendantIds(draggedNodeId).includes(targetId) ) potentialTargetId = targetId;
       }
     }
-
-    // --- ハイライト表示の更新 ---
-    if (potentialTargetId !== null && potentialTargetId !== highlightedDropTargetId) {
-      // 新しいターゲットにハイライト
-      removeHighlightFromTarget(); // 既存のハイライト解除
-      addHighlightToTarget(potentialTargetId); // 新規ハイライト追加
-    } else if (potentialTargetId === null && highlightedDropTargetId !== null) {
-      // ターゲット候補がなくなった場合、ハイライト解除
-      removeHighlightFromTarget();
-    }
+    if (potentialTargetId !== null && potentialTargetId !== highlightedDropTargetId) { removeHighlightFromTarget(); addHighlightToTarget(potentialTargetId); }
+    else if (potentialTargetId === null && highlightedDropTargetId !== null) { removeHighlightFromTarget(); }
   }
 
   /**
-   * 指定されたIDのノードにドロップターゲット用のハイライトを追加する
-   * @param {number} targetId ハイライトするノードID
+   * 指定されたIDのノードにドロップターゲット用ハイライトを追加する
    */
   function addHighlightToTarget(targetId) {
-    const targetElement = nodesContainer.querySelector(`.node[data-id='${targetId}']`);
-    if (targetElement) {
-      targetElement.classList.add('drop-target-highlight');
-      highlightedDropTargetId = targetId; // ハイライト中のIDを記録
-    }
+    const targetElement = nodesContainer.querySelector(`.node[data-id='${targetId}']`); if (targetElement) { targetElement.classList.add('drop-target-highlight'); highlightedDropTargetId = targetId; }
   }
-
   /**
    * 現在ハイライトされているノードからハイライトを解除する
    */
   function removeHighlightFromTarget() {
-    if (highlightedDropTargetId !== null) {
-      const highlightedElement = nodesContainer.querySelector(`.node[data-id='${highlightedDropTargetId}']`);
-      if (highlightedElement) {
-        highlightedElement.classList.remove('drop-target-highlight');
-      }
-      highlightedDropTargetId = null; // ハイライト中のIDをクリア
-    }
+    if (highlightedDropTargetId !== null) { const highlightedElement = nodesContainer.querySelector(`.node[data-id='${highlightedDropTargetId}']`); if (highlightedElement) highlightedElement.classList.remove('drop-target-highlight'); highlightedDropTargetId = null; }
   }
 
   /**
-   * マウスボタンが離された時の処理 (パン or ドラッグ終了)
+   * マウスボタンが離された時の処理 (パン終了 or ドラッグ終了 / クリック判定)
    */
   function handlePanOrDragEnd(event) {
-    if (isPanning) {
-      handlePanEnd(event); // パン終了
-    } else if (draggingNode) {
-      handleNodeDragEnd(event); // ドラッグ終了
+    if (isPanning) { handlePanEnd(event); return; } // パン終了
+
+    if (draggingNode) {
+        const dx = Math.abs(event.clientX - draggingNode.startX); const dy = Math.abs(event.clientY - draggingNode.startY);
+        const moved = dx > CLICK_MOVE_THRESHOLD || dy > CLICK_MOVE_THRESHOLD; // 十分に移動したか
+        const isActualDrag = draggingNode.isDragging && moved; // ドラッグ操作として確定か
+        const draggedNodeId = draggingNode.id;
+        const draggedNodeElement = draggingNode.element;
+        const currentHighlightedTargetId = highlightedDropTargetId; // mouseup 時のハイライトID
+
+        // スタイルとハイライト解除
+        if (draggedNodeElement) draggedNodeElement.classList.remove('dragging');
+        removeHighlightFromTarget();
+
+        let needsRender = false; // 再描画フラグ
+
+        // --- ドロップ操作（親子関係変更）判定 ---
+        if (currentHighlightedTargetId !== null) {
+            const targetNodeId = currentHighlightedTargetId;
+            const draggedNode = getNodeById(draggedNodeId);
+            const targetNode = getNodeById(targetNodeId);
+            const targetNodeElement = nodesContainer.querySelector(`.node[data-id='${targetNodeId}']`);
+            // ドロップ条件チェック
+            if (draggedNode && targetNode && targetNodeElement && draggedNode.parentId !== targetNodeId &&
+                draggedNode.parentId !== null && targetNodeId !== rootNodeId &&
+                !getDescendantIds(draggedNodeId).includes(targetNodeId))
+            {
+                draggedNode.parentId = targetNodeId; // 親を変更
+                // 位置を自動調整
+                const targetNodeWidth = targetNodeElement.offsetWidth; const draggedNodeWidth = draggedNodeElement.offsetWidth; const draggedNodeHeight = draggedNodeElement.offsetHeight;
+                const canvasWidth = canvas.offsetWidth; const canvasHeight = canvas.offsetHeight;
+                const spacingX = 80; const spacingY = 0;
+                let newDropX = targetNode.x + targetNodeWidth + spacingX; let newDropY = targetNode.y + spacingY;
+                newDropX = Math.max(0, Math.min(newDropX, canvasWidth - draggedNodeWidth)); newDropY = Math.max(0, Math.min(newDropY, canvasHeight - draggedNodeHeight));
+                draggedNode.x = newDropX; draggedNode.y = newDropY; // 位置データ更新
+                if (targetNode.isCollapsed) targetNode.isCollapsed = false; // ターゲット展開
+                needsRender = true; // ドロップ成功時は再描画
+            } else {
+                needsRender = true; // ドロップ無効でもドラッグ移動は反映するため再描画
+            }
+        }
+        // --- クリック/ダブルクリック or 通常のドラッグ移動終了判定 ---
+        else { // ハイライトなしの場合
+            if (!isActualDrag) { // ドラッグ操作でなかった場合 => クリック/ダブルクリック
+                const currentTime = Date.now();
+                if (lastClickedNodeId === draggedNodeId && (currentTime - lastClickTime) < DBL_CLICK_DELAY) {
+                    // ダブルクリック
+                    if (!isEditing) startEditingNode(draggedNodeId); // 編集中でなければ編集開始
+                    lastClickTime = 0; lastClickedNodeId = null; // ダブルクリック判定リセット
+                    needsRender = false; // startEditingNode内でrenderが呼ばれるので不要
+                } else {
+                    // シングルクリック
+                    needsRender = true; // renderを呼んで選択状態を確定
+                    lastClickTime = currentTime; lastClickedNodeId = draggedNodeId; // クリック情報更新
+                }
+            } else { // 通常のドラッグ移動終了
+                 needsRender = true; // 位置データは更新済みなので再描画のみ
+            }
+        }
+
+        // ドラッグ情報クリア
+        draggingNode = null;
+        // 必要に応じて再描画
+        if (needsRender) render();
+        // フォーカスを戻す
+        container.focus();
     }
   }
 
   /**
-   * パン（キャンバス移動）操作を終了する
+   * パン操作を終了する
    */
   function handlePanEnd(event) {
-    if (isPanning) {
-      isPanning = false; // パンモード解除
-      container.classList.remove('panning'); // カーソルスタイルを戻す
-    }
+    if (isPanning) { isPanning = false; container.classList.remove('panning'); }
   }
 
   /**
-   * ノードドラッグ操作の終了処理
-   * @param {MouseEvent} event - mouseupイベントオブジェクト
+   * ドラッグ中に接続線の位置を更新する (暫定描画)
+   * @param {number} nodeId - 移動中のノードID
    */
-  function handleNodeDragEnd(event) {
-    if (draggingNode) {
-      const draggedNodeId = draggingNode.id;
-      const draggedNodeElement = draggingNode.element;
-
-      removeHighlightFromTarget(); // ドラッグ終了時にハイライト解除
-
-      // --- ドロップターゲットの特定 ---
-      draggedNodeElement.style.pointerEvents = 'none'; // 再度マウス直下を取得
-      const elementUnderMouse = document.elementFromPoint(event.clientX, event.clientY);
-      draggedNodeElement.style.pointerEvents = 'auto';
-
-      let targetNodeElement = null;
-      if (elementUnderMouse) {
-        targetNodeElement = elementUnderMouse.closest('.node');
-      }
-
-      // --- 親子関係変更と位置再計算 ---
-      let parentChanged = false;
-      // 有効なドロップターゲット上でマウスが離されたか？
-      if (targetNodeElement && targetNodeElement.dataset.id !== String(draggedNodeId)) {
-        const targetNodeId = parseInt(targetNodeElement.dataset.id, 10);
-        const draggedNode = getNodeById(draggedNodeId);
-        const targetNode = getNodeById(targetNodeId);
-
-        // ドロップ可能条件を再確認
-        if (
-          draggedNode && targetNode &&
-          draggedNode.parentId !== targetNodeId &&
-          draggedNode.parentId !== null &&
-          !getDescendantIds(draggedNodeId).includes(targetNodeId)
-        ) {
-          // 親子関係を変更
-          draggedNode.parentId = targetNodeId;
-          parentChanged = true;
-
-          // 新しい親に合わせて位置を調整
-          const targetNodeWidth = targetNodeElement.offsetWidth;
-          const draggedNodeWidth = draggedNodeElement.offsetWidth;
-          const draggedNodeHeight = draggedNodeElement.offsetHeight;
-          const canvasWidth = canvas.offsetWidth;
-          const canvasHeight = canvas.offsetHeight;
-          const spacingX = 80; // 親からのオフセットX
-          const spacingY = 0;  // 親からのオフセットY (ここでは同じ高さ)
-          let newDropX = targetNode.x + targetNodeWidth + spacingX;
-          let newDropY = targetNode.y + spacingY;
-          // キャンバス境界内に収める
-          newDropX = Math.max(0, Math.min(newDropX, canvasWidth - draggedNodeWidth));
-          newDropY = Math.max(0, Math.min(newDropY, canvasHeight - draggedNodeHeight));
-          // ノードデータの座標を更新
-          draggedNode.x = newDropX;
-          draggedNode.y = newDropY;
-
-          // ドロップ先の親が折りたたまれていたら展開
-          if (targetNode.isCollapsed) {
-            targetNode.isCollapsed = false;
-          }
-        }
-      }
-
-      // ドラッグ状態を解除
-      draggingNode = null;
-      draggedNodeElement.style.zIndex = 2; // z-indexを元に戻す
-      draggedNodeElement.classList.remove('dragging'); // ドラッグスタイル解除
-
-      // 再描画 (親子関係が変わった場合は位置調整も反映される)
-      render();
-
-      container.focus();
-    }
-  }
-
-  /**
-   * ドラッグ中に、指定されたノードに接続されている線の位置を更新する
-   * (render関数が呼ばれるまでの暫定的な線の再描画)
-   * @param {number} nodeId - 移動したノードのID
-   */
-   function updateConnectedLinesForNode(nodeId) {
-    // 対象ノードに関連する既存の線を削除
+  function updateConnectedLinesForNode(nodeId) {
     svg.querySelectorAll(`path[data-from-node-id='${nodeId}'], path[data-to-node-id='${nodeId}']`).forEach(path => path.remove());
-    const node = getNodeById(nodeId);
-    const nodeEl = nodesContainer.querySelector(`.node[data-id='${nodeId}']`);
-    if (!node || !nodeEl) return; // ノードデータ or 要素がなければ終了
+    const node = getNodeById(nodeId); const nodeEl = nodesContainer.querySelector(`.node[data-id='${nodeId}']`); if (!node || !nodeEl) return;
+    // 親への線
+    if (node.parentId !== null) { const parentNode = getNodeById(node.parentId); const parentEl = nodesContainer.querySelector(`.node[data-id='${node.parentId}']`); if (parentNode && parentEl) { const colorInfo = getNodeColorInfo(node.id); const path = drawCurvedLine(parentEl, nodeEl); if (path) { path.setAttribute('data-from-node-id', parentNode.id); path.setAttribute('data-to-node-id', node.id); path.style.stroke = colorInfo.line; svg.appendChild(path); } } }
+    // 子への線 (ノードが展開されている場合)
+    if (!node.isCollapsed) { const children = nodes.filter(n => n.parentId === nodeId); children.forEach(child => { const childEl = nodesContainer.querySelector(`.node[data-id='${child.id}']`); if (childEl) { const colorInfo = getNodeColorInfo(child.id); const path = drawCurvedLine(nodeEl, childEl); if (path) { path.setAttribute('data-from-node-id', node.id); path.setAttribute('data-to-node-id', child.id); path.style.stroke = colorInfo.line; svg.appendChild(path); } } }); }
+  }
 
-    // 描画される可能性のあるノードリストを取得
-    const potentialVisibleNodes = getVisibleNodes();
-    const isNodePotentiallyVisible = potentialVisibleNodes.some(vn => vn.id === nodeId) || (draggingNode && draggingNode.id === nodeId);
-
-    if (!isNodePotentiallyVisible) return; // 表示可能性がなければ線は描画しない
-
-    // 親ノードへの線
-    if (node.parentId !== null) {
-        const parentNode = getNodeById(node.parentId);
-        const parentEl = nodesContainer.querySelector(`.node[data-id='${node.parentId}']`);
-        // 親が表示可能性リストに含まれ、展開されており、DOM要素も存在するか？
-        const isParentPotentiallyVisibleAndExpanded = parentNode && potentialVisibleNodes.some(vn => vn.id === parentNode.id) && !parentNode.isCollapsed && parentEl;
-        if (isParentPotentiallyVisibleAndExpanded) {
-            const colorInfo = getNodeColorInfo(node.id);
-            const path = drawCurvedLine(parentEl, nodeEl);
-            if (path) {
-                path.setAttribute('data-from-node-id', parentNode.id);
-                path.setAttribute('data-to-node-id', node.id);
-                path.style.stroke = colorInfo.line;
-                svg.appendChild(path);
-            }
-        }
-    }
-
-    // 子ノードへの線
-    if (!node.isCollapsed) { // ドラッグ中ノードが展開されている場合
-        const children = nodes.filter(n => n.parentId === nodeId);
-        children.forEach(child => {
-            const childEl = nodesContainer.querySelector(`.node[data-id='${child.id}']`);
-            // 子が表示可能性リストに含まれ、DOM要素も存在するか？
-            const isChildPotentiallyVisible = childEl && potentialVisibleNodes.some(vn => vn.id === child.id);
-            if (isChildPotentiallyVisible) {
-                const colorInfo = getNodeColorInfo(child.id);
-                const path = drawCurvedLine(nodeEl, childEl);
-                if (path) {
-                    path.setAttribute('data-from-node-id', node.id);
-                    path.setAttribute('data-to-node-id', child.id);
-                    path.style.stroke = colorInfo.line;
-                    svg.appendChild(path);
-                }
-            }
-        });
-    }
-}
-
-  // --- JSON 保存/読込 ---
-
+  // ========================================
+  // === イベントハンドラ: JSON I/O ===
+  // ========================================
   /**
    * 現在のマインドマップデータをJSONファイルとして保存する
    */
   function handleSaveJson() {
-    if (nodes.length === 0) {
-      alert("保存するデータがありません。");
-      return;
-    }
-    // 保存するデータ構造
-    const dataToSave = {
-      nodes: nodes,
-      nextNodeId: nextNodeId // 次のIDも保存
-    };
-    const jsonString = JSON.stringify(dataToSave, null, 2); // 整形してJSON文字列化
+    if (isEditing) finishEditing(true); // 編集中なら保存
+    if (nodes.length === 0) { alert("保存するデータがありません。"); return; }
+    const dataToSave = { nodes: nodes, nextNodeId: nextNodeId };
+    const jsonString = JSON.stringify(dataToSave, null, 2); // 見やすいようにインデント付き
     const blob = new Blob([jsonString], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    // ファイル名にタイムスタンプを含める
-    const timestamp = new Date().toISOString().replace(/[:.-]/g, '').slice(0, 15);
-    a.download = `mindmap_${timestamp}.json`;
-    document.body.appendChild(a);
-    a.click(); // ダウンロードリンクをクリック
-    document.body.removeChild(a); // 要素を削除
-    URL.revokeObjectURL(url); // オブジェクトURLを解放
+    const a = document.createElement('a'); a.href = url;
+    // ファイル名生成 (MDMyyyymmddhhmmss.json)
+    const now = new Date(); const yyyy = now.getFullYear(); const mm = String(now.getMonth() + 1).padStart(2, '0'); const dd = String(now.getDate()).padStart(2, '0');
+    const hh = String(now.getHours()).padStart(2, '0'); const mi = String(now.getMinutes()).padStart(2, '0'); const ss = String(now.getSeconds()).padStart(2, '0');
+    const timestamp = `${yyyy}${mm}${dd}${hh}${mi}${ss}`; a.download = `MDM${timestamp}.json`;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
   }
 
   /**
-   * JSONファイルを選択して読み込む処理
+   * JSONファイルを読み込む
    */
   function handleLoadJsonFile(event) {
-    const file = event.target.files[0];
-    if (!file) return;
+    const file = event.target.files[0]; if (!file) return;
     const reader = new FileReader();
     reader.onload = (e) => {
       try {
         const loadedData = JSON.parse(e.target.result);
-        // 読み込んだデータが期待する形式かチェック
+        // データ形式チェック
         if (loadedData && Array.isArray(loadedData.nodes) && typeof loadedData.nextNodeId === 'number') {
           nodes = loadedData.nodes;
-          // 互換性のため isCollapsed がない場合にデフォルト値falseを設定
-          nodes.forEach(node => {
-            if (node.isCollapsed === undefined) node.isCollapsed = false;
-          });
+          // 互換性のため isCollapsed がない場合にデフォルト値 false を設定
+          nodes.forEach(node => { if (node.isCollapsed === undefined) node.isCollapsed = false; });
           nextNodeId = loadedData.nextNodeId;
-          // ルートノードと選択状態を再設定
-          const root = nodes.find(n => n.parentId === null);
-          rootNodeId = root ? root.id : null;
+          const root = nodes.find(n => n.parentId === null); rootNodeId = root ? root.id : null;
           selectedNodeId = rootNodeId || (nodes.length > 0 ? nodes[0].id : null);
+          isEditing = false; // 編集モード解除
           render(); // 再描画
-          // 全体表示に調整
-          if (rootNodeId || nodes.length > 0) {
-            handleFitToScreen();
-          } else {
-            // データが空だった場合の初期化
-            updateScale(1.0, false);
-            container.scrollLeft=0; container.scrollTop=0;
-            container.focus();
-          }
+          // 描画後に全体表示
+          if (rootNodeId || nodes.length > 0) { setTimeout(handleFitToScreen, 0); }
+          else { updateScale(1.0, false); container.scrollLeft=0; container.scrollTop=0; container.focus(); } // データ空の場合
           alert('マインドマップデータを読み込みました。');
-        } else {
-          alert('無効なJSONファイル形式です。\n期待される形式: { "nodes": [...], "nextNodeId": ... }');
-        }
-      } catch (error) {
-        console.error('JSONファイルのパースに失敗しました:', error);
-        alert('JSONファイルの読み込みに失敗しました。ファイル形式を確認してください。');
-      } finally {
-        loadJsonInput.value = ''; // input要素をリセット
-      }
+        } else { alert('無効なJSONファイル形式です。\n期待される形式: { "nodes": [...], "nextNodeId": ... }'); }
+      } catch (error) { console.error('JSONファイルの読み込みに失敗しました:', error); alert('JSONファイルの読み込みに失敗しました。ファイル形式を確認してください。'); }
+      finally { loadJsonInput.value = ''; } // input をリセット
     };
-    reader.onerror = () => {
-      alert('ファイル読み込み中にエラーが発生しました。');
-      loadJsonInput.value = '';
-    };
-    reader.readAsText(file); // ファイルをテキストとして読み込み
+    reader.onerror = () => { alert('ファイル読み込み中にエラーが発生しました。'); loadJsonInput.value = ''; };
+    reader.readAsText(file);
   }
 
-  // --- キーボード操作 ---
-
+  // ========================================
+  // === イベントハンドラ: キーボード操作 ===
+  // ========================================
   /**
    * グローバルなキーダウンイベント処理
    */
   function handleKeyDown(event) {
-    const activeElement = document.activeElement;
-    const isCtrlOrMeta = event.ctrlKey || event.metaKey; // Ctrl or Cmd
+    const activeElement = document.activeElement; const isCtrlOrMeta = event.ctrlKey || event.metaKey;
 
-    // 編集中はキーボードショートカット無効 (textarea内のイベントは別で処理)
+    // 編集中 or 特定の入力要素にフォーカスがある場合は一部ショートカットを除き無視
     if (isEditing) { return; }
-    // ズーム入力欄にフォーカスがある場合、一部ショートカットを除き無効
-    if (activeElement === zoomInput && !isCtrlOrMeta) { return; }
+    if (activeElement === zoomInput && !isCtrlOrMeta) { return; } // ズーム入力中は数値入力優先
 
-    // Ctrl/Cmdキーとの組み合わせショートカット
+    // Ctrl/Cmd + Key ショートカット
     if (isCtrlOrMeta) {
       switch (event.key.toLowerCase()) {
         case 's': event.preventDefault(); handleSaveJson(); return; // 保存
@@ -1279,164 +1130,82 @@
         case '+': case '=': event.preventDefault(); handleZoomIn(); return; // ズームイン
         case '-': event.preventDefault(); handleZoomOut(); return; // ズームアウト
         case '0': event.preventDefault(); handleFitToScreen(); return; // 全体表示
+        case 'e': event.preventDefault(); handleExpandAll(); return; // 全て展開
+        case 'l': event.preventDefault(); handleCollapseAll(); return; // 全て閉じる
       }
     }
 
-    // コンテナかbodyにフォーカスがある場合のショートカット
-    if (activeElement !== container && activeElement !== document.body) {
-      return;
-    }
+    // コンテナ or Body にフォーカスがある場合のショートカット
+    if (activeElement !== container && activeElement !== document.body) { return; }
     switch (event.key) {
-      case 'Tab':       event.preventDefault(); addChildNode(); break; // 子を追加
-      case 'Enter':     event.preventDefault(); addSiblingNode(); break; // 兄弟を追加
-      case 'Delete':
-      case 'Backspace': event.preventDefault(); deleteSelectedNode(); break; // 削除
-      case 'F2':        event.preventDefault(); startEditingSelectedNode(); break; // 編集開始
+      case 'Tab': event.preventDefault(); addChildNode(); break; // 子を追加
+      case 'Enter': event.preventDefault(); addSiblingNode(); break; // 兄弟を追加
+      case 'Delete': case 'Backspace': event.preventDefault(); deleteSelectedNode(); break; // 削除
+      case 'F2': event.preventDefault(); startEditingSelectedNode(); break; // 編集開始
+      // 将来的にカーソルキーでの選択移動などを追加可能
     }
   }
 
-  // --- ビューポート操作 ---
-
+  // ========================================
+  // === イベントハンドラ: ビューポート操作 ===
+  // ========================================
   /**
    * 指定したノードが画面中央に来るようにスクロールする
-   * @param {number} nodeId 中央に表示するノードID
-   * @param {boolean} [smooth=true] スムーズスクロールを使用するか
+   * @param {number} nodeId - 中央に表示するノードID
+   * @param {boolean} [smooth=true] - スムーズスクロールを使用するかどうか
    */
   function centerViewOnNode(nodeId, smooth = true) {
     const node = getNodeById(nodeId);
-    const nodeEl = nodesContainer.querySelector(`.node[data-id='${nodeId}']`);
-    if (node && nodeEl) {
-      const containerRect = container.getBoundingClientRect();
-      const containerWidth = container.clientWidth;
-      const containerHeight = container.clientHeight;
-      // ノードの中心座標（スケール適用後）
-      const nodeCenterX = node.x + nodeEl.offsetWidth / 2;
-      const nodeCenterY = node.y + nodeEl.offsetHeight / 2;
-      // 目標スクロール位置（ノード中心がビューポート中心に来るように）
-      const targetScrollLeft = nodeCenterX * currentScale - containerWidth / 2;
-      const targetScrollTop = nodeCenterY * currentScale - containerHeight / 2;
-      // スクロール実行
-      container.scrollTo({
-        left: Math.max(0, targetScrollLeft), // マイナスにならないように
-        top: Math.max(0, targetScrollTop),
-        behavior: smooth ? 'smooth' : 'auto' // スクロール挙動
-      });
-      container.focus(); // フォーカス設定
-    } else {
-      container.focus();
-    }
+    // DOM要素の取得とスクロールは次のフレームで行う
+    setTimeout(() => {
+        const nodeEl = nodesContainer.querySelector(`.node[data-id='${nodeId}']`);
+        if (node && nodeEl) {
+            const containerWidth = container.clientWidth; const containerHeight = container.clientHeight;
+            const nodeCenterX = node.x + nodeEl.offsetWidth / 2; const nodeCenterY = node.y + nodeEl.offsetHeight / 2;
+            const targetScrollLeft = nodeCenterX * currentScale - containerWidth / 2; const targetScrollTop = nodeCenterY * currentScale - containerHeight / 2;
+            container.scrollTo({ left: Math.max(0, targetScrollLeft), top: Math.max(0, targetScrollTop), behavior: smooth ? 'smooth' : 'auto' });
+            container.focus();
+        } else { container.focus(); }
+    }, 0);
   }
 
-  /**
-   * ズームイン処理
-   */
-  function handleZoomIn() {
-    const newScale = Math.min(maxScale, currentScale + scaleStep);
-    updateScale(newScale, true); // 画面中央基準でズーム
-  }
-
-  /**
-   * ズームアウト処理
-   */
-  function handleZoomOut() {
-    const newScale = Math.max(minScale, currentScale - scaleStep);
-    updateScale(newScale, true); // 画面中央基準でズーム
-  }
-
-  /**
-   * ズーム入力欄の値変更時の処理
-   */
+  /** ズームイン処理 */
+  function handleZoomIn() { updateScale(Math.min(maxScale, currentScale + scaleStep), true); }
+  /** ズームアウト処理 */
+  function handleZoomOut() { updateScale(Math.max(minScale, currentScale - scaleStep), true); }
+  /** ズーム入力欄の値変更処理 */
   function handleZoomInputChange() {
-    let newScalePercent = parseInt(zoomInput.value, 10);
-    if (isNaN(newScalePercent)) { // 無効な入力なら元に戻す
-      zoomInput.value = Math.round(currentScale * 100);
-      return;
-    }
-    // 最小/最大値内に制限
-    newScalePercent = Math.max(minScale * 100, Math.min(maxScale * 100, newScalePercent));
-    const newScale = newScalePercent / 100;
-    updateScale(newScale, true); // 画面中央基準でズーム
+    let newScalePercent = parseInt(zoomInput.value, 10); if (isNaN(newScalePercent)) { zoomInput.value = Math.round(currentScale * 100); return; }
+    newScalePercent = Math.max(minScale * 100, Math.min(maxScale * 100, newScalePercent)); updateScale(newScalePercent / 100, true);
   }
-
-  /**
-   * マウスホイールによるズーム処理 (Ctrl/Cmdキー押下時)
-   */
+  /** マウスホイールによるズーム処理 (Ctrl/Cmdキー押下時) */
   function handleWheelZoom(event) {
-    if (!event.ctrlKey && !event.metaKey) return; // Ctrl or Cmd キーが押されていない場合は無視
-    event.preventDefault(); // デフォルトのスクロール動作を抑制
-
-    const oldScale = currentScale;
-    let newScale;
-    if (event.deltaY < 0) { // ホイール上方回転（ズームイン）
-      newScale = Math.min(maxScale, oldScale + scaleStep);
-    } else { // ホイール下方回転（ズームアウト）
-      newScale = Math.max(minScale, oldScale - scaleStep);
-    }
-
-    if (Math.abs(oldScale - newScale) < 0.001) return; // スケールが変わらない場合は処理中断
-
-    // マウスカーソル位置基準でズームするための計算
-    const mouseX = event.clientX;
-    const mouseY = event.clientY;
-    const containerRect = container.getBoundingClientRect();
-    const containerX = containerRect.left;
-    const containerY = containerRect.top;
-    const mouseXInContainer = mouseX - containerX; // コンテナ内でのマウスX座標
-    const mouseYInContainer = mouseY - containerY; // コンテナ内でのマウスY座標
-    // マウス位置に対応するキャンバス上の座標（スケール適用前）
-    const canvasX = (container.scrollLeft + mouseXInContainer) / oldScale;
-    const canvasY = (container.scrollTop + mouseYInContainer) / oldScale;
-    // 新しいスケール適用後の目標スクロール位置
-    const targetScrollLeft = canvasX * newScale - mouseXInContainer;
-    const targetScrollTop = canvasY * newScale - mouseYInContainer;
-
-    // スケールを更新（スクロール位置調整はしない）
-    updateScale(newScale, false);
-    // 次のフレームでスクロール位置を調整
-    requestAnimationFrame(() => {
-      container.scrollLeft = Math.max(0, targetScrollLeft);
-      container.scrollTop = Math.max(0, targetScrollTop);
-    });
+    if (!event.ctrlKey && !event.metaKey) return; event.preventDefault();
+    const oldScale = currentScale; let newScale; if (event.deltaY < 0) newScale = Math.min(maxScale, oldScale + scaleStep); else newScale = Math.max(minScale, oldScale - scaleStep);
+    if (Math.abs(oldScale - newScale) < 0.001) return; // スケール変化なし
+    // マウスポインタ位置基準でズーム
+    const mouseX = event.clientX; const mouseY = event.clientY; const containerRect = container.getBoundingClientRect(); const containerX = containerRect.left; const containerY = containerRect.top;
+    const mouseXInContainer = mouseX - containerX; const mouseYInContainer = mouseY - containerY; const canvasX = (container.scrollLeft + mouseXInContainer) / oldScale; const canvasY = (container.scrollTop + mouseYInContainer) / oldScale;
+    const targetScrollLeft = canvasX * newScale - mouseXInContainer; const targetScrollTop = canvasY * newScale - mouseYInContainer;
+    updateScale(newScale, false); // スケール更新 (スクロールは別途)
+    requestAnimationFrame(() => { container.scrollLeft = Math.max(0, targetScrollLeft); container.scrollTop = Math.max(0, targetScrollTop); }); // スクロール位置調整
   }
 
   /**
-   * キャンバスのスケール（ズーム倍率）を更新する
-   * @param {number} newScale 新しいスケール値
-   * @param {boolean} [adjustScroll=false] 画面中央基準でスクロール位置を調整するか
+   * キャンバスのスケール（ズーム倍率）を更新し、必要ならスクロール位置も調整する
+   * @param {number} newScale - 新しいスケール値
+   * @param {boolean} [adjustScroll=false] - ビューポート中央基準でスクロールを調整するか
    */
   function updateScale(newScale, adjustScroll = false) {
-    const oldScale = currentScale;
-    newScale = Math.max(minScale, Math.min(maxScale, newScale)); // 最小/最大値内に制限
-
-    if (Math.abs(oldScale - newScale) < 0.001) { // ほぼ変化ない場合は入力欄だけ更新
-      zoomInput.value = Math.round(newScale * 100);
-      return;
-    }
-
-    let targetScrollLeft = container.scrollLeft;
-    let targetScrollTop = container.scrollTop;
-
-    // 画面中央基準でズームする場合のスクロール位置計算
-    if (adjustScroll && oldScale > 0) {
-      const viewWidth = container.clientWidth;
-      const viewHeight = container.clientHeight;
-      // 現在のビューポート中央に対応するキャンバス上の座標
-      const canvasXAtCenter = (container.scrollLeft + viewWidth / 2) / oldScale;
-      const canvasYAtCenter = (container.scrollTop + viewHeight / 2) / oldScale;
-      // 新しいスケールでの目標スクロール位置
-      targetScrollLeft = canvasXAtCenter * newScale - viewWidth / 2;
-      targetScrollTop = canvasYAtCenter * newScale - viewHeight / 2;
-    }
-
-    // requestAnimationFrame を使ってスムーズな更新
+    const oldScale = currentScale; newScale = Math.max(minScale, Math.min(maxScale, newScale)); // 範囲内に制限
+    if (Math.abs(oldScale - newScale) < 0.001) { zoomInput.value = Math.round(newScale * 100); return; } // 変化が小さい場合は入力欄更新のみ
+    let targetScrollLeft = container.scrollLeft; let targetScrollTop = container.scrollTop;
+    // 中央基準ズーム時のスクロール計算
+    if (adjustScroll && oldScale > 0) { const viewWidth = container.clientWidth; const viewHeight = container.clientHeight; const canvasXAtCenter = (container.scrollLeft + viewWidth / 2) / oldScale; const canvasYAtCenter = (container.scrollTop + viewHeight / 2) / oldScale; targetScrollLeft = canvasXAtCenter * newScale - viewWidth / 2; targetScrollTop = canvasYAtCenter * newScale - viewHeight / 2; }
+    // スタイル適用と状態更新
     requestAnimationFrame(() => {
-      if (adjustScroll) { // スクロール調整が必要な場合
-        container.scrollLeft = Math.max(0, targetScrollLeft);
-        container.scrollTop = Math.max(0, targetScrollTop);
-      }
-      currentScale = newScale; // スケール更新
-      canvas.style.transform = `scale(${currentScale})`; // CSSでスケール適用
-      zoomInput.value = Math.round(currentScale * 100); // 入力欄更新
+      if (adjustScroll) { container.scrollLeft = Math.max(0, targetScrollLeft); container.scrollTop = Math.max(0, targetScrollTop); }
+      currentScale = newScale; canvas.style.transform = `scale(${currentScale})`; zoomInput.value = Math.round(currentScale * 100);
     });
   }
 
@@ -1444,93 +1213,32 @@
    * 全ての表示ノードが画面内に収まるようにズームとパンを調整する
    */
   function handleFitToScreen() {
-    if (nodes.length === 0) { // ノードがない場合
-        updateScale(1.0, false);
-        container.scrollLeft = 0; container.scrollTop = 0;
-        container.focus();
-        return;
+    if (nodes.length === 0) { updateScale(1.0, false); container.scrollLeft = 0; container.scrollTop = 0; container.focus(); return; }
+    const actualVisibleNodes = getVisibleNodes(); // 表示されるノードを取得
+
+     // 表示ノードがない場合（ルートが閉じているなど）
+     if (actualVisibleNodes.length === 0) {
+        if (rootNodeId) { const rootNode = getNodeById(rootNodeId); if (rootNode) rootNode.isCollapsed = false; render(); updateScale(1.0, false); centerViewOnNode(rootNodeId, false); } // ルートを開いて表示
+        else { updateScale(1.0, false); container.scrollLeft = 0; container.scrollTop = 0; } // ルートもない場合
+        container.focus(); return;
     }
-
-    // 実際に描画されているノードの情報を取得 (render関数内のロジックを再現)
-    const actualVisibleNodes = [];
-    const actualVisibleNodeIds = new Set();
-    const potentialVisibleNodes = getVisibleNodes();
-    const rootNodes = potentialVisibleNodes.filter(n => n.parentId === null);
-    rootNodes.forEach(root => {
-        actualVisibleNodeIds.add(root.id);
-        actualVisibleNodes.push(root);
-    });
-    potentialVisibleNodes.forEach(node => {
-        if (node.parentId === null) return;
-        const parentNode = getNodeById(node.parentId);
-        if (parentNode && actualVisibleNodeIds.has(parentNode.id) && !parentNode.isCollapsed) {
-            actualVisibleNodeIds.add(node.id);
-            actualVisibleNodes.push(node);
-        }
-    });
-
-     if (actualVisibleNodes.length === 0) { // 描画対象ノードがない場合 (ルートのみで折りたたまれているなど)
-        if (rootNodeId) { updateScale(1.0, false); centerViewOnNode(rootNodeId, false); }
-        else { updateScale(1.0, false); container.scrollLeft = 0; container.scrollTop = 0; }
-        container.focus();
-        return;
-    }
-
-    // 描画ノードのバウンディングボックス（外接矩形）を計算
-    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-    let nodeElementFound = false; // DOM要素が実際に見つかったかフラグ
-
-     actualVisibleNodes.forEach(nodeData => {
-        const nodeEl = nodesContainer.querySelector(`.node[data-id='${nodeData.id}']`);
-        if (!nodeEl) return; // DOM要素がなければスキップ (描画直後などで稀にあるかも)
-        nodeElementFound = true;
-        const nodeLeft = nodeData.x;
-        const nodeTop = nodeData.y;
-        const nodeRight = nodeData.x + nodeEl.offsetWidth;
-        const nodeBottom = nodeData.y + nodeEl.offsetHeight;
-        minX = Math.min(minX, nodeLeft); minY = Math.min(minY, nodeTop);
-        maxX = Math.max(maxX, nodeRight); maxY = Math.max(maxY, nodeBottom);
-    });
-
-    if (!nodeElementFound) { // 描画要素が一つも見つからなかった場合
-        if (rootNodeId) { updateScale(1.0, false); centerViewOnNode(rootNodeId, false); }
-        else { updateScale(1.0, false); container.scrollLeft = 0; container.scrollTop = 0; }
-         container.focus();
-         return;
-    }
-
-    const contentWidth = maxX - minX;
-    const contentHeight = maxY - minY;
-
-    if (contentWidth <= 0 || contentHeight <= 0) { // 幅か高さがない場合 (ノードが1つだけなど)
-        if(actualVisibleNodes.length > 0) { centerViewOnNode(actualVisibleNodes[0].id, false); } // 最初のノードに中央合わせ
-        else { updateScale(1.0, false); container.scrollLeft = 0; container.scrollTop = 0; }
-        updateScale(1.0, false); // スケールは100%に
-        container.focus();
-         return;
-    }
-
-    // コンテナサイズとパディングに基づいて最適なスケールを計算
-    const containerWidth = container.clientWidth;
-    const containerHeight = container.clientHeight;
-    const padding = 40; // 周囲の余白
-    const scaleX = (containerWidth > padding * 2) ? (containerWidth - padding * 2) / contentWidth : minScale;
-    const scaleY = (containerHeight > padding * 2) ? (containerHeight - padding * 2) / contentHeight : minScale;
-    let optimalScale = Math.min(scaleX, scaleY);
-    optimalScale = Math.max(minScale, Math.min(maxScale, optimalScale)); // 最小/最大制限
-
-    // スケールを適用 (updateScaleを使わず直接設定)
-    currentScale = optimalScale;
-    canvas.style.transform = `scale(${currentScale})`;
-    zoomInput.value = Math.round(currentScale * 100);
-
-    // コンテンツの中央がビューポートの中央に来るようにスクロール
-    const contentCenterX = minX + contentWidth / 2;
-    const contentCenterY = minY + contentHeight / 2;
-    const targetScrollLeft = contentCenterX * currentScale - containerWidth / 2;
-    const targetScrollTop = contentCenterY * currentScale - containerHeight / 2;
-    container.scrollTo({ left: Math.max(0, targetScrollLeft), top: Math.max(0, targetScrollTop), behavior: 'auto' });
-    container.focus();
+    // DOM要素のサイズ確定後に計算するため setTimeout
+    setTimeout(() => {
+        // 表示ノード群のバウンディングボックス計算
+        let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity; let nodeElementFound = false;
+        actualVisibleNodes.forEach(nodeData => { const nodeEl = nodesContainer.querySelector(`.node[data-id='${nodeData.id}']`); if (!nodeEl) return; nodeElementFound = true; const nodeLeft = nodeData.x; const nodeTop = nodeData.y; const nodeRight = nodeData.x + nodeEl.offsetWidth; const nodeBottom = nodeData.y + nodeEl.offsetHeight; minX = Math.min(minX, nodeLeft); minY = Math.min(minY, nodeTop); maxX = Math.max(maxX, nodeRight); maxY = Math.max(maxY, nodeBottom); });
+        if (!nodeElementFound) { /* 要素が見つからない場合のエラーハンドリング or フォールバック */ container.focus(); return; }
+        const contentWidth = maxX - minX; const contentHeight = maxY - minY;
+        // ノードが1つ or 直線状の場合
+        if (contentWidth <= 0 || contentHeight <= 0) { if(actualVisibleNodes.length > 0) { centerViewOnNode(actualVisibleNodes[0].id, false); } else { /* フォールバック */ } updateScale(1.0, false); container.focus(); return; }
+        // 最適スケール計算
+        const containerWidth = container.clientWidth; const containerHeight = container.clientHeight; const padding = 50; // 周囲の余白
+        const scaleX = (containerWidth > padding * 2) ? (containerWidth - padding * 2) / contentWidth : minScale; const scaleY = (containerHeight > padding * 2) ? (containerHeight - padding * 2) / contentHeight : minScale;
+        let optimalScale = Math.min(scaleX, scaleY); optimalScale = Math.max(minScale, Math.min(maxScale, optimalScale));
+        updateScale(optimalScale, false); // スケール適用
+        // スケール適用後に中央へスクロール
+        setTimeout(() => { const contentCenterX = minX + contentWidth / 2; const contentCenterY = minY + contentHeight / 2; const targetScrollLeft = contentCenterX * currentScale - containerWidth / 2; const targetScrollTop = contentCenterY * currentScale - containerHeight / 2; container.scrollTo({ left: Math.max(0, targetScrollLeft), top: Math.max(0, targetScrollTop), behavior: 'smooth' }); container.focus(); }, 50);
+    }, 0);
 }
 
   // ========================================
