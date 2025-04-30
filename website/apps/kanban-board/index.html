@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>カンバンボード - AIと創るJavaScriptツールキット</title>
+    <meta name="description" content="タスクをカードで管理し、リスト間をドラッグ＆ドロップで移動できるカンバンボード。詳細編集、ラベル、チェックリスト、コメント機能付き。Vue.jsとAIで開発。">
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="../../assets/css/style.css"> <!-- 相対パス注意 -->
+    <!-- Favicon -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📋</text></svg>">
+    <style>
+        /* このページ固有の微調整などがあればここに追加 */
+        .card-body ul li::marker { content: "✓ "; color: #198754; } /* 特徴リストのマーカー */
+    </style>
+</head>
+<body>
+
+    <header>
+        <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+            <div class="container">
+                 <a class="navbar-brand" href="../../index.html">
+                    <span class="fw-bold">AIと創るJavaScriptツールキット</span>
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarNav">
+                     <ul class="navbar-nav ms-auto">
+                        <li class="nav-item"><a class="nav-link" href="../../index.html">ホーム</a></li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle active" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                アプリ紹介
+                            </a>
+                             <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                                <li><a class="dropdown-item" href="../sticky-notes/index.html">付箋アプリ</a></li>
+                                <li><a class="dropdown-item" href="../gantt-chart/index.html">ガントチャート</a></li>
+                                <li><a class="dropdown-item active" aria-current="page" href="index.html">カンバンボード</a></li>
+                                <li><a class="dropdown-item" href="../schedule/index.html">スケジュールチェック</a></li>
+                                <li><a class="dropdown-item" href="../mindmap/index.html">マインドマップ</a></li>
+                            </ul>
+                        </li>
+                        <li class="nav-item"><a class="nav-link" href="../../ai-creation.html">AIと創るアイデア</a></li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container mt-4">
+        <div class="row">
+            <div class="col-lg-8">
+                 <article class="manual-section">
+                    <h1 class="mb-4">📋 カンバンボード (Kanban Board)</h1>
+                    <p class="lead">タスクをカードとして視覚化し、「To Do」「進行中」「完了」などのリスト間をドラッグ＆ドロップで移動させて進捗を管理するツールです。</p>
+
+                    <div class="text-center my-4">
+                        <!-- ここにカンバンボードのメインスクリーンショット画像を挿入 -->
+                        <img src="../../assets/images/kanban-board-screenshot.png" alt="カンバンボードの画面" class="img-fluid rounded border shadow-sm mb-3 screenshot">
+                        <a href="https://LifeBook2021.github.io/app/Kanban/" target="_blank" rel="noopener noreferrer" class="btn btn-success btn-lg">
+                            <i class="bi bi-play-circle me-2"></i>カンバンボードを使ってみる (無料)
+                        </a>
+                    </div>
+
+                    <h2>主な特徴</h2>
+                     <ul class="list-unstyled">
+                        <li><i class="bi bi-check-circle-fill text-success me-2"></i><strong>ドラッグ＆ドロップ:</strong> カードやリストを直感的に移動・並べ替えできます。</li>
+                        <li><i class="bi bi-check-circle-fill text-success me-2"></i><strong>タスク詳細編集:</strong> モーダルウィンドウでタイトル、詳細、担当者、期限日を編集できます。</li>
+                        <li><i class="bi bi-check-circle-fill text-success me-2"></i><strong>ラベル機能:</strong> タスクに複数のラベルを付け、色分けして分類できます。</li>
+                        <li><i class="bi bi-check-circle-fill text-success me-2"></i><strong>チェックリスト:</strong> タスク内にサブタスクリストを作成し、完了状況を管理できます。</li>
+                        <li><i class="bi bi-check-circle-fill text-success me-2"></i><strong>コメント機能:</strong> タスクに関するメモや議論を時系列で記録できます。</li>
+                         <li><i class="bi bi-check-circle-fill text-success me-2"></i><strong>カードの色分け:</strong> カードごとに背景色を設定できます。</li>
+                         <li><i class="bi bi-check-circle-fill text-success me-2"></i><strong>ボードタイトル編集:</strong> ボード全体のタイトルを編集できます。</li>
+                        <li><i class="bi bi-check-circle-fill text-success me-2"></i><strong>データ保存/読込:</strong> ボード全体の状態をJSONファイルとして保存・読み込みできます。</li>
+                    </ul>
+
+                    <h2>使い方マニュアル</h2>
+
+                    <h3>画面構成</h3>
+                    <!-- ここにカンバンボードの画面構成を示す画像を挿入 (ヘッダー、リスト、カードを指し示す) -->
+                    <img src="../../assets/images/kanban-board-layout.png" alt="カンバンボード 画面構成" class="screenshot">
+                    <ol>
+                        <li><strong>ヘッダー:</strong> ボードタイトル（クリックで編集可）、リスト追加ボタン、JSON保存/読込ボタンがあります。</li>
+                        <li><strong>ボード:</strong> 複数のリスト（列）で構成されます。ボード全体を左右にスクロールできます。</li>
+                        <li><strong>リスト:</strong> タスクカードを格納する列です。「To Do」「進行中」などのステータスを表します。
+                            <ul>
+                                <li><strong>リストヘッダー:</strong> リスト名（編集可）、リスト移動ハンドル<i class="bi bi-grip-vertical"></i>、リスト削除ボタン<i class="bi bi-trash"></i>があります。</li>
+                                <li><strong>リストコンテンツ:</strong> タスクカードが配置されるエリアです。</li>
+                                <li><strong>カード追加ボタン:</strong> リストの末尾にあり、クリックすると新規カード作成モーダルが開きます。</li>
+                            </ul>
+                        </li>
+                        <li><strong>カード:</strong> 個々のタスクを表します。クリックすると詳細モーダルが開きます。
+                             <ul>
+                                <li>タイトル、担当者、期限日、ラベルなどが表示されます。</li>
+                                <li>カード移動ハンドル<i class="bi bi-grip-vertical"></i>、カード削除ボタン<i class="bi bi-x-lg"></i>があります。</li>
+                            </ul>
+                        </li>
+                    </ol>
+
+                    <h3>基本的な使い方</h3>
+                     <ul class="list-group list-group-flush">
+                        <li class="list-group-item"><strong>リストの追加:</strong> ヘッダーの<kbd>リスト追加</kbd>ボタンをクリックします。</li>
+                        <li class="list-group-item"><strong>リスト名の編集:</strong> リストヘッダーのリスト名部分をクリックして編集します。</li>
+                        <li class="list-group-item"><strong>リストの移動:</strong> リストヘッダーの移動ハンドル<i class="bi bi-grip-vertical"></i>をドラッグ＆ドロップします。</li>
+                        <li class="list-group-item"><strong>リストの削除:</strong> リストヘッダーの削除ボタン<i class="bi bi-trash"></i>をクリックします（中のカードも削除されます）。</li>
+                        <li class="list-group-item"><strong>カードの追加:</strong> 各リストの下部にある<kbd>カード追加</kbd>ボタンをクリックします。モーダルが開くので、タイトルなどを入力して保存します。</li>
+                        <li class="list-group-item"><strong>カードの移動:</strong> カードの移動ハンドル<i class="bi bi-grip-vertical"></i>をドラッグし、同じリスト内または別のリストにドロップします。</li>
+                         <li class="list-group-item"><strong>カードの削除:</strong> カード右上の削除ボタン<i class="bi bi-x-lg"></i>をクリックします。</li>
+                        <li class="list-group-item"><strong>カード詳細の表示・編集:</strong> カード本体をクリックすると詳細モーダルが開きます。
+                            <ul>
+                                <li>表示モードでは、タイトルや詳細などをダブルクリックすると編集モードに切り替わります。</li>
+                                <li>または、モーダル下部の<kbd>編集</kbd>ボタンをクリックします。</li>
+                                <li>編集後、<kbd>保存</kbd>ボタンで変更を確定します。</li>
+                            </ul>
+                         </li>
+                    </ul>
+
+                    <h3>タスク詳細モーダル</h3>
+                    <!-- ここにタスク詳細モーダルのスクリーンショットを挿入 -->
+                    <img src="../../assets/images/kanban-board-modal.png" alt="タスク詳細モーダル" class="screenshot">
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item"><strong>基本情報:</strong> タイトル、詳細、担当者、期限日、ステータス（所属リスト）、カード色を編集できます。</li>
+                        <li class="list-group-item"><strong>ラベル:</strong>
+                            <ul>
+                                <li>既存のラベルが表示されます。編集モードで<kbd>×</kbd>をクリックして削除できます。</li>
+                                <li>編集モードで入力欄に新しいラベル名を入力し<kbd>+</kbd>ボタンか<kbd>Enter</kbd>で追加できます。既存のラベルを選択して追加することも可能です。</li>
+                                <li>ラベルの色はラベル名に基づいて自動で設定されます。</li>
+                            </ul>
+                        </li>
+                         <li class="list-group-item"><strong>チェックリスト:</strong>
+                            <ul>
+                                <li>編集モードで<kbd>チェックリスト追加</kbd>ボタンで新しいリストを作成できます。</li>
+                                <li>各リストのタイトルや項目は編集モードで編集できます。</li>
+                                <li>項目のチェックボックスは表示モードでもクリックでき、変更は即時保存されます。</li>
+                                <li>編集モードでリストや項目を削除できます。</li>
+                            </ul>
+                         </li>
+                         <li class="list-group-item"><strong>コメント:</strong>
+                            <ul>
+                                <li>過去のコメントが時系列で表示されます。</li>
+                                <li>新しいコメントを入力し<kbd>コメント追加</kbd>ボタンで追加できます（即時保存）。</li>
+                                <li>既存のコメントは表示モードで<kbd><i class="bi bi-pencil-fill"></i></kbd>ボタンで編集、<kbd><i class="bi bi-trash"></i></kbd>ボタンで削除できます（即時保存）。</li>
+                            </ul>
+                         </li>
+                        <li class="list-group-item"><strong>カードのコピー:</strong> 表示モードで<kbd>コピー</kbd>ボタンをクリックすると、現在のカード内容（コメント除く）を複製した新しいカードが同じリストに追加されます。</li>
+                    </ul>
+
+                    <h3>データの保存と読込</h3>
+                     <ul class="list-group list-group-flush">
+                        <li class="list-group-item"><strong>保存:</strong> ヘッダー右側の<kbd>JSON保存</kbd>ボタンをクリックします。変更がある場合、ボタンは黄色<span class="badge bg-warning text-dark">!</span>で強調表示されます。<code>KBD[日付時刻].json</code>というファイル名でダウンロードされます。</li>
+                        <li class="list-group-item"><strong>読込:</strong> ヘッダー右側の<kbd>JSON読込</kbd>ボタンをクリックし、保存したJSONファイルを選択します。現在のボード内容は上書きされます。読み込んだ日時はボタンの隣に表示されます。</li>
+                    </ul>
+
+                 </article>
+            </div>
+             <div class="col-lg-4">
+                 <aside>
+                     <div class="card mt-4 mt-lg-0">
+                        <div class="card-body">
+                            <h5 class="card-title">アプリ情報</h5>
+                            <ul class="list-unstyled">
+                                <li><strong>バージョン:</strong> 1.0</li>
+                                <li><strong>最終更新:</strong> 2024/MM/DD</li> <!-- 適宜更新 -->
+                                <li><strong>技術:</strong> HTML, CSS, Vue.js 2, Bootstrap 5, Vue.Draggable (SortableJS)</li>
+                                <li><strong>開発協力:</strong> Google AI Studio</li>
+                            </ul>
+                            <a href="https://LifeBook2021.github.io/app/Kanban/" target="_blank" rel="noopener noreferrer" class="btn btn-success w-100 mb-2">
+                                <i class="bi bi-play-circle me-2"></i>アプリを起動
+                            </a>
+                             <div>
+                                <small class="text-muted">
+                                    <i class="bi bi-code-slash me-1"></i>ソースコードは、上記の「アプリを起動」リンク先のページで、ブラウザの「ページのソースを表示」(またはそれに類する)機能を使用することで確認・保存できます。
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                     <div class="card mt-4">
+                         <div class="card-body">
+                             <h5 class="card-title">開発ストーリー</h5>
+                             <p class="small">「Trelloのようなカンバンボードを作りたい」という動機から、AIにVue.jsを使った実装を依頼。基本的なドラッグ＆ドロップ機能から始め、モーダルでの詳細編集、ラベル、チェックリスト、コメント機能などをAIとの対話を通じて段階的に追加していきました。Vue.jsのリアクティビティとコンポーネント化の理解が鍵となりました。</p>
+                             <a href="../../ai-creation.html" class="btn btn-outline-info btn-sm">AIとの開発をもっと詳しく</a>
+                         </div>
+                     </div>
+                 </aside>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer mt-auto">
+        <div class="container text-center">
+            <span class="text-muted">&copy; 2024 AIと創るJavaScriptツールキット. All Rights Reserved.</span>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS Bundle (Vue App needs to load its own scripts) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Note: Vue.js and Vue.Draggable are loaded within the Kanban app's HTML itself -->
+</body>
+</html>
