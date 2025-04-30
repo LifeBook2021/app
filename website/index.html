@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AIと創るJavaScriptツールキット | 高度なWebアプリをコード不要で</title>
+    <meta name="description" content="JavaScriptと生成AI(Google AI Studio等)を活用し、プログラミング経験がなくてもアイデアを形に。マインドマップ、ガントチャート、カンバンボードなど5つの多機能Webアプリを紹介します。">
+    <meta name="keywords" content="JavaScript, シングルページアプリケーション, SPA, 生成AI, Google AI Studio, プログラミング不要, アイデア具現化, マインドマップ, スケジュール管理, 付箋, ガントチャート, カンバンボード, Webアプリ, 無料ツール">
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="assets/css/style.css">
+    <!-- Favicon (仮) -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🚀</text></svg>">
+</head>
+<body>
+
+    <header>
+        <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+            <div class="container">
+                <a class="navbar-brand" href="index.html">
+                    <!-- ここにロゴ画像を挿入 (例: <img src="assets/images/logo.png" alt="サイトロゴ">) -->
+                    <span class="fw-bold">AIと創るJavaScriptツールキット</span>
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav ms-auto">
+                        <li class="nav-item"><a class="nav-link active" aria-current="page" href="index.html">ホーム</a></li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                アプリ紹介
+                            </a>
+                            <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                                <li><a class="dropdown-item" href="apps/sticky-notes/index.html">付箋アプリ</a></li>
+                                <li><a class="dropdown-item" href="apps/gantt-chart/index.html">ガントチャート</a></li>
+                                <li><a class="dropdown-item" href="apps/kanban-board/index.html">カンバンボード</a></li>
+                                <li><a class="dropdown-item" href="apps/schedule/index.html">スケジュールチェック</a></li>
+                                <li><a class="dropdown-item" href="apps/mindmap/index.html">マインドマップ</a></li>
+                            </ul>
+                        </li>
+                        <li class="nav-item"><a class="nav-link" href="ai-creation.html">AIと創るアイデア</a></li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main>
+        <!-- ヒーローセクション -->
+        <section class="hero-section">
+            <div class="container">
+                <h1>そのアイデア、AIと共に形にしませんか？</h1>
+                <p class="lead">JavaScriptの力と生成AIのサポートがあれば、コーディング経験がなくても高度なWebアプリケーションを創り出せます。このサイトでは、その実例となる5つのツールと、AIを活用した開発プロセスを紹介します。</p>
+                <a href="#apps" class="btn btn-primary btn-lg">アプリを試す</a>
+                <a href="ai-creation.html" class="btn btn-outline-light btn-lg ms-2">AI活用ストーリーを読む</a>
+            </div>
+        </section>
+
+        <!-- アプリ紹介セクション -->
+        <section id="apps" class="container mt-5">
+            <h2 class="text-center mb-5">AIと創り上げた多機能Webアプリ</h2>
+            <div class="row g-4">
+                <!-- 付箋アプリ -->
+                <div class="col-lg-4 col-md-6">
+                    <div class="card app-card">
+                        <!-- ここに付箋アプリのスクリーンショット画像を挿入 -->
+                        <img src="assets/images/sticky-notes-screenshot.png" class="card-img-top" alt="付箋アプリ スクリーンショット">
+                        <div class="card-body">
+                            <h5 class="card-title">📝 付箋アプリ</h5>
+                            <p class="card-text">アイデアやタスクを自由に書き留めて整理。ドラッグ＆ドロップ、色分け、リサイズ、JSON保存/読込に対応。</p>
+                            <a href="apps/sticky-notes/index.html" class="btn btn-outline-primary mt-auto">詳細と使い方</a>
+                        </div>
+                    </div>
+                </div>
+                <!-- ガントチャート -->
+                <div class="col-lg-4 col-md-6">
+                    <div class="card app-card">
+                        <!-- ここにガントチャートのスクリーンショット画像を挿入 -->
+                        <img src="assets/images/gantt-chart-screenshot.png" class="card-img-top" alt="ガントチャート スクリーンショット">
+                        <div class="card-body">
+                            <h5 class="card-title">📊 ガントチャート</h5>
+                            <p class="card-text">プロジェクトのスケジュールを視覚化。タスク編集、期間変更、進捗管理、祝日表示、ビュー切替、JSON保存/読込が可能。</p>
+                            <a href="apps/gantt-chart/index.html" class="btn btn-outline-primary mt-auto">詳細と使い方</a>
+                        </div>
+                    </div>
+                </div>
+                <!-- カンバンボード -->
+                <div class="col-lg-4 col-md-6">
+                    <div class="card app-card">
+                        <!-- ここにカンバンボードのスクリーンショット画像を挿入 -->
+                        <img src="assets/images/kanban-board-screenshot.png" class="card-img-top" alt="カンバンボード スクリーンショット">
+                        <div class="card-body">
+                            <h5 class="card-title">📋 カンバンボード</h5>
+                            <p class="card-text">タスクをリスト間でドラッグ＆ドロップ管理。詳細編集、期限、ラベル、チェックリスト、コメント機能、JSON保存/読込に対応。(Vue.js使用)</p>
+                            <a href="apps/kanban-board/index.html" class="btn btn-outline-primary mt-auto">詳細と使い方</a>
+                        </div>
+                    </div>
+                </div>
+                <!-- スケジュールチェック -->
+                <div class="col-lg-4 col-md-6">
+                    <div class="card app-card">
+                        <!-- ここにスケジュールチェックのスクリーンショット画像を挿入 -->
+                        <img src="assets/images/schedule-screenshot.png" class="card-img-top" alt="スケジュールチェック スクリーンショット">
+                        <div class="card-body">
+                            <h5 class="card-title">📅 スケジュールチェック</h5>
+                            <p class="card-text">メンバーごとの月間スケジュールをカレンダー形式で確認・マーク。祝日表示、メンバー編集、JSON保存/読込機能付き。</p>
+                            <a href="apps/schedule/index.html" class="btn btn-outline-primary mt-auto">詳細と使い方</a>
+                        </div>
+                    </div>
+                </div>
+                <!-- マインドマップ -->
+                <div class="col-lg-4 col-md-6">
+                    <div class="card app-card">
+                        <!-- ここにマインドマップのスクリーンショット画像を挿入 -->
+                        <img src="assets/images/mindmap-screenshot.png" class="card-img-top" alt="マインドマップ スクリーンショット">
+                        <div class="card-body">
+                            <h5 class="card-title">💡 マインドマップ</h5>
+                            <p class="card-text">思考を放射状に広げて整理。ノードの追加・編集・移動・削除、親子関係変更、ズーム/パン、JSON保存/読込に対応。</p>
+                            <a href="apps/mindmap/index.html" class="btn btn-outline-primary mt-auto">詳細と使い方</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- コンセプトセクション -->
+        <section class="container mt-5 py-5 bg-light rounded">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <h2>コードが書けなくても、アイデアは形にできる</h2>
+                    <p>「こんなツールがあったら便利なのに…」そう思ったことはありませんか？</p>
+                    <p>これらのアプリは、プログラミングの専門知識がなくても、Google AI Studioのような生成AIとの対話を通じて開発されました。初期の簡単なプロトタイプから、要件を追加し、試行錯誤を繰り返すことで、多機能なWebアプリケーションへと進化させることができたのです。</p>
+                    <p>あなたも、AIをパートナーにして、頭の中のアイデアを実現してみませんか？</p>
+                    <a href="ai-creation.html" class="btn btn-info">AIとの開発ストーリーをもっと知る</a>
+                </div>
+                <div class="col-md-6 text-center">
+                    <!-- ここにAIやアイデア具現化をイメージさせる画像を挿入 -->
+                    <img src="assets/images/ai-concept-image.png" alt="AIとアイデアの具現化イメージ" class="img-fluid rounded shadow-sm">
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="footer mt-auto">
+        <div class="container text-center">
+            <span class="text-muted">&copy; 2024 AIと創るJavaScriptツールキット. All Rights Reserved.</span>
+            <!-- 必要であればGitHubリポジトリへのリンクなどを追加 -->
+            <!-- <p class="mt-2"><a href="[GitHubリポジトリURL]" target="_blank" rel="noopener noreferrer">GitHub Repository</a></p> -->
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
