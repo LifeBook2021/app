@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>スケジュールチェック - AIと創るJavaScriptツールキット</title>
+    <meta name="description" content="チームメンバーの月間スケジュールをカレンダー形式で管理・共有。出勤/予定などを簡単にマーク。祝日表示、JSON保存/読込に対応。AIを活用して開発。">
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="../../assets/css/style.css"> <!-- 相対パス注意 -->
+    <!-- Favicon -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📅</text></svg>">
+</head>
+<body>
+
+    <header>
+        <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+            <div class="container">
+                 <a class="navbar-brand" href="../../index.html">
+                    <span class="fw-bold">AIと創るJavaScriptツールキット</span>
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarNav">
+                     <ul class="navbar-nav ms-auto">
+                        <li class="nav-item"><a class="nav-link" href="../../index.html">ホーム</a></li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle active" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                アプリ紹介
+                            </a>
+                             <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                                <li><a class="dropdown-item" href="../sticky-notes/index.html">付箋アプリ</a></li>
+                                <li><a class="dropdown-item" href="../gantt-chart/index.html">ガントチャート</a></li>
+                                <li><a class="dropdown-item" href="../kanban-board/index.html">カンバンボード</a></li>
+                                <li><a class="dropdown-item active" aria-current="page" href="index.html">スケジュールチェック</a></li>
+                                <li><a class="dropdown-item" href="../mindmap/index.html">マインドマップ</a></li>
+                            </ul>
+                        </li>
+                        <li class="nav-item"><a class="nav-link" href="../../ai-creation.html">AIと創るアイデア</a></li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container mt-4">
+        <div class="row">
+            <div class="col-lg-8">
+                 <article class="manual-section">
+                    <h1 class="mb-4">📅 スケジュールチェック (Schedule Check)</h1>
+                    <p class="lead">チームメンバーなどの月間スケジュールをシンプルなカレンダー形式で管理・確認するためのツールです。</p>
+
+                     <div class="text-center my-4">
+                        <!-- ここにスケジュールチェックのメインスクリーンショット画像を挿入 -->
+                        <img src="../../assets/images/schedule-screenshot.png" alt="スケジュールチェックの画面" class="img-fluid rounded border shadow-sm mb-3 screenshot">
+                        <a href="https://LifeBook2021.github.io/app/calendar/" target="_blank" rel="noopener noreferrer" class="btn btn-success btn-lg">
+                            <i class="bi bi-play-circle me-2"></i>スケジュールチェックを使ってみる (無料)
+                        </a>
+                    </div>
+
+                    <h2>主な特徴</h2>
+                    <ul>
+                        <li><strong>月間カレンダー表示:</strong> メンバーごとのスケジュールを月単位で表示します。</li>
+                        <li><strong>簡単マーキング:</strong> 日付セルをクリックするだけで、予定（出勤など）をON/OFFできます。</li>
+                        <li><strong>メンバー管理:</strong> メンバーの追加、名前の編集、削除が可能です。</li>
+                        <li><strong>祝日・曜日表示:</strong> 日本の祝日、土曜日、日曜日を色分け表示します。</li>
+                        <li><strong>今日ハイライト:</strong> 当日の列をハイライト表示します。</li>
+                        <li><strong>年月移動:</strong> 前月/次月ボタンや年月入力で表示月を簡単に移動できます。</li>
+                        <li><strong>データ保存/読込:</strong> メンバーとスケジュールデータをJSONファイルとして保存・読み込みできます。</li>
+                    </ul>
+
+                    <h2>使い方マニュアル</h2>
+
+                    <h3>画面構成</h3>
+                    <!-- ここにスケジュールチェックの画面構成を示す画像を挿入 (ヘッダー、カレンダーエリアを指し示す) -->
+                    <img src="../../assets/images/schedule-layout.png" alt="スケジュールチェック 画面構成" class="screenshot">
+                    <ol>
+                        <li><strong>ヘッダー:</strong> アプリタイトルと操作コントロールがあります。
+                            <ul>
+                                <li><strong>年月表示・移動:</strong> 現在表示中の年月が表示され、<kbd>&lt;</kbd><kbd>&gt;</kbd>ボタンで前月/次月に移動できます。年/月を入力して<kbd>移動</kbd>ボタンでジャンプも可能です。</li>
+                                <li><strong>今日へ:</strong> クリックすると当日の月に移動します。</li>
+                                <li><strong>メンバー追加:</strong> 新しいメンバー行（空行）を追加します。</li>
+                                <li><strong>JSON読込/保存:</strong> データをファイルから読み込んだり、ファイルへ保存したりします。</li>
+                            </ul>
+                        </li>
+                        <li><strong>カレンダーエリア:</strong>
+                            <ul>
+                                <li><strong>メンバー列 (左端):</strong> メンバー名が表示されます。クリックして名前を編集できます。</li>
+                                <li><strong>日付ヘッダー (上部):</strong> 日付と曜日が表示されます。土日祝日は色分けされ、当日はハイライトされます。</li>
+                                <li><strong>日付セル:</strong> 各メンバーの各日付に対応します。クリックすることで予定の有無を青い背景色でマーク/解除できます。土日祝日にも薄く色が付きます。</li>
+                            </ul>
+                        </li>
+                    </ol>
+
+                     <h3>基本的な使い方</h3>
+                     <ul class="list-group list-group-flush">
+                        <li class="list-group-item"><strong>予定のマーク/解除:</strong> カレンダーエリアの日付セルをクリックします。クリックするたびに青い背景色がON/OFFされます。</li>
+                        <li class="list-group-item"><strong>メンバーの追加:</strong> ヘッダーの<kbd>メンバー追加</kbd>ボタンをクリックします。リストの最下部に空の行が追加されるので、左端のセルをクリックして名前を入力します。</li>
+                        <li class="list-group-item"><strong>メンバー名の編集:</strong> 編集したいメンバー名のセルをクリックし、新しい名前を入力します。</li>
+                        <li class="list-group-item"><strong>メンバーの削除:</strong> 削除したいメンバー名のセルを空にして<kbd>Backspace</kbd>キーを押します（行が1つしかない場合は削除できません）。</li>
+                        <li class="list-group-item"><strong>表示月の変更:</strong>
+                            <ul>
+                                <li>ヘッダーの<kbd>&lt; 前月</kbd>、<kbd>次月 &gt;</kbd>ボタンをクリックします。</li>
+                                <li>ヘッダーの年・月入力欄に数値を入力し、<kbd>移動</kbd>ボタンをクリックします。</li>
+                                <li><kbd>今日へ</kbd>ボタンで当日の月にジャンプします。</li>
+                            </ul>
+                        </li>
+                    </ul>
+
+                     <h3>データの保存と読込</h3>
+                     <ul class="list-group list-group-flush">
+                         <li class="list-group-item"><strong>保存:</strong> ヘッダー右側の<kbd>JSON保存</kbd>ボタンをクリックします。変更がある場合、ボタンはオレンジ色<span class="badge bg-warning text-dark">!</span>で強調表示されます。<code>CL[日付時刻].json</code>というファイル名でダウンロードされます。空のメンバー行や、予定が全くマークされていないメンバーの情報は保存されません。</li>
+                        <li class="list-group-item"><strong>読込:</strong> ヘッダー右側の<kbd>JSON読込</kbd>ボタンをクリックし、保存したJSONファイルを選択します。現在のメンバーとスケジュールは上書きされます。読み込んだ日時はボタンの隣に表示されます。</li>
+                    </ul>
+
+                 </article>
+            </div>
+             <div class="col-lg-4">
+                 <aside>
+                     <div class="card mt-4 mt-lg-0">
+                        <div class="card-body">
+                            <h5 class="card-title">アプリ情報</h5>
+                            <ul class="list-unstyled">
+                                <li><strong>バージョン:</strong> 1.0</li>
+                                <li><strong>最終更新:</strong> 2024/MM/DD</li> <!-- 適宜更新 -->
+                                <li><strong>技術:</strong> HTML, CSS, Vanilla JavaScript</li>
+                                <li><strong>外部API:</strong> holidays-jp (祝日データ取得)</li>
+                                <li><strong>開発協力:</strong> Google AI Studio</li>
+                            </ul>
+                             <a href="https://LifeBook2021.github.io/app/calendar/" target="_blank" rel="noopener noreferrer" class="btn btn-success w-100 mb-2">
+                                <i class="bi bi-play-circle me-2"></i>アプリを起動
+                            </a>
+                             <div>
+                                <small class="text-muted">
+                                    <i class="bi bi-code-slash me-1"></i>ソースコードは、上記の「アプリを起動」リンク先のページで、ブラウザの「ページのソースを表示」(またはそれに類する)機能を使用することで確認・保存できます。
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                     <div class="card mt-4">
+                         <div class="card-body">
+                             <h5 class="card-title">開発ストーリー</h5>
+                             <p class="small">シンプルな出欠確認表のアイデアから発展。AIに「月間カレンダー形式にしたい」「メンバーを追加・編集できるように」「祝日を表示したい」と依頼。特に祝日データの外部API連携部分でAIのサポートが役立ちました。UIの調整やデータ保存形式の決定にもAIと対話しながら進めました。</p>
+                              <a href="../../ai-creation.html" class="btn btn-outline-info btn-sm">AIとの開発をもっと詳しく</a>
+                         </div>
+                     </div>
+                 </aside>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer mt-auto">
+        <div class="container text-center">
+            <span class="text-muted">&copy; 2024 AIと創るJavaScriptツールキット. All Rights Reserved.</span>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
