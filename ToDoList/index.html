@@ -1,0 +1,1652 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>週間ToDoカレンダー</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%3E%3Ctext%20y%3D%22.9em%22%20font-size%3D%2290%22%3E%E2%9C%85%3C%2Ftext%3E%3C%2Fsvg%3E">
+    <style>
+        /* --- 基本スタイル --- */
+        html, body { height: 100%; margin: 0; overflow: hidden; }
+        body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; background-color: #f4f4f4; height: 100%; }
+        .container { width: 100%; max-width: none; flex-grow: 1; display: flex; flex-direction: column; background-color: #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.1); padding: 15px; box-sizing: border-box; overflow: hidden; }
+        h1 { margin-top: 0; margin-bottom: 15px; text-align: center; flex-shrink: 0; }
+
+        /* --- コントロールエリア --- */
+        .controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 15px; flex-shrink: 0; }
+        .action-group-left, .action-group-right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+        .controls button, .controls label.data-load-label { padding: 8px 15px; height: 38px; line-height: 1.5; box-sizing: border-box; cursor: pointer; border: none; border-radius: 4px; color: white; transition: background-color 0.2s; white-space: nowrap; display: inline-flex; align-items: center; justify-content: center; gap: 5px; }
+        .week-navigation button, #saveDataBtn { background-color: #007bff; } .week-navigation button:hover, #saveDataBtn:hover { background-color: #0056b3; }
+        #goToTodayBtn { background-color: #6c757d; } #goToTodayBtn:hover { background-color: #5a6268; }
+        #showAddTodoDialogBtn { background-color: #17a2b8; } #showAddTodoDialogBtn:hover { background-color: #117a8b; }
+        #settingsBtn { background-color: #ffc107; color: #333; } #settingsBtn:hover { background-color: #e0a800; }
+        label.data-load-label { background-color: #28a745; } label.data-load-label:hover { background-color: #218838; }
+        #currentWeekDisplay { font-size: 1.2em; font-weight: bold; margin: 0 10px; white-space: nowrap; }
+        #loadDataInput { display: none; }
+
+        /* --- カレンダーグリッド --- */
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); grid-template-rows: auto 1fr; gap: 5px; border: 1px solid #ddd; padding: 5px; background-color: #f9f9f9; flex-grow: 1; overflow: hidden; min-height: 200px; }
+        .day-header { font-weight: bold; text-align: center; background-color: #f0f0f0; padding: 8px; min-height: auto; border: 1px solid #eee; }
+        .day-cell { padding: 8px; border: 1px solid #eee; background-color: #fff; position: relative; display: flex; flex-direction: column; gap: 5px; overflow-y: auto; min-height: 100px; }
+        .day-number-container { display: flex; flex-direction: column; align-items: center; margin-bottom: 5px; flex-shrink: 0; text-align: center; }
+        .day-number { font-size: 0.9em; color: #555; font-weight: bold; }
+        .holiday-name { font-size: 0.75em; color: #dc3545; font-weight: normal; margin-top: 2px; line-height: 1.1; max-width: 95%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .sunday { background-color: #fff0e6; } .saturday { background-color: #e6f7ff; } .holiday { background-color: #ffeeee; } .today { background-color: #e6ffe6; }
+        .day-header.sunday { background-color: #ffcc99; } .day-header.saturday { background-color: #b3e0ff; }
+
+        /* --- ToDoアイテム --- */
+        .todo-item { padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 0.9em; box-shadow: 1px 1px 3px rgba(0,0,0,0.1); word-wrap: break-word; display: flex; flex-direction: column; gap: 4px; flex-shrink: 0; cursor: pointer; }
+        .todo-item:hover { border-color: #aaa; }
+        .todo-priority-high-bg { background-color: #ffe8cc; }
+        .todo-priority-medium-bg { background-color: #ffffcc; }
+        .todo-priority-low-bg { background-color: #e6f7ff; }
+        .todo-item.todo-overdue-bg { background-color: #ffcccc; border-color: #f5c6cb; }
+        .todo-item.completed .todo-title, .todo-item.completed .todo-details { text-decoration: line-through; color: #888; }
+        .todo-details { font-size: 0.8em; color: #555; }
+        .todo-priority-High { color: #e67e22; font-weight: bold; }
+        .todo-priority-Medium { color: #f0ad4e; }
+        .todo-priority-Low { color: #5bc0de; }
+        .todo-actions { display: flex; align-items: center; justify-content: flex-start; gap: 8px; margin-top: 5px; cursor: default; }
+        .todo-actions input[type="checkbox"] { cursor: pointer; margin-right: 0; }
+        .completion-timestamp { font-size: 0.75em; color: #28a745; white-space: nowrap; display: none; }
+        .todo-item.completed .completion-timestamp { display: inline; }
+        .action-buttons { margin-left: auto; display: flex; gap: 5px; }
+        .edit-todo-btn, .delete-todo-btn { background: none; border: none; cursor: pointer; font-size: 0.9em; padding: 0 3px; }
+        .edit-todo-btn { color: #007bff; } .edit-todo-btn:hover { color: #0056b3; }
+        .delete-todo-btn { color: #dc3545; } .delete-todo-btn:hover { color: #c82333; }
+
+        /* --- ダイアログ共通 --- */
+        .dialog-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5); display: none; justify-content: center; align-items: center; z-index: 1000; overflow-y: auto; padding: 20px 0;}
+        .dialog-content { background-color: #fff; padding: 25px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); width: 90%; max-width: 480px; display: flex; flex-direction: column; gap: 15px; transition: background-color 0.3s ease; margin: auto; }
+        .dialog-content h2 { margin-top: 0; margin-bottom: 15px; font-size: 1.4em; text-align: center; }
+        .dialog-buttons { display: flex; justify-content: flex-end; gap: 10px; margin-top: 15px; }
+        .dialog-buttons button { padding: 10px 20px; cursor: pointer; border: none; border-radius: 4px; font-weight: bold; }
+        .dialog-content label { display: block; margin-bottom: 5px; font-weight: bold; }
+        .dialog-content input[type="text"], .dialog-content textarea, .dialog-content input[type="date"], .dialog-content input[type="time"], .dialog-content select, .dialog-content input[type="number"] { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-family: inherit; font-size: 1em; margin-bottom: 10px; }
+        .dialog-content textarea { min-height: 80px; resize: vertical; line-height: 1.6; }
+        .dialog-content input[type="date"], .dialog-content input[type="time"] { height: 38px; padding: 8px; width: auto; margin-bottom: 0;}
+        .dialog-content input:disabled, .dialog-content textarea:disabled, .dialog-content select:disabled { background-color: rgba(233, 236, 239, 0.5); cursor: not-allowed; }
+
+        /* --- ToDoダイアログ --- */
+        .todo-dialog.dialog-priority-high-bg { background-color: #fff4e6; } .todo-dialog.dialog-priority-medium-bg { background-color: #fffff0; } .todo-dialog.dialog-priority-low-bg { background-color: #f0f8ff; }
+        .datetime-input-wrapper { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+        #dialogTodoDueDate { flex: 2 1 150px; }
+        #dialogTodoDueTime { flex: 1 1 100px; }
+        #dialogTodoDueDate:focus, #dialogTodoDueTime:focus { border-color: #86b7fe; outline: 0; box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25); }
+        .datetime-input-wrapper.disabled #dialogTodoDueDate, .datetime-input-wrapper.disabled #dialogTodoDueTime { background-color: rgba(233, 236, 239, 0.5); cursor: not-allowed; border-color: #ced4da; box-shadow: none; }
+        .recurrence-section { border-top: 1px solid #eee; padding-top: 15px; margin-top: 15px; }
+        .todo-dialog.mode-view .recurrence-section, .todo-dialog.mode-edit .recurrence-section { display: none; }
+        .recurrence-options { display: none; padding-left: 15px; border-left: 3px solid #eee; margin-top: 10px; }
+        .recurrence-options.visible { display: block; }
+        .recurrence-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
+        .recurrence-row input[type="number"], .recurrence-row input[type="date"], .recurrence-row select { padding: 8px; border: 1px solid #ccc; border-radius: 4px; height: 38px; box-sizing: border-box; width: auto; margin-bottom: 0; }
+        #recurrenceInterval { width: 70px; } #recurrenceDayOfMonth { width: 70px; }
+        .days-of-week label { display: inline-block; margin-right: 8px; font-weight: normal; }
+        .days-of-week input[type="checkbox"] { margin-right: 3px; vertical-align: middle; width: auto; margin-bottom: 0; }
+        .recurrence-section input:disabled, .recurrence-section select:disabled, .recurrence-section .days-of-week input:disabled + label { opacity: 0.6; cursor: not-allowed; }
+        .recurrence-section .days-of-week input:disabled { pointer-events: none;}
+        .hidden { display: none; }
+        .priority-palette { display: flex; justify-content: space-around; gap: 10px; margin-top: 5px; margin-bottom: 10px; }
+        .priority-option { flex-grow: 1; padding: 10px 5px; border: 2px solid #ccc; border-radius: 4px; cursor: pointer; text-align: center; font-weight: bold; transition: border-color 0.2s, transform 0.1s, opacity 0.2s; color: #333; background: none; }
+        .priority-option:hover { border-color: #888; }
+        .priority-option.selected { border-color: #007bff; transform: scale(1.05); box-shadow: 0 0 5px rgba(0, 123, 255, 0.5); }
+        .priority-option[data-priority="High"] { background-color: #ffe8cc; } .priority-option[data-priority="Medium"] { background-color: #ffffcc; } .priority-option[data-priority="Low"] { background-color: #e6f7ff; }
+        .todo-dialog.mode-view .priority-option:not(.selected) { opacity: 0.7; }
+        .todo-dialog.mode-view .priority-option:hover:not(.selected) { border-color: #ccc; }
+        #dialogCompletionInfo { font-size: 0.85em; color: #28a745; font-weight: bold; text-align: right; margin-top: 10px; padding-top: 10px; border-top: 1px dashed #ccc; }
+        #saveTodoDialogBtn { background-color: #28a745; color: white; } #saveTodoDialogBtn:hover { background-color: #218838; }
+        #cancelTodoDialogBtn { background-color: #6c757d; color: white; } #cancelTodoDialogBtn:hover { background-color: #5a6268; }
+        #editTodoDialogBtn { background-color: #ffc107; color: #333; } #editTodoDialogBtn:hover { background-color: #e0a800; }
+        #closeViewDialogBtn { background-color: #6c757d; color: white; } #closeViewDialogBtn:hover { background-color: #5a6268; }
+
+        /* --- 削除オプションダイアログ --- */
+        .delete-options-dialog { max-width: 400px; }
+        .delete-options-dialog h2 { font-size: 1.3em; }
+        .delete-options-form label { display: block; margin-bottom: 12px; font-weight: normal; cursor: pointer; }
+        .delete-options-form input[type="radio"] { margin-right: 8px; vertical-align: middle; width: auto; margin-bottom: 0; }
+        #confirmDeleteBtn { background-color: #dc3545; color: white; } #confirmDeleteBtn:hover { background-color: #c82333; }
+        #cancelDeleteBtn { background-color: #6c757d; color: white; } #cancelDeleteBtn:hover { background-color: #5a6268; }
+
+        /* --- 設定ダイアログ --- */
+        .settings-dialog { max-width: 400px; }
+        .settings-dialog .settings-group { margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 15px; }
+        .settings-dialog .settings-group:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+        .settings-dialog .settings-group legend { font-weight: bold; margin-bottom: 10px; font-size: 1.1em; }
+        .settings-dialog label { display: block; margin-bottom: 8px; font-weight: normal; cursor: pointer; }
+        .settings-dialog input[type="radio"] { margin-right: 8px; vertical-align: middle; width: auto; margin-bottom: 0; }
+        #saveSettingsBtn { background-color: #007bff; color: white; } #saveSettingsBtn:hover { background-color: #0056b3; }
+        #cancelSettingsBtn { background-color: #6c757d; color: white; } #cancelSettingsBtn:hover { background-color: #5a6268; }
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>週間ToDoカレンダー</h1>
+        <div class="controls">
+             <div class="action-group-left">
+                 <div class="week-navigation">
+                     <button id="prevWeekBtn">&lt; 前週</button>
+                     <span id="currentWeekDisplay"></span>
+                     <button id="nextWeekBtn">次週 &gt;</button>
+                 </div>
+                 <button id="goToTodayBtn">今日へ</button>
+                 <button id="showAddTodoDialogBtn">ToDo追加</button>
+                 <button id="settingsBtn">⚙️ 設定</button>
+             </div>
+             <div class="action-group-right">
+                 <button id="saveDataBtn">💾 保存</button>
+                 <input type="file" id="loadDataInput" accept=".json">
+                 <label for="loadDataInput" class="data-load-label">📂 読込</label>
+             </div>
+        </div>
+        <div class="calendar-grid" id="calendarGrid">
+            <!-- 曜日ヘッダーはJSで生成 -->
+        </div>
+    </div>
+
+    <!-- ToDo詳細/編集/追加ダイアログ -->
+    <div class="dialog-overlay" id="dialogOverlay">
+        <div class="todo-dialog dialog-content" id="todoDialog">
+            <h2 id="dialogTitle">ToDo</h2>
+            <input type="hidden" id="todoEditId">
+            <input type="hidden" id="todoInstanceDate">
+            <div><label for="dialogTodoTitle">タイトル:</label><input type="text" id="dialogTodoTitle" required></div>
+            <div>
+                <label for="dialogTodoDueDate">期限日時:</label>
+                <div class="datetime-input-wrapper" id="datetimeInputWrapper">
+                    <input type="date" id="dialogTodoDueDate" required>
+                    <input type="time" id="dialogTodoDueTime">
+                </div>
+                <small>※日付のみ指定した場合、その日の終わりが期限になります。</small>
+            </div>
+            <div>
+                <label>優先度:</label>
+                <div class="priority-palette" id="dialogPriorityPalette">
+                    <button type="button" class="priority-option" data-priority="High">高</button>
+                    <button type="button" class="priority-option" data-priority="Medium">中</button>
+                    <button type="button" class="priority-option" data-priority="Low">低</button>
+                </div>
+            </div>
+            <div>
+                <label for="dialogTodoContent">内容:</label>
+                <textarea id="dialogTodoContent" rows="4" placeholder="詳細な内容を記入..."></textarea>
+            </div>
+            <!-- 繰り返し設定 (新規追加時のみ表示) -->
+            <div class="recurrence-section" style="display: none;">
+                <label for="recurrenceType">繰り返し:</label>
+                <select id="recurrenceType">
+                    <option value="none">しない</option>
+                    <option value="daily">毎日</option>
+                    <option value="weekly">毎週</option>
+                    <option value="monthly">毎月</option>
+                </select>
+                <div id="recurrenceOptions" class="recurrence-options">
+                     <div class="recurrence-row"> <input type="number" id="recurrenceInterval" value="1" min="1"> <span id="recurrenceIntervalUnit">日間隔</span> </div>
+                     <div id="weeklyOptions" class="hidden recurrence-row"> <label>曜日:</label> <div class="days-of-week"> <label><input type="checkbox" name="daysOfWeek" value="0">日</label> <label><input type="checkbox" name="daysOfWeek" value="1">月</label> <label><input type="checkbox" name="daysOfWeek" value="2">火</label> <label><input type="checkbox" name="daysOfWeek" value="3">水</label> <label><input type="checkbox" name="daysOfWeek" value="4">木</label> <label><input type="checkbox" name="daysOfWeek" value="5">金</label> <label><input type="checkbox" name="daysOfWeek" value="6">土</label> </div> </div>
+                     <div id="monthlyOptions" class="hidden recurrence-row"> <label for="recurrenceDayOfMonth">日付:</label> <input type="number" id="recurrenceDayOfMonth" min="1" max="31"> 日 </div>
+                     <div class="recurrence-row"> <label for="recurrenceEndType">終了:</label> <select id="recurrenceEndType"> <option value="never">しない</option> <option value="onDate">指定日</option> </select> <input type="date" id="recurrenceEndDate" class="hidden"> </div>
+                </div>
+            </div>
+            <div id="dialogCompletionInfo" class="hidden"></div>
+            <div class="dialog-buttons dialog-edit-buttons" id="dialogEditButtons"><button id="saveTodoDialogBtn">保存</button><button id="cancelTodoDialogBtn">キャンセル</button></div>
+            <div class="dialog-buttons dialog-view-buttons" id="dialogViewButtons"><button id="editTodoDialogBtn">編集</button><button id="closeViewDialogBtn">閉じる</button></div>
+        </div>
+    </div>
+
+    <!-- 削除オプションダイアログ -->
+    <div class="dialog-overlay" id="deleteOptionsDialogOverlay">
+        <div class="delete-options-dialog dialog-content">
+            <h2>削除オプション</h2>
+            <form id="deleteOptionsForm">
+                <input type="hidden" id="deleteTargetId">
+                <input type="hidden" id="deleteTargetInstanceDate">
+                <div id="deleteOptionThisWrapper">
+                    <label>
+                        <input type="radio" name="deleteOption" value="this" checked> この予定のみ削除
+                    </label>
+                </div>
+                <div id="deleteOptionFutureWrapper">
+                    <label>
+                        <input type="radio" name="deleteOption" value="future"> これ以降のすべての予定を削除
+                    </label>
+                </div>
+                <div id="deleteOptionAllWrapper">
+                    <label>
+                        <input type="radio" name="deleteOption" value="all"> すべての繰り返し予定を削除
+                    </label>
+                </div>
+            </form>
+            <div class="dialog-buttons delete-options-buttons">
+                <button id="confirmDeleteBtn">削除実行</button>
+                <button id="cancelDeleteBtn">キャンセル</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 設定ダイアログ -->
+    <div class="dialog-overlay" id="settingsDialogOverlay">
+        <div class="settings-dialog dialog-content">
+            <h2>設定</h2>
+            <form id="settingsForm">
+                <fieldset class="settings-group">
+                    <legend>週の開始曜日</legend>
+                    <label>
+                        <input type="radio" name="weekStart" value="0"> 日曜始まり
+                    </label>
+                    <label>
+                        <input type="radio" name="weekStart" value="1"> 月曜始まり
+                    </label>
+                </fieldset>
+                <fieldset class="settings-group">
+                    <legend>ToDo追加時のデフォルト期限日</legend>
+                    <label>
+                        <input type="radio" name="defaultDueDate" value="today"> 今日
+                    </label>
+                    <label>
+                        <input type="radio" name="defaultDueDate" value="week"> 1週間後
+                    </label>
+                    <label>
+                        <input type="radio" name="defaultDueDate" value="month"> 1ヶ月後
+                    </label>
+                </fieldset>
+            </form>
+            <div class="dialog-buttons settings-buttons">
+                <button id="saveSettingsBtn">保存</button>
+                <button id="cancelSettingsBtn">キャンセル</button>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- グローバル変数 ---
+            let currentDate = new Date(); // 現在表示している週の基準日
+            let todos = []; // 全てのToDoテンプレートデータ {id, title, dueDate, priority, content, recurrence, completedDates, exceptionDates}
+            let holidays = {}; // 祝日データ {'YYYY-MM-DD': '祝日名'}
+            let editingTodoId = null; // 編集/表示中のToDoテンプレートID
+            let editingInstanceDate = null; // 編集/表示中のToDoインスタンスの日付 (YYYY-MM-DD)
+            let selectedPriorityInDialog = 'Medium'; // ダイアログで選択中の優先度
+            let currentDialogMode = 'add'; // ダイアログのモード ('add', 'edit', 'view')
+
+            // --- 定数 ---
+            const SETTINGS_KEY = 'todoCalendarSettings'; // LocalStorageキー
+            const PRIORITY_MAP = { High: '高', Medium: '中', Low: '低' };
+            const DAY_NAMES = ['日', '月', '火', '水', '木', '金', '土']; // 日本語曜日名 (getDay()のインデックスに対応)
+            const DEFAULT_PRIORITY = 'Medium'; // デフォルト優先度
+            const DEFAULT_TIME_FOR_DATE_ONLY = '23:59'; // 日付のみ指定した場合のデフォルト時刻
+            const CURRENT_DATA_VERSION = 1; // 保存データ形式のバージョン
+
+            // --- アプリケーション設定 (デフォルト値) ---
+            let settings = {
+                weekStartDay: 0, // 0: 日曜始まり, 1: 月曜始まり
+                defaultDueDateOffset: 'today' // 'today', 'week', 'month'
+            };
+
+            // --- DOM要素キャッシュ ---
+            const prevWeekBtn = document.getElementById('prevWeekBtn');
+            const nextWeekBtn = document.getElementById('nextWeekBtn');
+            const currentWeekDisplay = document.getElementById('currentWeekDisplay');
+            const calendarGrid = document.getElementById('calendarGrid');
+            const saveDataBtn = document.getElementById('saveDataBtn');
+            const loadDataInput = document.getElementById('loadDataInput');
+            const showAddTodoDialogBtn = document.getElementById('showAddTodoDialogBtn');
+            const goToTodayBtn = document.getElementById('goToTodayBtn');
+            const settingsBtn = document.getElementById('settingsBtn');
+            // ToDoダイアログ関連
+            const dialogOverlay = document.getElementById('dialogOverlay');
+            const todoDialog = document.getElementById('todoDialog');
+            const dialogTitle = document.getElementById('dialogTitle');
+            const todoEditIdInput = document.getElementById('todoEditId');
+            const todoInstanceDateInput = document.getElementById('todoInstanceDate');
+            const dialogTodoTitleInput = document.getElementById('dialogTodoTitle');
+            const dialogTodoDueDate = document.getElementById('dialogTodoDueDate');
+            const dialogTodoDueTime = document.getElementById('dialogTodoDueTime');
+            const datetimeInputWrapper = document.getElementById('datetimeInputWrapper');
+            const dialogPriorityPalette = document.getElementById('dialogPriorityPalette');
+            const priorityOptions = dialogPriorityPalette.querySelectorAll('.priority-option');
+            const dialogTodoContent = document.getElementById('dialogTodoContent');
+            const recurrenceSection = document.querySelector('.recurrence-section');
+            const recurrenceTypeSelect = document.getElementById('recurrenceType');
+            const recurrenceOptionsDiv = document.getElementById('recurrenceOptions');
+            const recurrenceIntervalInput = document.getElementById('recurrenceInterval');
+            const recurrenceIntervalUnitSpan = document.getElementById('recurrenceIntervalUnit');
+            const weeklyOptionsDiv = document.getElementById('weeklyOptions');
+            const daysOfWeekCheckboxes = document.querySelectorAll('input[name="daysOfWeek"]');
+            const monthlyOptionsDiv = document.getElementById('monthlyOptions');
+            const recurrenceDayOfMonthInput = document.getElementById('recurrenceDayOfMonth');
+            const recurrenceEndTypeSelect = document.getElementById('recurrenceEndType');
+            const recurrenceEndDateInput = document.getElementById('recurrenceEndDate');
+            const dialogCompletionInfo = document.getElementById('dialogCompletionInfo');
+            const dialogEditButtons = document.getElementById('dialogEditButtons');
+            const dialogViewButtons = document.getElementById('dialogViewButtons');
+            const saveTodoDialogBtn = document.getElementById('saveTodoDialogBtn');
+            const cancelTodoDialogBtn = document.getElementById('cancelTodoDialogBtn');
+            const editTodoDialogBtn = document.getElementById('editTodoDialogBtn');
+            const closeViewDialogBtn = document.getElementById('closeViewDialogBtn');
+            // 削除オプションダイアログ関連
+            const deleteOptionsDialogOverlay = document.getElementById('deleteOptionsDialogOverlay');
+            const deleteOptionsDialog = document.querySelector('.delete-options-dialog');
+            const deleteOptionThisWrapper = document.getElementById('deleteOptionThisWrapper');
+            const deleteOptionFutureWrapper = document.getElementById('deleteOptionFutureWrapper');
+            const deleteOptionAllWrapper = document.getElementById('deleteOptionAllWrapper');
+            const deleteTargetIdInput = document.getElementById('deleteTargetId');
+            const deleteTargetInstanceDateInput = document.getElementById('deleteTargetInstanceDate');
+            const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+            const cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
+            // 設定ダイアログ関連
+            const settingsDialogOverlay = document.getElementById('settingsDialogOverlay');
+            const settingsDialog = document.querySelector('.settings-dialog');
+            const settingsForm = document.getElementById('settingsForm');
+            const saveSettingsBtn = document.getElementById('saveSettingsBtn');
+            const cancelSettingsBtn = document.getElementById('cancelSettingsBtn');
+
+
+            // ==================================================================
+            // ヘルパー関数
+            // ==================================================================
+
+            /**
+             * Dateオブジェクトを指定された形式の文字列にフォーマットします。
+             * @param {Date} d - フォーマットするDateオブジェクト。
+             * @param {string} [f='YYYY-MM-DD'] - 出力形式 ('YYYY-MM-DD', 'MM/DD', 'HH:MM', 'YYYY/MM/DD HH:MM', 'YYYY-MM-DDTHH:mm')。
+             * @returns {string} フォーマットされた日付文字列。失敗した場合は空文字列。
+             */
+            function formatDate(d, f = 'YYYY-MM-DD') {
+                try {
+                    if (!(d instanceof Date) || isNaN(d.getTime())) return '';
+                    const y = d.getFullYear(),
+                          m = String(d.getMonth() + 1).padStart(2, '0'),
+                          dt = String(d.getDate()).padStart(2, '0'),
+                          h = String(d.getHours()).padStart(2, '0'),
+                          min = String(d.getMinutes()).padStart(2, '0');
+                    switch (f) {
+                        case 'YYYY-MM-DD': return `${y}-${m}-${dt}`;
+                        case 'MM/DD': return `${m}/${dt}`;
+                        case 'HH:MM': return `${h}:${min}`;
+                        case 'YYYY/MM/DD HH:MM': return `${y}/${m}/${dt} ${h}:${min}`;
+                        case 'YYYY-MM-DDTHH:mm': return `${y}-${m}-${dt}T${h}:${min}`;
+                        default: return `${y}/${m}/${dt}`;
+                    }
+                } catch (e) {
+                    console.error("日付フォーマットエラー:", d, e);
+                    return '';
+                }
+            }
+
+            /**
+             * ToDoダイアログの背景色を優先度に応じて更新します。
+             * @param {string|null} priority - 優先度 ('High', 'Medium', 'Low') または null (色をクリア)。
+             */
+            function updateDialogBackground(priority) {
+                todoDialog.classList.remove('dialog-priority-high-bg', 'dialog-priority-medium-bg', 'dialog-priority-low-bg');
+                if (priority) {
+                    todoDialog.classList.add(`dialog-priority-${priority.toLowerCase()}-bg`);
+                }
+            }
+
+            /**
+             * 日付文字列 (YYYY-MM-DD) をUTC基準のDateオブジェクトに変換します。
+             * @param {string} dateStr - 変換する日付文字列。
+             * @returns {Date|null} 変換後のDateオブジェクト、または失敗時にnull。
+             */
+            function parseDateString(dateStr) {
+                try {
+                    if (!dateStr) return null;
+                    // UTCの0時として解釈
+                    const d = new Date(dateStr + 'T00:00:00Z');
+                    return isNaN(d.getTime()) ? null : d;
+                } catch {
+                    return null;
+                }
+            }
+
+            /**
+             * 二つのDateオブジェクトの日数差をUTC基準で計算します。
+             * @param {Date} date1 - 日付1。
+             * @param {Date} date2 - 日付2。
+             * @returns {number} 日数差 (date1 - date2)。
+             */
+            function getDateDiffInDays(date1, date2) {
+                const msPerDay = 1000 * 60 * 60 * 24;
+                const utc1 = Date.UTC(date1.getUTCFullYear(), date1.getUTCMonth(), date1.getUTCDate());
+                const utc2 = Date.UTC(date2.getUTCFullYear(), date2.getUTCMonth(), date2.getUTCDate());
+                return Math.round((utc1 - utc2) / msPerDay);
+            }
+
+            /**
+             * 二つのDateオブジェクトの週数差をUTC基準で計算します (週の開始は日曜固定)。
+             * @param {Date} date1 - 日付1。
+             * @param {Date} date2 - 日付2。
+             * @returns {number} 週数差 (date1の週 - date2の週)。
+             */
+            function getWeekDiff(date1, date2) {
+                const msPerWeek = 1000 * 60 * 60 * 24 * 7;
+                // 各日付の日曜始まりの週の開始日(UTC)を計算
+                const startOfWeek1 = new Date(Date.UTC(date1.getUTCFullYear(), date1.getUTCMonth(), date1.getUTCDate() - date1.getUTCDay()));
+                const startOfWeek2 = new Date(Date.UTC(date2.getUTCFullYear(), date2.getUTCMonth(), date2.getUTCDate() - date2.getUTCDay()));
+                return Math.round((startOfWeek1.getTime() - startOfWeek2.getTime()) / msPerWeek);
+            }
+
+            /**
+             * 二つのDateオブジェクトの月数差をUTC基準で計算します。
+             * @param {Date} date1 - 日付1。
+             * @param {Date} date2 - 日付2。
+             * @returns {number} 月数差 (date1の月 - date2の月)。
+             */
+            function getMonthDiff(date1, date2) {
+                return (date1.getUTCFullYear() - date2.getUTCFullYear()) * 12 + (date1.getUTCMonth() - date2.getUTCMonth());
+            }
+
+
+            // ==================================================================
+            // 設定関連処理
+            // ==================================================================
+
+            /**
+             * 設定をLocalStorageから読み込み、グローバル変数 `settings` を更新します。
+             */
+            function loadSettings() {
+                try {
+                    const savedSettings = localStorage.getItem(SETTINGS_KEY);
+                    if (savedSettings) {
+                        const parsed = JSON.parse(savedSettings);
+                        // 値の検証と適用
+                        if (typeof parsed.weekStartDay === 'number' && [0, 1].includes(parsed.weekStartDay)) {
+                            settings.weekStartDay = parsed.weekStartDay;
+                        }
+                        if (typeof parsed.defaultDueDateOffset === 'string' && ['today', 'week', 'month'].includes(parsed.defaultDueDateOffset)) {
+                            settings.defaultDueDateOffset = parsed.defaultDueDateOffset;
+                        }
+                    }
+                    // console.info("設定を読み込みました:", settings); // デバッグ用に残しても良い
+                } catch (error) {
+                    console.error("設定の読み込みに失敗しました:", error);
+                    // エラー発生時はデフォルト設定を維持
+                }
+            }
+
+            /**
+             * 現在の `settings` をLocalStorageに保存します。
+             */
+            function saveSettings() {
+                try {
+                    localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+                    // console.info("設定を保存しました:", settings); // デバッグ用に残しても良い
+                } catch (error) {
+                    console.error("設定の保存に失敗しました:", error);
+                    alert("設定の保存中にエラーが発生しました。");
+                }
+            }
+
+            /**
+             * 設定ダイアログを開きます。
+             */
+            function openSettingsDialog() {
+                // 現在の設定値をフォームに反映
+                settingsForm.elements.weekStart.value = settings.weekStartDay.toString();
+                settingsForm.elements.defaultDueDate.value = settings.defaultDueDateOffset;
+                settingsDialogOverlay.style.display = 'flex';
+            }
+
+            /**
+             * 設定ダイアログを閉じます。
+             */
+            function closeSettingsDialog() {
+                settingsDialogOverlay.style.display = 'none';
+            }
+
+            /**
+             * 設定ダイアログの内容をグローバル変数 `settings` に反映し、保存、カレンダーを再描画します。
+             */
+            function saveSettingsFromDialog() {
+                const newWeekStartDay = parseInt(settingsForm.elements.weekStart.value, 10);
+                const newDefaultDueDateOffset = settingsForm.elements.defaultDueDate.value;
+
+                // 設定が変更された場合のみ処理
+                if (settings.weekStartDay !== newWeekStartDay || settings.defaultDueDateOffset !== newDefaultDueDateOffset) {
+                    settings.weekStartDay = newWeekStartDay;
+                    settings.defaultDueDateOffset = newDefaultDueDateOffset;
+                    saveSettings();
+                    renderCalendar(); // 設定変更をカレンダーに反映
+                }
+                closeSettingsDialog();
+            }
+
+
+            // ==================================================================
+            // 初期化処理
+            // ==================================================================
+
+            /**
+             * アプリケーションを初期化します。設定読み込み、イベントリスナー設定、祝日取得、カレンダー描画を行います。
+             */
+            async function initializeApp() {
+                loadSettings(); // 設定を最初に読み込む
+                setupEventListeners();
+                await fetchHolidays();
+                loadInitialData(); // 必要であればLocalStorage等からToDoデータを読み込む処理を追加
+                renderCalendar();
+            }
+
+            /**
+             * 主要なUI要素にイベントリスナーを設定します。
+             */
+            function setupEventListeners() {
+                // 週ナビゲーション
+                prevWeekBtn.addEventListener('click', () => navigateWeek(-1));
+                nextWeekBtn.addEventListener('click', () => navigateWeek(1));
+                goToTodayBtn.addEventListener('click', () => { currentDate = new Date(); renderCalendar(); });
+
+                // ToDo操作
+                showAddTodoDialogBtn.addEventListener('click', () => openDialog('add'));
+                saveTodoDialogBtn.addEventListener('click', saveTodoFromDialog);
+                cancelTodoDialogBtn.addEventListener('click', closeDialog);
+                editTodoDialogBtn.addEventListener('click', switchToEditMode);
+                closeViewDialogBtn.addEventListener('click', closeDialog);
+                dialogOverlay.addEventListener('click', (event) => { if (event.target === dialogOverlay) closeDialog(); });
+                document.addEventListener('keydown', (event) => { if (event.key === 'Escape' && dialogOverlay.style.display === 'flex') closeDialog(); });
+
+                // 優先度パレット
+                setupPriorityPalette();
+                // 繰り返し設定UI
+                setupRecurrenceUIListeners();
+
+                // 削除オプションダイアログ
+                confirmDeleteBtn.addEventListener('click', handleDeleteOption);
+                cancelDeleteBtn.addEventListener('click', closeDeleteOptionsDialog);
+                deleteOptionsDialogOverlay.addEventListener('click', (event) => { if (event.target === deleteOptionsDialogOverlay) closeDeleteOptionsDialog(); });
+                document.addEventListener('keydown', (event) => { if (event.key === 'Escape' && deleteOptionsDialogOverlay.style.display === 'flex') closeDeleteOptionsDialog(); });
+
+                // 設定ダイアログ
+                settingsBtn.addEventListener('click', openSettingsDialog);
+                saveSettingsBtn.addEventListener('click', saveSettingsFromDialog);
+                cancelSettingsBtn.addEventListener('click', closeSettingsDialog);
+                settingsDialogOverlay.addEventListener('click', (event) => { if (event.target === settingsDialogOverlay) closeSettingsDialog(); });
+                document.addEventListener('keydown', (event) => { if (event.key === 'Escape' && settingsDialogOverlay.style.display === 'flex') closeSettingsDialog(); });
+
+                // データ保存/読込
+                saveDataBtn.addEventListener('click', saveData);
+                loadDataInput.addEventListener('change', loadData);
+             }
+
+            /**
+             * 祝日データをAPIから取得し、`holidays` 変数に格納します。
+             * @returns {Promise<void>}
+             */
+            async function fetchHolidays() {
+                try {
+                    const response = await fetch('https://holidays-jp.github.io/api/v1/date.json');
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    holidays = await response.json();
+                    // console.info("祝日データを取得しました。");
+                } catch (error) {
+                    console.error("祝日データの取得に失敗しました:", error);
+                    holidays = {}; // 取得失敗時は空にする
+                }
+            }
+
+            /**
+             * 初期データ（ToDoリストなど）を読み込む処理（現在はダミー）。
+             * 必要に応じてLocalStorageからの読み込みなどを実装します。
+             */
+            function loadInitialData() {
+                // 例: LocalStorageからToDoデータを読み込む場合
+                // const savedTodos = localStorage.getItem('todosData');
+                // if (savedTodos) {
+                //     try {
+                //         todos = JSON.parse(savedTodos);
+                //     } catch (e) {
+                //         console.error("ToDoデータの読み込みに失敗:", e);
+                //         todos = [];
+                //     }
+                // }
+            }
+
+            /**
+             * ToDoダイアログの優先度選択ボタンにイベントリスナーを設定します。
+             * 表示モードでのクリックにも対応します。
+             */
+            function setupPriorityPalette() {
+                 priorityOptions.forEach(button => {
+                     button.addEventListener('click', () => {
+                         const newPriority = button.dataset.priority;
+                         priorityOptions.forEach(btn => btn.classList.remove('selected'));
+                         button.classList.add('selected');
+                         selectedPriorityInDialog = newPriority;
+
+                         // 表示モード(view)の場合、即座にToDoデータを更新してカレンダーを再描画
+                         if (currentDialogMode === 'view' && editingTodoId) {
+                             const todo = todos.find(t => t.id === editingTodoId);
+                             if (todo && todo.priority !== newPriority) {
+                                 todo.priority = newPriority;
+                                 updateDialogBackground(newPriority);
+                                 renderCalendar();
+                                 // console.info(`ToDo [${todo.id}] の優先度を ${newPriority} に直接変更。`);
+                                 // saveToLocalStorage(); // 必要なら永続化処理
+                             } else if (!todo) {
+                                 console.error("優先度更新エラー: 対象ToDo不明 (View Mode)");
+                             }
+                         }
+                     });
+                 });
+             }
+
+            /**
+             * ToDoダイアログの繰り返し設定UIのイベントリスナーを設定します。
+             */
+            function setupRecurrenceUIListeners() {
+                recurrenceTypeSelect.addEventListener('change', (e) => {
+                    const type = e.target.value;
+                    recurrenceOptionsDiv.classList.toggle('visible', type !== 'none');
+                    weeklyOptionsDiv.classList.toggle('hidden', type !== 'weekly');
+                    monthlyOptionsDiv.classList.toggle('hidden', type !== 'monthly');
+                    switch(type) {
+                        case 'daily': recurrenceIntervalUnitSpan.textContent = '日間隔'; break;
+                        case 'weekly': recurrenceIntervalUnitSpan.textContent = '週間隔'; break;
+                        case 'monthly': recurrenceIntervalUnitSpan.textContent = 'ヶ月間隔'; break;
+                        default: recurrenceIntervalUnitSpan.textContent = ''; break;
+                    }
+                });
+                recurrenceEndTypeSelect.addEventListener('change', (e) => {
+                    recurrenceEndDateInput.classList.toggle('hidden', e.target.value !== 'onDate');
+                });
+            }
+
+
+            // ==================================================================
+            // カレンダー描画関連
+            // ==================================================================
+
+            /**
+             * カレンダーグリッド全体を描画します。
+             * 曜日ヘッダー、各日付セル、ToDoアイテムを含みます。
+             * 期限切れToDoは今日のセルに移動します。
+             */
+            function renderCalendar() {
+                // --- 週の開始日と終了日を計算 ---
+                const startOfWeek = new Date(currentDate);
+                if (settings.weekStartDay === 1) { // 月曜始まりの場合
+                    const dayOfWeek = currentDate.getDay(); // 0=Sun, 1=Mon, ..., 6=Sat
+                    const diff = dayOfWeek === 0 ? -6 : 1 - dayOfWeek; // 日曜なら6日前、それ以外なら月曜からの差
+                    startOfWeek.setDate(currentDate.getDate() + diff);
+                } else { // 日曜始まり (デフォルト)
+                    startOfWeek.setDate(currentDate.getDate() - currentDate.getDay());
+                }
+                startOfWeek.setHours(0, 0, 0, 0); // 週の開始日の0時0分0秒
+
+                const endOfWeek = new Date(startOfWeek);
+                endOfWeek.setDate(startOfWeek.getDate() + 6);
+                endOfWeek.setHours(23, 59, 59, 999); // 週の最終日の終わり
+
+                // --- ヘッダーの週表示を更新 ---
+                currentWeekDisplay.textContent = `${formatDate(startOfWeek, 'YYYY/MM/DD')} - ${formatDate(endOfWeek, 'YYYY/MM/DD')}`;
+
+                // --- グリッド内容をクリア ---
+                calendarGrid.innerHTML = '';
+
+                // --- 曜日ヘッダーを生成 ---
+                const dayIndices = Array.from({ length: 7 }, (_, i) => (settings.weekStartDay + i) % 7);
+                dayIndices.forEach(dayIndex => {
+                    const dayHeader = document.createElement('div');
+                    dayHeader.classList.add('day-header');
+                    dayHeader.textContent = DAY_NAMES[dayIndex];
+                    if (dayIndex === 0) dayHeader.classList.add('sunday');
+                    if (dayIndex === 6) dayHeader.classList.add('saturday');
+                    calendarGrid.appendChild(dayHeader);
+                });
+
+                // --- ToDoインスタンスの生成と分類 ---
+                const todayStr = formatDate(new Date());
+                const now = Date.now();
+
+                // 表示範囲より広めにインスタンスを生成（期限切れ対応のため）
+                let allPossibleInstances = [];
+                 const generateStartDate = new Date(startOfWeek);
+                 generateStartDate.setFullYear(generateStartDate.getFullYear() - 1); // 1年前から生成開始
+                 todos.forEach(todo => {
+                     allPossibleInstances = allPossibleInstances.concat( generateRecurringInstances(todo, generateStartDate, endOfWeek) );
+                 });
+
+                // 期限切れで未完了のインスタンスを特定
+                const overdueUncompletedInstances = allPossibleInstances.filter(inst =>
+                    !inst.isCompleted && inst.instanceDueDate.getTime() < now
+                );
+                const overdueInstanceKeys = new Set(overdueUncompletedInstances.map(inst => `${inst.templateId}-${inst.dateString}`));
+
+                // --- 各日付セルの描画 ---
+                for (let i = 0; i < 7; i++) {
+                    const cellDate = new Date(startOfWeek);
+                    cellDate.setDate(startOfWeek.getDate() + i);
+                    const dateStr = formatDate(cellDate);
+                    const isTodayCell = (dateStr === todayStr);
+
+                    // 日付セル要素を作成
+                    const dayCell = createDayCellElement(cellDate, dateStr, isTodayCell);
+
+                    // この日に該当するインスタンスを取得 (表示範囲内で、期限切れ未完了でないもの)
+                    let instancesForThisCell = allPossibleInstances.filter(inst => {
+                         const isInView = inst.instanceDueDate >= startOfWeek && inst.instanceDueDate <= endOfWeek;
+                         return inst.dateString === dateStr && isInView && !overdueInstanceKeys.has(`${inst.templateId}-${inst.dateString}`);
+                    });
+
+                    // 今日のセルの場合、期限切れ未完了インスタンスを追加
+                    if (isTodayCell) {
+                         const currentCellInstanceKeys = new Set(instancesForThisCell.map(inst => `${inst.templateId}-${inst.dateString}`));
+                         overdueUncompletedInstances.forEach(oi => {
+                             if (!currentCellInstanceKeys.has(`${oi.templateId}-${oi.dateString}`)) {
+                                  instancesForThisCell.push(oi);
+                              }
+                         });
+                    }
+
+                    // ToDoアイテムをソートしてセルに追加
+                    instancesForThisCell.sort(compareTodoInstances).forEach(inst => {
+                        dayCell.appendChild(createTodoElementFromInstance(inst));
+                    });
+                    calendarGrid.appendChild(dayCell);
+                }
+            }
+
+            /**
+             * 指定された日付のセル要素を作成します。
+             * @param {Date} cellDate - セルの日付。
+             * @param {string} dateStr - セルの日付文字列 (YYYY-MM-DD)。
+             * @param {boolean} isTodayCell - このセルが今日かどうか。
+             * @returns {HTMLDivElement} 作成された日付セル要素。
+             */
+            function createDayCellElement(cellDate, dateStr, isTodayCell) {
+                 const dayCell = document.createElement('div');
+                 dayCell.classList.add('day-cell');
+                 dayCell.dataset.date = dateStr;
+
+                 // 日付番号と祝日名コンテナ
+                 const dayNumberContainer = document.createElement('div');
+                 dayNumberContainer.classList.add('day-number-container');
+                 const dayNumber = document.createElement('span');
+                 dayNumber.classList.add('day-number');
+                 dayNumber.textContent = cellDate.getDate();
+                 dayNumberContainer.appendChild(dayNumber);
+
+                 // 祝日表示
+                 const holidayNameText = holidays[dateStr];
+                 if (holidayNameText) {
+                     const holidayName = document.createElement('span');
+                     holidayName.classList.add('holiday-name');
+                     holidayName.textContent = holidayNameText;
+                     holidayName.title = holidayNameText; // ツールチップ用
+                     dayNumberContainer.appendChild(holidayName);
+                     dayCell.classList.add('holiday');
+                 }
+                 dayCell.appendChild(dayNumberContainer);
+
+                 // 曜日クラスと今日クラス
+                 const dayOfWeek = cellDate.getDay();
+                 if (dayOfWeek === 0) dayCell.classList.add('sunday');
+                 if (dayOfWeek === 6) dayCell.classList.add('saturday');
+                 if (isTodayCell) dayCell.classList.add('today');
+
+                 return dayCell;
+             }
+
+            /**
+             * ToDoテンプレートから、指定期間内に発生するToDoインスタンスの配列を生成します。
+             * @param {object} todo - ToDoテンプレートオブジェクト。
+             * @param {Date} generateStartDate - インスタンス生成を開始する日付。
+             * @param {Date} generateEndDate - インスタンス生成を終了する日付。
+             * @returns {Array<object>} 生成されたToDoインスタンスの配列。
+             */
+            function generateRecurringInstances(todo, generateStartDate, generateEndDate) {
+                const instances = [];
+                let startTime = DEFAULT_TIME_FOR_DATE_ONLY;
+                if (todo.dueDate) { try { const timePart = todo.dueDate.split('T')[1]?.substring(0, 5); if (timePart) startTime = timePart; } catch(e) { /* ignore */ } }
+
+                // 単発ToDoの場合
+                if (!todo.recurrence || todo.recurrence.type === 'none') {
+                    if (todo.dueDate) {
+                        try {
+                            const dueDateObj = new Date(todo.dueDate);
+                            if (!isNaN(dueDateObj.getTime())) {
+                                // 生成範囲内かチェック
+                                const localGenerateStart = new Date(generateStartDate.getFullYear(), generateStartDate.getMonth(), generateStartDate.getDate());
+                                const localGenerateEnd = new Date(generateEndDate.getFullYear(), generateEndDate.getMonth(), generateEndDate.getDate(), 23, 59, 59, 999);
+                                if (dueDateObj >= localGenerateStart && dueDateObj <= localGenerateEnd) {
+                                     const dateStr = formatDate(dueDateObj, 'YYYY-MM-DD');
+                                     if (!todo.exceptionDates?.[dateStr]) { // 除外日でなければ追加
+                                         const isCompleted = !!todo.completedDates?.[dateStr];
+                                         instances.push({ templateId: todo.id, dateString: dateStr, instanceDueDate: dueDateObj, title: todo.title, priority: todo.priority, content: todo.content, isCompleted: isCompleted, completedAt: todo.completedDates?.[dateStr] || null, recurrenceRule: null });
+                                     }
+                                 }
+                            }
+                        } catch (e) { console.error(`単発ToDo日付解析エラー(ID: ${todo.id}, DueDate: ${todo.dueDate}):`, e); }
+                    }
+                    return instances;
+                }
+
+                // 繰り返しToDoの場合
+                const rule = todo.recurrence;
+                const startDate = parseDateString(rule.startDate); // UTC Date
+                if (!startDate) return []; // 開始日が不正なら空配列
+                const endDate = rule.endType === 'onDate' && rule.endDate ? parseDateString(rule.endDate) : null; // UTC Date or null
+
+                let currentCheckDate = new Date(Date.UTC(startDate.getUTCFullYear(), startDate.getUTCMonth(), startDate.getUTCDate())); // チェック開始日(UTC)
+
+                // 計算開始日を決定 (パフォーマンスのため、不要な過去の計算をスキップ)
+                const calculationStartDateLimit = new Date(Date.UTC(generateStartDate.getFullYear(), generateStartDate.getMonth(), generateStartDate.getDate() - 31)); // 余裕をもって1ヶ月前から
+                const calculationStartDate = currentCheckDate > calculationStartDateLimit ? new Date(currentCheckDate) : new Date(calculationStartDateLimit);
+
+                 // スキップ処理
+                 if (currentCheckDate < calculationStartDate) {
+                     if (rule.type === 'daily') { const diff = getDateDiffInDays(calculationStartDate, currentCheckDate); const skipCount = Math.max(0, Math.floor(diff / rule.interval) * rule.interval); currentCheckDate.setUTCDate(startDate.getUTCDate() + skipCount); }
+                     else if (rule.type === 'weekly') { const diff = getWeekDiff(calculationStartDate, currentCheckDate); const skipCount = Math.max(0, Math.floor(diff / rule.interval) * rule.interval); currentCheckDate.setUTCDate(startDate.getUTCDate() + skipCount * 7); }
+                     else if (rule.type === 'monthly') { const diff = getMonthDiff(calculationStartDate, currentCheckDate); const skipCount = Math.max(0, Math.floor(diff / rule.interval)); currentCheckDate.setUTCMonth(startDate.getUTCMonth() + skipCount * rule.interval); const daysInTargetMonth = new Date(currentCheckDate.getUTCFullYear(), currentCheckDate.getUTCMonth() + 1, 0).getUTCDate(); const originalDay = startDate.getUTCDate(); if (originalDay <= daysInTargetMonth) { currentCheckDate.setUTCDate(originalDay); } else { currentCheckDate.setUTCDate(daysInTargetMonth); } }
+                     if (currentCheckDate < startDate) currentCheckDate = new Date(Date.UTC(startDate.getUTCFullYear(), startDate.getUTCMonth(), startDate.getUTCDate()));
+                 }
+
+                let counter = 0;
+                const MAX_INSTANCES_PER_TODO = 1095; // 無限ループ防止 (約3年分)
+                const generateEndDateUTC = new Date(Date.UTC(generateEndDate.getFullYear(), generateEndDate.getMonth(), generateEndDate.getDate(), 23, 59, 59, 999));
+
+                // インスタンス生成ループ
+                while (currentCheckDate <= generateEndDateUTC && counter < MAX_INSTANCES_PER_TODO) {
+                    counter++;
+                    if (endDate && currentCheckDate > endDate) break; // 繰り返し終了日チェック
+
+                    let isValidInstance = false;
+                    const currentDayUTC = currentCheckDate.getUTCDay();
+                    const currentDateOfMonthUTC = currentCheckDate.getUTCDate();
+
+                    // 繰り返しルールに合致するか判定
+                    if (currentCheckDate >= startDate) {
+                        switch (rule.type) {
+                            case 'daily':
+                                const dayDiff = getDateDiffInDays(currentCheckDate, startDate);
+                                if (dayDiff >= 0 && dayDiff % rule.interval === 0) isValidInstance = true;
+                                break;
+                            case 'weekly':
+                                const weekDiff = getWeekDiff(currentCheckDate, startDate);
+                                if (weekDiff >= 0 && weekDiff % rule.interval === 0 && rule.daysOfWeek?.includes(currentDayUTC)) isValidInstance = true;
+                                break;
+                            case 'monthly':
+                                const monthDiff = getMonthDiff(currentCheckDate, startDate);
+                                const daysInMonth = new Date(currentCheckDate.getUTCFullYear(), currentCheckDate.getUTCMonth() + 1, 0).getUTCDate();
+                                const targetDay = Math.min(rule.dayOfMonth, daysInMonth); // 月末調整
+                                if (monthDiff >= 0 && monthDiff % rule.interval === 0 && currentDateOfMonthUTC === targetDay) isValidInstance = true;
+                                break;
+                        }
+                    }
+
+                    const dateStr = `${currentCheckDate.getUTCFullYear()}-${String(currentCheckDate.getUTCMonth() + 1).padStart(2, '0')}-${String(currentCheckDate.getUTCDate()).padStart(2, '0')}`;
+
+                     // インスタンスが生成範囲内かつ除外日でないかチェック
+                     let instanceDateLocalForCheck;
+                     try { const [year, month, day] = dateStr.split('-').map(Number); instanceDateLocalForCheck = new Date(year, month - 1, day); } catch { instanceDateLocalForCheck = null; }
+                     const localGenerateStartForCheck = new Date(generateStartDate.getFullYear(), generateStartDate.getMonth(), generateStartDate.getDate());
+                     const localGenerateEndForCheck = new Date(generateEndDate.getFullYear(), generateEndDate.getMonth(), generateEndDate.getDate());
+
+                    if (isValidInstance && instanceDateLocalForCheck && instanceDateLocalForCheck >= localGenerateStartForCheck && instanceDateLocalForCheck <= localGenerateEndForCheck && !todo.exceptionDates?.[dateStr]) {
+                         // ローカルタイムゾーンでのDateオブジェクトを作成
+                         let instanceDueDateObj;
+                         try {
+                             const [year, month, day] = dateStr.split('-').map(Number);
+                             const [hour, minute] = startTime.split(':').map(Number);
+                             instanceDueDateObj = new Date(year, month - 1, day, hour || 0, minute || 0);
+                             if (isNaN(instanceDueDateObj.getTime())) throw new Error("Invalid Date Object from recurrence");
+                         } catch(e) {
+                             console.warn(`ToDo日時生成エラー (ID: ${todo.id}, Date: ${dateStr}, Time: ${startTime}):`, e);
+                             instanceDueDateObj = new Date(dateStr + 'T00:00:00'); // フォールバック
+                         }
+                         const isCompleted = !!todo.completedDates?.[dateStr];
+                         instances.push({ templateId: todo.id, dateString: dateStr, instanceDueDate: instanceDueDateObj, title: todo.title, priority: todo.priority, content: todo.content, isCompleted: isCompleted, completedAt: todo.completedDates?.[dateStr] || null, recurrenceRule: rule });
+                    }
+                    // 次のチェック日へ(UTC)
+                    currentCheckDate.setUTCDate(currentCheckDate.getUTCDate() + 1);
+                }
+                if (counter >= MAX_INSTANCES_PER_TODO) {
+                    console.warn(`ToDo [${todo.id}] の繰り返しインスタンス生成が上限 ${MAX_INSTANCES_PER_TODO} に達しました。`);
+                }
+                return instances;
+            }
+
+            /**
+             * ToDoインスタンスデータからHTML要素を作成します。
+             * @param {object} instance - ToDoインスタンスデータ。
+             * @returns {HTMLDivElement} 作成されたToDoアイテム要素。
+             */
+            function createTodoElementFromInstance(instance) {
+                 const todoItem = document.createElement('div');
+                 todoItem.classList.add('todo-item');
+                 todoItem.dataset.id = instance.templateId;
+                 todoItem.dataset.instanceDate = instance.dateString;
+
+                 const priorityValue = instance.priority || DEFAULT_PRIORITY;
+                 const isCompleted = instance.isCompleted;
+                 const isOverdue = !isCompleted && instance.instanceDueDate.getTime() < Date.now();
+
+                 // --- クラス適用 ---
+                 // 1. 背景色クラス
+                 let bgClass = '';
+                 if (!isCompleted && isOverdue) { // 未完了かつ期限切れ
+                     bgClass = 'todo-overdue-bg';
+                 } else { // 未完了で期限内 または 完了済み
+                     bgClass = `todo-priority-${priorityValue.toLowerCase()}-bg`;
+                 }
+                 if (bgClass) {
+                     todoItem.classList.add(bgClass);
+                 }
+                 // 2. 完了クラス
+                 if (isCompleted) {
+                     todoItem.classList.add('completed');
+                 }
+
+                 // --- 要素の内容生成 ---
+                 // タイトル
+                 const titleDiv = document.createElement('div');
+                 titleDiv.classList.add('todo-title');
+                 titleDiv.textContent = instance.title;
+                 todoItem.appendChild(titleDiv);
+
+                 // 詳細（時刻、優先度）
+                 const detailsDiv = document.createElement('div');
+                 detailsDiv.classList.add('todo-details');
+                 let detailsText = '';
+                 const timePart = formatDate(instance.instanceDueDate, 'HH:MM');
+                 if (timePart !== DEFAULT_TIME_FOR_DATE_ONLY && timePart !== '00:00') { // デフォルト時刻/フォールバック時刻以外なら表示
+                     detailsText += `${timePart} `;
+                 }
+                 const prioritySpan = document.createElement('span');
+                 prioritySpan.textContent = `優先度: ${PRIORITY_MAP[priorityValue] || PRIORITY_MAP[DEFAULT_PRIORITY]}`;
+                 prioritySpan.classList.add(`todo-priority-${priorityValue}`); // 優先度に応じた文字色クラス
+                 detailsDiv.appendChild(document.createTextNode(detailsText));
+                 detailsDiv.appendChild(prioritySpan);
+                 todoItem.appendChild(detailsDiv);
+
+                 // アクション（チェックボックス、完了日時、編集/削除ボタン）
+                 const actionsDiv = document.createElement('div');
+                 actionsDiv.classList.add('todo-actions');
+                 // チェックボックス
+                 const checkbox = document.createElement('input');
+                 checkbox.type = 'checkbox';
+                 checkbox.checked = instance.isCompleted;
+                 checkbox.title = instance.isCompleted ? '未完了に戻す' : '完了にする';
+                 checkbox.addEventListener('change', () => toggleTodoStatus(instance.templateId, instance.dateString));
+                 actionsDiv.appendChild(checkbox);
+                 // 完了日時
+                 const completionTimestampSpan = document.createElement('span');
+                 completionTimestampSpan.classList.add('completion-timestamp');
+                 if (instance.isCompleted && instance.completedAt) {
+                     try { completionTimestampSpan.textContent = formatDate(new Date(instance.completedAt), 'YYYY/MM/DD HH:MM'); } catch(e) {/* ignore */}
+                 }
+                 actionsDiv.appendChild(completionTimestampSpan);
+                 // ボタン群
+                 const buttonGroup = document.createElement('div');
+                 buttonGroup.classList.add('action-buttons');
+                 const editBtn = document.createElement('button');
+                 editBtn.innerHTML = '&#9998;'; // 鉛筆アイコン
+                 editBtn.title = '編集';
+                 editBtn.classList.add('edit-todo-btn');
+                 editBtn.addEventListener('click', () => { const templateTodo = todos.find(t => t.id === instance.templateId); if(templateTodo) openDialog('edit', templateTodo, instance.dateString); });
+                 buttonGroup.appendChild(editBtn);
+                 const deleteBtn = document.createElement('button');
+                 deleteBtn.innerHTML = '&#10006;'; // バツアイコン
+                 deleteBtn.title = '削除';
+                 deleteBtn.classList.add('delete-todo-btn');
+                 deleteBtn.addEventListener('click', () => openDeleteOptionsDialog(instance.templateId, instance.dateString));
+                 buttonGroup.appendChild(deleteBtn);
+                 actionsDiv.appendChild(buttonGroup);
+
+                 todoItem.appendChild(actionsDiv);
+
+                 // クリックで詳細表示 (アクションボタン以外)
+                 todoItem.addEventListener('click', (e) => {
+                     if (!e.target.closest('.todo-actions')) {
+                         const templateTodo = todos.find(t => t.id === instance.templateId);
+                         if (templateTodo) {
+                             openDialog('view', templateTodo, instance.dateString);
+                         }
+                     }
+                 });
+
+                 return todoItem;
+            }
+
+             /**
+              * ToDoインスタンスをソートするための比較関数。
+              * 1. 未完了 -> 完了 の順
+              * 2. 同じ完了状態なら期限日時の昇順
+              * @param {object} a - ToDoインスタンス A。
+              * @param {object} b - ToDoインスタンス B。
+              * @returns {number} ソート順 (-1, 0, 1)。
+              */
+             function compareTodoInstances(a, b) {
+                 if (a.isCompleted !== b.isCompleted) {
+                     return a.isCompleted ? 1 : -1; // 未完了が先
+                 }
+                 // 完了状態が同じ場合、期限日時でソート
+                 return a.instanceDueDate.getTime() - b.instanceDueDate.getTime();
+             }
+
+
+            // ==================================================================
+            // ダイアログ関連処理
+            // ==================================================================
+
+            /**
+             * ToDo追加/編集/表示ダイアログを開きます。
+             * @param {'add'|'edit'|'view'} mode - ダイアログのモード。
+             * @param {object} [todo=null] - 編集/表示対象のToDoテンプレートデータ。
+             * @param {string} [instanceDateStr=null] - 編集/表示対象のToDoインスタンスの日付 (YYYY-MM-DD)。
+             */
+            function openDialog(mode, todo = null, instanceDateStr = null) {
+                 currentDialogMode = mode;
+                 editingTodoId = todo ? todo.id : null;
+                 editingInstanceDate = instanceDateStr;
+
+                 // --- ダイアログ状態リセット ---
+                 todoEditIdInput.value = editingTodoId || '';
+                 todoInstanceDateInput.value = instanceDateStr || '';
+                 dialogCompletionInfo.classList.add('hidden');
+                 dialogCompletionInfo.textContent = '';
+                 updateDialogBackground(null); // 背景色リセット
+                 todoDialog.classList.remove('mode-add', 'mode-edit', 'mode-view');
+                 todoDialog.classList.add(`mode-${mode}`); // 現在のモードクラスを追加
+
+                 // --- モード別初期設定 ---
+                 let initialPriority = DEFAULT_PRIORITY;
+                 let isEditable = (mode === 'add' || mode === 'edit');
+                 let initialDueDate = '';
+                 let initialDueTime = '';
+                 let initialContent = '';
+
+                 if (mode === 'add') {
+                     dialogTitle.textContent = 'ToDo追加';
+                     // デフォルト期限日を設定から計算
+                     const now = new Date();
+                     let defaultDate = new Date();
+                     switch (settings.defaultDueDateOffset) {
+                         case 'week': defaultDate.setDate(now.getDate() + 7); break;
+                         case 'month': defaultDate.setMonth(now.getMonth() + 1); break;
+                         case 'today': default: break; // 今日がデフォルト
+                     }
+                     initialDueDate = formatDate(defaultDate, 'YYYY-MM-DD');
+                     initialDueTime = ''; // 時間はデフォルト空
+                     initialContent = '';
+                     recurrenceSection.style.display = 'block'; // 繰り返し設定を表示
+                     selectedPriorityInDialog = DEFAULT_PRIORITY; // ダイアログ内優先度をリセット
+
+                 } else { // edit or view
+                      if (!todo) {
+                          console.error("編集/表示対象のToDoデータがありません。");
+                          closeDialog();
+                          return;
+                      }
+                      initialPriority = todo.priority || DEFAULT_PRIORITY;
+                      initialContent = todo.content || '';
+                      selectedPriorityInDialog = initialPriority; // ダイアログ内優先度を設定
+                      recurrenceSection.style.display = 'none'; // 繰り返し設定は非表示
+
+                      // 表示/編集対象の日時を決定
+                      let displayDateSource = todo.dueDate; // デフォルトはテンプレートのdueDate
+                      if (mode === 'view' && instanceDateStr) {
+                           // viewモードの場合、該当インスタンスの日時を優先
+                           // 確実にインスタンスデータを取得するため広範囲で再生成して検索
+                           const viewDayStart = new Date(instanceDateStr + 'T00:00:00'); viewDayStart.setFullYear(viewDayStart.getFullYear() - 1);
+                           const viewDayEnd = new Date(instanceDateStr + 'T23:59:59'); viewDayEnd.setFullYear(viewDayEnd.getFullYear() + 1);
+                           const instance = generateRecurringInstances(todo, viewDayStart, viewDayEnd)
+                                            .find(inst => inst.dateString === instanceDateStr);
+                          if (instance) {
+                              displayDateSource = instance.instanceDueDate; // インスタンスのDateオブジェクトを使用
+                          } else {
+                               console.warn(`Viewモードでインスタンスが見つかりません: ${todo.id} - ${instanceDateStr}. テンプレートのDueDateを使用します。`);
+                          }
+                      }
+                      // else if (mode === 'edit') { /* editモードはデフォルトのtemplate.dueDateを使用 */ }
+
+                      // 日時フィールドに値を設定
+                      if (displayDateSource) {
+                          try {
+                              const dateObj = (displayDateSource instanceof Date) ? displayDateSource : new Date(displayDateSource);
+                              if (!isNaN(dateObj.getTime())) {
+                                  initialDueDate = formatDate(dateObj, 'YYYY-MM-DD');
+                                  const timePart = formatDate(dateObj, 'HH:MM');
+                                  if (timePart !== DEFAULT_TIME_FOR_DATE_ONLY && timePart !== '00:00') {
+                                      initialDueTime = timePart;
+                                  }
+                              }
+                          } catch (e) { console.error("期限日時解析エラー:", e, displayDateSource); }
+                      }
+
+                      // モード別タイトルと追加情報
+                      if (mode === 'edit') {
+                          dialogTitle.textContent = 'ToDo編集';
+                      } else { // view
+                          dialogTitle.textContent = 'ToDo詳細';
+                          updateDialogBackground(initialPriority); // 背景色を設定
+                          // 完了情報を表示
+                          const completedAt = todo.completedDates?.[instanceDateStr];
+                          if (completedAt) {
+                              try {
+                                  const completedDateStr = formatDate(new Date(completedAt), 'YYYY/MM/DD HH:MM');
+                                  dialogCompletionInfo.textContent = `${completedDateStr} 完了`;
+                                  dialogCompletionInfo.classList.remove('hidden');
+                              } catch(e) { /* ignore date parsing error */ }
+                          }
+                      }
+                 }
+
+                 // --- フォーム要素に値を設定 ---
+                 dialogTodoTitleInput.value = todo?.title || ''; // 新規なら空
+                 dialogTodoTitleInput.disabled = !isEditable;
+                 dialogTodoDueDate.value = initialDueDate;
+                 dialogTodoDueTime.value = initialDueTime;
+                 dialogTodoDueDate.disabled = !isEditable;
+                 dialogTodoDueTime.disabled = !isEditable;
+                 datetimeInputWrapper.classList.toggle('disabled', !isEditable);
+                 dialogTodoContent.value = initialContent;
+                 dialogTodoContent.disabled = !isEditable;
+
+                 // 繰り返し設定の値 (編集/閲覧時も値は設定しておくが、UIは非表示)
+                 const recurrence = todo?.recurrence;
+                 recurrenceTypeSelect.value = recurrence?.type || 'none';
+                 recurrenceOptionsDiv.classList.toggle('visible', !!recurrence && recurrence.type !== 'none');
+                 recurrenceIntervalInput.value = recurrence?.interval || 1;
+                 recurrenceIntervalUnitSpan.textContent = recurrence?.type === 'weekly' ? '週間隔' : (recurrence?.type === 'monthly' ? 'ヶ月間隔' : (recurrence?.type === 'daily' ? '日間隔' : ''));
+                 weeklyOptionsDiv.classList.toggle('hidden', recurrence?.type !== 'weekly');
+                 daysOfWeekCheckboxes.forEach(cb => cb.checked = recurrence?.daysOfWeek?.includes(parseInt(cb.value)) || false);
+                 monthlyOptionsDiv.classList.toggle('hidden', recurrence?.type !== 'monthly');
+                 recurrenceDayOfMonthInput.value = recurrence?.dayOfMonth || '';
+                 recurrenceEndTypeSelect.value = recurrence?.endType || 'never';
+                 recurrenceEndDateInput.classList.toggle('hidden', recurrence?.endType !== 'onDate');
+                 recurrenceEndDateInput.value = recurrence?.endDate || '';
+                 // 繰り返し設定の編集可否
+                 recurrenceTypeSelect.disabled = !isEditable;
+                 recurrenceIntervalInput.disabled = !isEditable;
+                 daysOfWeekCheckboxes.forEach(cb => cb.disabled = !isEditable);
+                 recurrenceDayOfMonthInput.disabled = !isEditable;
+                 recurrenceEndTypeSelect.disabled = !isEditable;
+                 recurrenceEndDateInput.disabled = !isEditable;
+
+                 // 優先度パレットの設定
+                 priorityOptions.forEach(button => {
+                     button.disabled = false; // 常に有効 (viewモードでも変更可能)
+                     button.classList.toggle('selected', button.dataset.priority === selectedPriorityInDialog);
+                     button.style.cursor = 'pointer'; // クリック可能を示す
+                 });
+
+                 // ボタン表示切り替え
+                 dialogEditButtons.style.display = isEditable ? 'flex' : 'none';
+                 dialogViewButtons.style.display = isEditable ? 'none' : 'flex';
+
+                 // ダイアログ表示とフォーカス
+                 dialogOverlay.style.display = 'flex';
+                 if (isEditable) {
+                     setTimeout(() => dialogTodoTitleInput.focus(), 50); // フォーカスをタイトルに
+                 }
+            }
+
+            /**
+             * 表示(View)モードから編集(Edit)モードに切り替えます。
+             */
+            function switchToEditMode() {
+                if (currentDialogMode !== 'view' || !editingTodoId) return;
+                const currentTodo = todos.find(t => t.id === editingTodoId);
+                if (currentTodo) {
+                    // instanceDateStrはそのまま引き継ぐ
+                    openDialog('edit', currentTodo, editingInstanceDate);
+                } else {
+                    console.error("編集モード切替エラー: 対象ToDo不明");
+                    closeDialog();
+                }
+            }
+
+            /**
+             * 開いているToDoダイアログを閉じます。
+             */
+            function closeDialog() {
+                dialogOverlay.style.display = 'none';
+                // 状態リセット
+                editingTodoId = null;
+                editingInstanceDate = null;
+                currentDialogMode = 'add'; // デフォルトに戻す
+                updateDialogBackground(null);
+                datetimeInputWrapper.classList.remove('disabled');
+                dialogCompletionInfo.classList.add('hidden');
+                todoDialog.classList.remove('mode-add', 'mode-edit', 'mode-view');
+                recurrenceSection.style.display = 'none'; // 常に非表示に
+            }
+
+            /**
+             * 削除オプションダイアログを開きます。
+             * @param {string} templateId - 削除対象のToDoテンプレートID。
+             * @param {string} instanceDateStr - 削除対象のToDoインスタンス日付 (YYYY-MM-DD)。
+             */
+            function openDeleteOptionsDialog(templateId, instanceDateStr) {
+                const todo = todos.find(t => t.id === templateId);
+                if (!todo) {
+                    console.error("削除オプション表示エラー: 対象ToDo不明", templateId);
+                    return;
+                }
+                // 対象情報を隠しフィールドにセット
+                deleteTargetIdInput.value = templateId;
+                deleteTargetInstanceDateInput.value = instanceDateStr;
+
+                // 繰り返し設定に応じてオプション表示を切り替え
+                const isRecurring = !!todo.recurrence && todo.recurrence.type !== 'none';
+                deleteOptionThisWrapper.style.display = 'block'; // 「この予定のみ」は常に表示
+                deleteOptionFutureWrapper.style.display = isRecurring ? 'block' : 'none';
+                deleteOptionAllWrapper.style.display = isRecurring ? 'block' : 'none';
+
+                // デフォルト選択を「この予定のみ」にする
+                const firstVisibleRadio = deleteOptionsDialog.querySelector('input[name="deleteOption"][value="this"]');
+                if(firstVisibleRadio) firstVisibleRadio.checked = true;
+
+                // ダイアログ表示
+                deleteOptionsDialogOverlay.style.display = 'flex';
+            }
+
+            /**
+             * 削除オプションダイアログを閉じます。
+             */
+            function closeDeleteOptionsDialog() {
+                deleteOptionsDialogOverlay.style.display = 'none';
+                deleteTargetIdInput.value = '';
+                deleteTargetInstanceDateInput.value = '';
+            }
+
+            /**
+             * 削除オプションダイアログで選択されたオプションに基づいて削除処理を実行します。
+             */
+            function handleDeleteOption() {
+                const selectedOption = deleteOptionsDialog.querySelector('input[name="deleteOption"]:checked');
+                const templateId = deleteTargetIdInput.value;
+                const instanceDateStr = deleteTargetInstanceDateInput.value;
+
+                if (!selectedOption || !templateId || !instanceDateStr) {
+                    console.error("削除オプション実行エラー: 必要な情報が不足");
+                    closeDeleteOptionsDialog();
+                    return;
+                }
+
+                const optionValue = selectedOption.value;
+                switch (optionValue) {
+                    case 'this':
+                        markInstanceAsException(templateId, instanceDateStr);
+                        break;
+                    case 'future':
+                        setRecurrenceEndDate(templateId, instanceDateStr);
+                        break;
+                    case 'all':
+                        deleteTodoTemplate(templateId); // 確認ダイアログは関数内で表示
+                        break;
+                    default:
+                        console.warn("未定義の削除オプション:", optionValue);
+                        break;
+                }
+                closeDeleteOptionsDialog(); // 処理後にダイアログを閉じる
+            }
+
+            /**
+             * ToDoダイアログの内容に基づいてToDoデータを保存（追加または更新）します。
+             */
+            function saveTodoFromDialog() {
+                // --- 入力値取得 ---
+                const title = dialogTodoTitleInput.value.trim();
+                const dateValue = dialogTodoDueDate.value;
+                const timeValue = dialogTodoDueTime.value;
+                const priority = selectedPriorityInDialog; // ダイアログで選択中の優先度
+                const content = dialogTodoContent.value.trim();
+                const id = todoEditIdInput.value; // 更新対象ID (新規なら空)
+
+                // --- バリデーション ---
+                if (!title || !dateValue) {
+                    alert('タイトルと期限日（日付）は必須入力です。');
+                    return;
+                }
+
+                // --- dueDate (ISO形式) の生成 ---
+                let dueDateISO = '';
+                try {
+                    const dateTimeString = `${dateValue}T${timeValue || DEFAULT_TIME_FOR_DATE_ONLY}:00`;
+                    const localDate = new Date(dateTimeString); // ローカルタイムゾーンとして解釈
+                    if (isNaN(localDate.getTime())) throw new Error("Invalid Date object created from inputs.");
+                    dueDateISO = localDate.toISOString(); // UTCに変換してISO文字列で保存
+                } catch (e) {
+                    console.error("期限日時の処理エラー:", e);
+                    alert("期限日時の形式が正しくありません。");
+                    return;
+                }
+
+                // --- 繰り返し設定の取得 (新規追加モードの場合のみ) ---
+                let recurrence = null;
+                if (currentDialogMode === 'add') {
+                    const recurrenceType = recurrenceTypeSelect.value;
+                    if (recurrenceType !== 'none') {
+                        const interval = Math.max(1, parseInt(recurrenceIntervalInput.value) || 1);
+                        const endType = recurrenceEndTypeSelect.value;
+                        const endDate = recurrenceEndDateInput.value || undefined;
+                        recurrence = { type: recurrenceType, interval, endType, endDate, startDate: dateValue }; // startDateはYYYY-MM-DD
+
+                        if (recurrenceType === 'weekly') {
+                            recurrence.daysOfWeek = Array.from(daysOfWeekCheckboxes).filter(cb => cb.checked).map(cb => parseInt(cb.value));
+                            if (recurrence.daysOfWeek.length === 0) { alert('毎週繰り返しの場合は曜日を1つ以上選択してください。'); return; }
+                        } else if (recurrenceType === 'monthly') {
+                            const dayOfMonth = parseInt(recurrenceDayOfMonthInput.value);
+                            if (!dayOfMonth || dayOfMonth < 1 || dayOfMonth > 31) { alert('毎月繰り返しの場合は有効な日付 (1-31) を入力してください。'); return; }
+                            recurrence.dayOfMonth = dayOfMonth;
+                        }
+                        // 終了日のバリデーション
+                        if (recurrence.endType === 'onDate' && (!recurrence.endDate || recurrence.endDate < recurrence.startDate)) {
+                             alert('繰り返しの終了日は開始日以降の有効な日付を入力してください。'); return;
+                        }
+                         // 終了日が指定されていない場合はendDateプロパティを削除
+                        if (recurrence.endType !== 'onDate') delete recurrence.endDate;
+                    }
+                }
+
+                // --- ToDoデータオブジェクト作成 ---
+                const todoData = { title, dueDate: dueDateISO, priority, content };
+
+                // --- 保存処理 (更新 or 新規追加) ---
+                if (id) { // 更新
+                    const index = todos.findIndex(t => t.id === id);
+                    if (index !== -1) {
+                        // 更新時は recurrence は変更しない（ダイアログUIで変更不可のため）
+                        todos[index] = { ...todos[index], ...todoData };
+                        // console.info(`ToDo [${id}] を更新しました。`);
+                    } else {
+                        console.error("ToDo更新エラー: 対象IDが見つかりません", id);
+                        alert("ToDoの更新に失敗しました。");
+                        closeDialog();
+                        return;
+                    }
+                } else { // 新規追加
+                    const newTodo = {
+                        id: Date.now().toString(), // ユニークID生成
+                        ...todoData,
+                        recurrence: recurrence, // 新規追加時のみ設定
+                        completedDates: {}, // 空で初期化
+                        exceptionDates: {}  // 空で初期化
+                    };
+                    todos.push(newTodo);
+                    // console.info(`ToDo [${newTodo.id}] を追加しました。`);
+                }
+
+                // --- 後処理 ---
+                closeDialog();
+                renderCalendar();
+                // saveTodosToLocalStorage(); // 必要であれば永続化処理を呼ぶ
+            }
+
+
+            // ==================================================================
+            // ToDoデータ操作関連
+            // ==================================================================
+
+            /**
+             * 指定されたToDoインスタンスを除外日としてマークします。
+             * @param {string} templateId - 対象のToDoテンプレートID。
+             * @param {string} instanceDateStr - 除外するインスタンスの日付 (YYYY-MM-DD)。
+             */
+            function markInstanceAsException(templateId, instanceDateStr) {
+                const todo = todos.find(t => t.id === templateId);
+                if (todo) {
+                    if (!todo.exceptionDates) todo.exceptionDates = {}; // なければ初期化
+                    todo.exceptionDates[instanceDateStr] = true;
+                    renderCalendar();
+                    // console.info(`ToDoインスタンス [${templateId}-${instanceDateStr}] を除外しました。`);
+                    // saveTodosToLocalStorage(); // 永続化
+                } else {
+                    console.error("インスタンス除外エラー: 対象テンプレート不明", templateId);
+                }
+            }
+
+            /**
+             * 繰り返しToDoの終了日を指定されたインスタンスの前日に設定します。
+             * @param {string} templateId - 対象のToDoテンプレートID。
+             * @param {string} instanceDateStr - この日の前日で終了させる基準日 (YYYY-MM-DD)。
+             */
+            function setRecurrenceEndDate(templateId, instanceDateStr) {
+                 const todo = todos.find(t => t.id === templateId);
+                 const instanceDate = parseDateString(instanceDateStr); // UTC Date
+
+                 if (todo && instanceDate) {
+                     if (!todo.recurrence) {
+                         alert("このToDoには繰り返し設定がありません。");
+                         return;
+                     }
+                     // 基準日の前日(UTC)を計算
+                     const prevDate = new Date(instanceDate);
+                     prevDate.setUTCDate(prevDate.getUTCDate() - 1);
+                     const newEndDate = formatDate(prevDate, 'YYYY-MM-DD'); // 新しい終了日 (YYYY-MM-DD)
+
+                     // 新しい終了日が開始日より前になる場合は、全削除を提案/実行
+                     if (newEndDate < todo.recurrence.startDate) {
+                          console.info(`繰り返し終了日(${newEndDate})が開始日(${todo.recurrence.startDate})より前になるため、ToDoテンプレート全体を削除します。`);
+                          deleteTodoTemplate(templateId); // 確認ダイアログは内部で表示
+                     } else {
+                         // 繰り返し設定を更新
+                         todo.recurrence.endType = 'onDate';
+                         todo.recurrence.endDate = newEndDate;
+                         renderCalendar();
+                         // console.info(`ToDo [${templateId}] の繰り返しを ${newEndDate} で終了しました。`);
+                         // saveTodosToLocalStorage(); // 永続化
+                     }
+                 } else {
+                     console.error("繰り返し終了日設定エラー: 対象ToDoまたは日付が無効");
+                 }
+            }
+
+            /**
+             * ToDoテンプレート（およびその全てのインスタンス）を削除します。
+             * 削除前に確認ダイアログを表示します。
+             * @param {string} templateId - 削除するToDoテンプレートID。
+             */
+            function deleteTodoTemplate(templateId) {
+                 if (!confirm('すべての繰り返し予定（元の予定を含む）を完全に削除しますか？この操作は元に戻せません。')) {
+                     return; // キャンセルされたら何もしない
+                 }
+                 const initialLength = todos.length;
+                 todos = todos.filter(todo => todo.id !== templateId); // IDが一致しないものだけ残す
+                 if (todos.length < initialLength) {
+                     renderCalendar();
+                     // console.info(`ToDoテンプレート [${templateId}] を削除しました。`);
+                     // saveTodosToLocalStorage(); // 永続化
+                 } else {
+                     console.warn(`削除対象のToDoテンプレート [${templateId}] が見つかりませんでした。`);
+                     alert("削除対象が見つかりませんでした。");
+                 }
+            }
+
+            /**
+             * 指定されたToDoインスタンスの完了/未完了状態を切り替えます。
+             * @param {string} templateId - 対象のToDoテンプレートID。
+             * @param {string} instanceDateStr - 対象のToDoインスタンス日付 (YYYY-MM-DD)。
+             */
+            function toggleTodoStatus(templateId, instanceDateStr) {
+                const todo = todos.find(t => t.id === templateId);
+                if (todo) {
+                    if (!todo.completedDates) todo.completedDates = {}; // なければ初期化
+
+                    if (todo.completedDates[instanceDateStr]) {
+                        // 完了 -> 未完了へ
+                        delete todo.completedDates[instanceDateStr];
+                        // console.info(`ToDoインスタンス [${templateId}-${instanceDateStr}] を未完了に。`);
+                    } else {
+                        // 未完了 -> 完了へ
+                        todo.completedDates[instanceDateStr] = new Date().toISOString(); // 完了日時を記録
+                        // console.info(`ToDoインスタンス [${templateId}-${instanceDateStr}] を完了に。`);
+                    }
+                    renderCalendar(); // 表示更新
+                    // saveTodosToLocalStorage(); // 永続化
+                } else {
+                    console.error("ステータス更新エラー: 対象ToDoテンプレート不明", templateId);
+                }
+            }
+
+
+            // ==================================================================
+            // 週移動 & データ保存/読込
+            // ==================================================================
+
+            /**
+             * 表示する週を指定された方向に移動します。
+             * @param {number} direction - 移動方向 (-1: 前週, 1: 次週)。
+             */
+            function navigateWeek(direction) {
+                currentDate.setDate(currentDate.getDate() + (direction * 7));
+                renderCalendar();
+            }
+
+            /**
+             * 現在のToDoデータと設定をJSONファイルとして保存します。
+             */
+            function saveData() {
+                const dataToSave = {
+                    version: CURRENT_DATA_VERSION,
+                    settings: settings, // 現在の設定オブジェクト
+                    todos: todos       // 現在のToDo配列
+                };
+
+                // ToDoがない場合に確認（設定のみでも保存可能）
+                if (dataToSave.todos.length === 0 && !confirm("ToDoがありません。設定情報のみ保存しますか？")) {
+                     return; // 保存しない場合は終了
+                 }
+
+                 try {
+                     const dataStr = JSON.stringify(dataToSave, null, 2); // 見やすいようにインデント
+                     const blob = new Blob([dataStr], { type: 'application/json' });
+                     const url = URL.createObjectURL(blob);
+                     const a = document.createElement('a');
+                     a.href = url;
+                     // ファイル名を生成 (例: TD20231027150000.json)
+                     const now=new Date(); const yyyy=now.getFullYear(),mm=String(now.getMonth()+1).padStart(2,'0'),dd=String(now.getDate()).padStart(2,'0'),hh=String(now.getHours()).padStart(2,'0'),mi=String(now.getMinutes()).padStart(2,'0'),ss=String(now.getSeconds()).padStart(2,'0'); const timestamp=`TD${yyyy}${mm}${dd}${hh}${mi}${ss}`;
+                     a.download = `${timestamp}.json`; // バージョン情報は含めない
+                     document.body.appendChild(a);
+                     a.click(); // ダウンロード開始
+                     document.body.removeChild(a); // 要素削除
+                     URL.revokeObjectURL(url); // メモリ解放
+                     console.info(`ToDoデータと設定を ${a.download} として保存しました。`);
+                 } catch (error) {
+                     console.error("データ保存エラー:", error);
+                     alert("データの保存中にエラーが発生しました。");
+                 }
+             }
+
+            /**
+             * JSONファイルを選択させ、ToDoデータと設定を読み込みます。
+             * @param {Event} event - ファイル選択イベント。
+             */
+            function loadData(event) {
+                 const file = event.target.files[0];
+                 if (!file) return; // ファイルが選択されなかった場合
+
+                 const reader = new FileReader();
+                 reader.onload = (e) => {
+                     try {
+                         const loadedData = JSON.parse(e.target.result);
+                         let loadedSettings = null;
+                         let loadedTodosArray = null;
+                         let settingsUpdated = false;
+
+                         // --- データ形式の判定と読み込み ---
+                         if (typeof loadedData === 'object' && loadedData !== null && 'version' in loadedData && 'todos' in loadedData) {
+                             // 新形式: { version, settings, todos }
+                             // console.info(`バージョン ${loadedData.version} のデータを読み込みます...`);
+
+                             // 設定の復元
+                             if ('settings' in loadedData && typeof loadedData.settings === 'object' && loadedData.settings !== null) {
+                                 const incomingSettings = loadedData.settings;
+                                 // 値の検証と適用
+                                 if (typeof incomingSettings.weekStartDay === 'number' && [0, 1].includes(incomingSettings.weekStartDay)) {
+                                     settings.weekStartDay = incomingSettings.weekStartDay;
+                                     settingsUpdated = true;
+                                 }
+                                 if (typeof incomingSettings.defaultDueDateOffset === 'string' && ['today', 'week', 'month'].includes(incomingSettings.defaultDueDateOffset)) {
+                                     settings.defaultDueDateOffset = incomingSettings.defaultDueDateOffset;
+                                     settingsUpdated = true;
+                                 }
+                                 if(settingsUpdated) {
+                                     saveSettings(); // LocalStorageにも反映
+                                     console.info("設定情報をファイルから復元しました:", settings);
+                                 } else {
+                                     console.warn("ファイル内の設定情報が無効でした。");
+                                 }
+                             } else {
+                                 console.warn("ファイルに設定情報が含まれていませんでした。");
+                             }
+
+                             // ToDoの復元
+                             if (Array.isArray(loadedData.todos)) {
+                                 loadedTodosArray = loadedData.todos;
+                             } else {
+                                 throw new Error("ファイル内のToDoデータが配列形式ではありません。");
+                             }
+
+                         } else if (Array.isArray(loadedData)) {
+                             // 旧形式: [ todo1, todo2, ... ]
+                             console.info("旧形式のToDoデータ（配列のみ）を読み込みます。設定は変更されません。");
+                             loadedTodosArray = loadedData;
+                         } else {
+                             throw new Error("認識できないデータ形式です。ファイルが破損している可能性があります。");
+                         }
+
+                         // --- ToDoデータの検証と適用 ---
+                         if(loadedTodosArray !== null) {
+                             const validatedTodos = loadedTodosArray.map(item => ({
+                                 id: item?.id?.toString() || Date.now().toString() + Math.random(),
+                                 title: item?.title || '無題',
+                                 dueDate: item?.dueDate || '', // ISO形式を期待
+                                 priority: ['High', 'Medium', 'Low'].includes(item?.priority) ? item.priority : DEFAULT_PRIORITY,
+                                 content: item?.content || '',
+                                 recurrence: item?.recurrence || null,
+                                 // completedDates/exceptionDates がオブジェクトでなければ空オブジェクトにする
+                                 completedDates: typeof item?.completedDates === 'object' && item?.completedDates !== null ? item.completedDates : {},
+                                 exceptionDates: typeof item?.exceptionDates === 'object' && item?.exceptionDates !== null ? item.exceptionDates : {}
+                             }));
+
+                             // 現在データがあれば上書き確認
+                             if (todos.length > 0 && !confirm('現在のToDoリストは上書きされます。よろしいですか？')) {
+                                 loadDataInput.value = ''; // inputをリセット
+                                 return; // 読み込み中止
+                             }
+                             todos = validatedTodos; // ToDoデータを適用
+                             console.info(`ファイルから ${todos.length} 件のToDoデータを読み込みました。`);
+                         } else if (!settingsUpdated) {
+                              // ToDoデータも設定更新もなかった場合
+                              console.warn("ファイルに有効なToDoデータが見つかりませんでした。");
+                              alert("ファイルに有効なToDoデータが見つかりませんでした。");
+                              loadDataInput.value = '';
+                              return;
+                         }
+
+                         // --- 再描画 ---
+                         renderCalendar();
+
+                     } catch (error) {
+                         console.error("データ読み込み/解析エラー:", error);
+                         alert(`ファイルの読み込みまたは解析に失敗しました。\n${error.message}`);
+                     } finally {
+                         loadDataInput.value = ''; // 次のファイル選択のためにリセット
+                     }
+                 };
+                 reader.onerror = () => {
+                     console.error("ファイル読み込みエラー");
+                     alert('ファイルの読み込みに失敗しました。');
+                     loadDataInput.value = '';
+                 };
+                 reader.readAsText(file); // ファイル読み込み開始
+             }
+
+
+            // ==================================================================
+            // アプリケーション実行開始
+            // ==================================================================
+            initializeApp();
+
+        });
+    </script>
+
+</body>
+</html>
