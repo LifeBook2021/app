@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-XE2CWFLT80"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-XE2CWFLT80');
+</script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>週間ToDoカレンダー - AIと創るJavaScriptツールキット</title>
+    <meta name="description" content="週単位でタスクを管理できるカレンダーアプリ。繰り返し設定、優先度、完了チェック、祝日表示、JSON保存/読込に対応。AIを活用して開発。">
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="../../assets/css/style.css"> <!-- 相対パス注意 -->
+    <!-- Favicon -->
+    <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%3E%3Ctext%20y%3D%22.9em%22%20font-size%3D%2290%22%3E%E2%9C%85%3C%2Ftext%3E%3C%2Fsvg%3E">
+</head>
+<body>
+
+    <header>
+        <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+            <div class="container">
+                 <a class="navbar-brand" href="../../index.html">
+                    <span class="fw-bold">AIと創るJavaScriptツールキット</span>
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarNav">
+                     <ul class="navbar-nav ms-auto">
+                        <li class="nav-item"><a class="nav-link" href="../../index.html">ホーム</a></li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle active" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                アプリ紹介
+                            </a>
+                             <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                                <li><a class="dropdown-item" href="../sticky-notes/index.html">付箋アプリ</a></li>
+                                <li><a class="dropdown-item" href="../gantt-chart/index.html">ガントチャート</a></li>
+                                <li><a class="dropdown-item" href="../kanban-board/index.html">カンバンボード</a></li>
+                                <li><a class="dropdown-item" href="../schedule/index.html">スケジュールチェック</a></li>
+                                <li><a class="dropdown-item" href="../mindmap/index.html">マインドマップ</a></li>
+                                <!-- ▼ ToDoリストページへのリンクをアクティブ化 ▼ -->
+                                <li><a class="dropdown-item active" aria-current="page" href="index.html">週間ToDoカレンダー</a></li>
+                                <!-- ▲ ToDoリストページへのリンクをアクティブ化 ▲ -->
+                            </ul>
+                        </li>
+                        <li class="nav-item"><a class="nav-link" href="../../ai-creation.html">AIと創るアイデア</a></li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container mt-4">
+        <div class="row">
+            <div class="col-lg-8">
+                 <article class="manual-section">
+                    <h1 class="mb-4">✅ 週間ToDoカレンダー (Weekly ToDo Calendar)</h1>
+                    <p class="lead">1週間を見渡しながらタスクを管理できるカレンダー形式のToDoリストです。</p>
+
+                    <div class="text-center my-4">
+                        <!-- ▼ 要差し替え: 週間ToDoカレンダーのメインスクリーンショット画像 ▼ -->
+                        <img src="../../assets/images/todolist-screenshot.png" alt="週間ToDoカレンダーの画面" class="img-fluid rounded border shadow-sm mb-3 screenshot">
+                        <!-- ▲ 要差し替え: 週間ToDoカレンダーのメインスクリーンショット画像 ▲ -->
+                        <!-- ▼ 要差し替え: アプリ本体への実際のリンク ▼ -->
+                        <a href="https://LifeBook2021.github.io/app/TodoList/" target="_blank" rel="noopener noreferrer" class="btn btn-success btn-lg">
+                            <i class="bi bi-play-circle me-2"></i>週間ToDoカレンダーを使ってみる (無料)
+                        </a>
+                        <!-- ▲ 要差し替え: アプリ本体への実際のリンク ▲ -->
+                    </div>
+
+                    <h2>主な特徴</h2>
+                    <ul>
+                        <li><strong>週間カレンダー表示:</strong> 1週間分のタスクを日付ごとに見やすく表示します。日曜始まり/月曜始まりを切替可能。</li>
+                        <li><strong>ToDo管理:</strong> タイトル、期限日時、優先度（高/中/低）、詳細内容を設定できます。</li>
+                        <li><strong>繰り返し設定:</strong> 毎日、毎週（曜日指定）、毎月（日付指定）の繰り返しタスクを作成できます。繰り返しの終了日も設定可能です。</li>
+                        <li><strong>完了チェック:</strong> 各タスクにチェックを入れて完了状態を管理できます。完了日時も記録されます。</li>
+                        <li><strong>祝日・今日表示:</strong> カレンダーに日本の祝日と今日の日付をハイライト表示します。</li>
+                        <li><strong>設定保存:</strong> 週の開始曜日やデフォルトの期限日設定をブラウザに記憶させます。</li>
+                        <li><strong>データ保存/読込:</strong> 作成したToDoリスト全体をJSONファイルとして保存・読み込みできます。</li>
+                        <li><strong>直感的な操作:</strong> ToDoの追加、編集、削除、完了チェックなどをダイアログやボタンで簡単に行えます。</li>
+                    </ul>
+
+                    <h2>使い方マニュアル</h2>
+
+                    <h3>画面構成</h3>
+                    <!-- ▼ 要差し替え: 週間ToDoカレンダーの画面構成画像 ▼ -->
+                    <img src="../../assets/images/todolist-layout.png" alt="週間ToDoカレンダー 画面構成" class="screenshot">
+                    <!-- ▲ 要差し替え: 週間ToDoカレンダーの画面構成画像 ▲ -->
+                    <ol>
+                        <li><strong>ヘッダー:</strong> アプリタイトルと各種操作ボタンがあります。
+                            <ul>
+                                <li><strong>週ナビゲーション:</strong> <kbd>&lt; 前週</kbd>, <kbd>次週 &gt;</kbd> ボタンと現在の表示週範囲。</li>
+                                <li><strong><kbd>今日へ</kbd>:</strong> 今日の日付が含まれる週に移動します。</li>
+                                <li><strong><kbd>ToDo追加</kbd>:</strong> 新しいToDoを作成するダイアログを開きます。</li>
+                                <li><strong><kbd>設定</kbd>:</strong> 週の開始曜日などを設定するダイアログを開きます。</li>
+                                <li><strong><kbd>保存</kbd>:</strong> 現在のToDoデータをJSONファイルとして保存します。</li>
+                                <li><strong><kbd>読込</kbd>:</strong> 保存したJSONファイルを読み込みます。</li>
+                            </ul>
+                        </li>
+                        <li><strong>カレンダーグリッド:</strong> 1週間分のカレンダーが表示されます。
+                            <ul>
+                                <li><strong>曜日ヘッダー:</strong> 設定に基づいた曜日のヘッダー（日〜土 or 月〜日）。土日は背景色が変わります。</li>
+                                <li><strong>日付セル:</strong> 各日付のマス。日付番号、祝日名（該当する場合）、その日のToDoアイテムが表示されます。今日の日付は背景色が変わります。</li>
+                                <li><strong>ToDoアイテム:</strong> 各日付に追加されたToDo。クリックで詳細表示、編集/削除ボタン付き。優先度に応じて背景色が変わります。期限切れで未完了のToDoは、今日のセルにまとめて表示されます。</li>
+                            </ul>
+                        </li>
+                    </ol>
+
+                    <h3>基本的な使い方</h3>
+                     <ul class="list-group list-group-flush">
+                        <li class="list-group-item"><strong>週の移動:</strong> ヘッダーの <kbd>&lt; 前週</kbd> / <kbd>次週 &gt;</kbd> ボタン、または <kbd>今日へ</kbd> ボタンで表示する週を切り替えます。</li>
+                        <li class="list-group-item"><strong>ToDoの追加:</strong> ヘッダーの <kbd>ToDo追加</kbd> ボタンをクリックし、開いたダイアログで情報を入力して <kbd>保存</kbd> をクリックします。</li>
+                        <li class="list-group-item"><strong>ToDoの詳細表示/編集:</strong> カレンダー上のToDoアイテムをクリックすると詳細表示ダイアログが開きます。<kbd>編集</kbd> ボタンを押すと編集モードになります。変更後 <kbd>保存</kbd> をクリックします。</li>
+                        <li class="list-group-item"><strong>ToDoの完了/未完了:</strong> ToDoアイテム内のチェックボックス <input type="checkbox" style="vertical-align: middle;"> をクリックして状態を切り替えます。完了すると完了日時が表示されます。</li>
+                        <li class="list-group-item"><strong>ToDoの削除:</strong> ToDoアイテム右下のバツアイコン <i class="bi bi-x-lg" style="color: #dc3545;"></i> をクリックします。繰り返しToDoの場合は削除オプション（この予定のみ、これ以降、すべて）を選択するダイアログが開きます。</li>
+                         <li class="list-group-item"><strong>設定の変更:</strong> ヘッダーの <kbd>設定</kbd> ボタン <i class="bi bi-gear-fill"></i> をクリックし、週の開始曜日やデフォルトの期限日を設定して <kbd>保存</kbd> をクリックします。</li>
+                    </ul>
+
+                    <h3>ToDo詳細/編集/追加ダイアログ</h3>
+                    <!-- ▼ 要差し替え: ToDoダイアログのスクリーンショット ▼ -->
+                    <img src="../../assets/images/todolist-dialog-todo.png" alt="ToDo詳細・編集・追加ダイアログ" class="screenshot">
+                    <!-- ▲ 要差し替え: ToDoダイアログのスクリーンショット ▲ -->
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item"><strong>タイトル:</strong> ToDoの名称を入力します（必須）。</li>
+                        <li class="list-group-item"><strong>期限日時:</strong> 期限となる日付（必須）と時刻（任意）を指定します。日付のみの場合、その日の終わりが期限となります。</li>
+                        <li class="list-group-item"><strong>優先度:</strong> <kbd>高</kbd> <kbd>中</kbd> <kbd>低</kbd> から選択します。ToDoアイテムの背景色が変わります。表示モードでも変更可能です。</li>
+                        <li class="list-group-item"><strong>内容:</strong> ToDoの詳細な説明やメモを記入できます。</li>
+                        <li class="list-group-item"><strong>繰り返し設定 (新規追加時のみ):</strong>
+                            <ul>
+                                <li>「しない」「毎日」「毎週」「毎月」から選択します。</li>
+                                <li>間隔（例: 2日ごと、3週間ごと）を指定できます。</li>
+                                <li>毎週の場合は曜日を、毎月の場合は日付を指定します。</li>
+                                <li>繰り返しの終了条件（なし、指定日）を設定できます。</li>
+                            </ul>
+                        </li>
+                        <li class="list-group-item"><strong>完了情報 (表示モード):</strong> ToDoが完了している場合、完了日時が表示されます。</li>
+                        <li class="list-group-item"><strong>ボタン:</strong>
+                            <ul>
+                                <li><strong>追加/編集モード:</strong> <kbd>保存</kbd> / <kbd>キャンセル</kbd> ボタン</li>
+                                <li><strong>表示モード:</strong> <kbd>編集</kbd> / <kbd>閉じる</kbd> ボタン</li>
+                             </ul>
+                        </li>
+                    </ul>
+
+                    <h3>削除オプションダイアログ (繰り返しToDo)</h3>
+                    <!-- ▼ 要差し替え: 削除オプションダイアログのスクリーンショット ▼ -->
+                    <img src="../../assets/images/todolist-dialog-delete.png" alt="削除オプションダイアログ" class="screenshot">
+                    <!-- ▲ 要差し替え: 削除オプションダイアログのスクリーンショット ▲ -->
+                    <p>繰り返し設定されたToDoを削除する際に表示されます。</p>
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item"><strong>この予定のみ削除:</strong> クリックした日付のToDoだけを削除（除外）します。</li>
+                        <li class="list-group-item"><strong>これ以降のすべての予定を削除:</strong> クリックした日付以降の繰り返しToDoをすべて削除します（繰り返しの終了日を前日に設定します）。</li>
+                        <li class="list-group-item"><strong>すべての繰り返し予定を削除:</strong> 元のToDoテンプレート自体を完全に削除します。</li>
+                    </ul>
+
+                    <h3>設定ダイアログ</h3>
+                    <!-- ▼ 要差し替え: 設定ダイアログのスクリーンショット ▼ -->
+                    <img src="../../assets/images/todolist-dialog-settings.png" alt="設定ダイアログ" class="screenshot">
+                    <!-- ▲ 要差し替え: 設定ダイアログのスクリーンショット ▲ -->
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item"><strong>週の開始曜日:</strong> カレンダーの表示を「日曜始まり」または「月曜始まり」に切り替えます。</li>
+                        <li class="list-group-item"><strong>ToDo追加時のデフォルト期限日:</strong> 新規ToDo作成時の期限日を「今日」「1週間後」「1ヶ月後」から選択できます。</li>
+                    </ul>
+
+
+                    <h3>データの保存と読込</h3>
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item"><strong>保存:</strong> ヘッダーの<kbd>保存</kbd>ボタンをクリックすると、ToDoデータと設定情報を含むJSONファイルが<code>TD[日付時刻].json</code>という名前でダウンロードされます。</li>
+                        <li class="list-group-item"><strong>読込:</strong> ヘッダーの<kbd>読込</kbd>ボタンをクリックし、保存したJSONファイルを選択します。現在の内容は上書きされます（確認ダイアログが表示されます）。設定情報もファイルの内容で更新されます。</li>
+                    </ul>
+
+                 </article>
+            </div>
+             <div class="col-lg-4">
+                <aside>
+                    <div class="card mt-4 mt-lg-0">
+                        <div class="card-body">
+                            <h5 class="card-title">アプリ情報</h5>
+                            <ul class="list-unstyled">
+                                <li><strong>バージョン:</strong> 1.0</li>
+                                <li><strong>最終更新:</strong> 2025/05/04</li> <!-- ▼ 適宜更新 ▼ -->
+                                <li><strong>技術:</strong> HTML, CSS, Vanilla JavaScript, Bootstrap 5</li>
+                                <li><strong>外部API:</strong> holidays-jp (祝日データ取得)</li>
+                                <li><strong>開発協力:</strong> Google AI Studio</li>
+                            </ul>
+                            <a href="https://LifeBook2021.github.io/app/todolist/" target="_blank" rel="noopener noreferrer" class="btn btn-success w-100 mb-2">
+                                <i class="bi bi-play-circle me-2"></i>アプリを起動
+                            </a>
+                             <div>
+                                <small class="text-muted">
+                                    ソースコードは、上記の「アプリを起動」リンク先のページで、ブラウザの「ページのソースを表示」(またはそれに類する)機能を使用することで確認・保存できます。
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card mt-4">
+                         <div class="card-body">
+                             <h5 class="card-title">開発ストーリー</h5>
+                             <p class="small">「繰り返し可能なToDoを週表示カレンダーで管理したい」という発想から、AIに設計と実装を依頼。基本的なカレンダー描画とToDo追加機能から始め、「繰り返しロジック」「優先度設定」「設定保存」「JSON入出力」など、複雑な要件をAIとの対話を通じて段階的に組み込み、デバッグを重ねて完成度を高めました。</p>
+                             <a href="../../ai-creation.html" class="btn btn-outline-info btn-sm">AIとの開発をもっと詳しく</a>
+                         </div>
+                     </div>
+                </aside>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer mt-auto">
+        <div class="container text-center">
+            <span class="text-muted">&copy; 2025 AIと創るJavaScriptツールキット. All Rights Reserved.</span>
+
+            <div class="mt-2">
+                <i class="bi bi-envelope me-1"></i>
+                <a href="mailto:lifebook20210120@gmail.com">lifebook20210120@gmail.com</a>
+            </div>
+
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
