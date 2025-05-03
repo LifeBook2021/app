@@ -1,3 +1,6 @@
+/* Bootstrap Icons Integration - Move @import to the top */
+@import url("https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css");
+
 /* 共通スタイル */
 body {
     display: flex;
@@ -20,21 +23,22 @@ main {
     margin-right: 0.5rem;
 }
 
-/* フッター */
-.footer {
+/* フッター (詳細度を上げたセレクタ) */
+body > footer.footer { /* body直下を指定して詳細度UP */
     background-color: #343a40;
-    color: #adb5bd;
+    color: #ced4da;      /* より明るいグレー */
     padding: 1.5rem 0;
     font-size: 0.9em;
 }
-.footer a {
-    color: #ced4da;
+body > footer.footer a { /* body直下を指定して詳細度UP */
+    color: #f8f9fa;      /* ほぼ白に近い色 */
     text-decoration: none;
 }
-.footer a:hover {
-    color: #ffffff;
+body > footer.footer a:hover {
+    color: #ffffff;      /* ホバー時は白 */
     text-decoration: underline;
 }
+
 
 /* アプリ紹介カード */
 .app-card {
@@ -201,5 +205,4 @@ body > footer.footer .text-muted {
     /* color: #ced4da !important; */
 }
 
-/* Bootstrap Icons Integration */
-@import url("https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css");
+/* 他のスタイルルールは @import の後に記述 */
