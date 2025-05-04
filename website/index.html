@@ -13,8 +13,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AIと創るJavaScriptツールキット | 高度なWebアプリをコード不要で</title>
-    <meta name="description" content="JavaScriptと生成AI(Google AI Studio等)を活用し、プログラミング経験がなくてもアイデアを形に。マインドマップ、ガントチャート、カンバンボードなど5つの多機能Webアプリを紹介します。">
-    <meta name="keywords" content="JavaScript, シングルページアプリケーション, SPA, 生成AI, Google AI Studio, プログラミング不要, アイデア具現化, マインドマップ, スケジュール管理, 付箋, ガントチャート, カンバンボード, Webアプリ, 無料ツール">
+    <meta name="description" content="JavaScriptと生成AI(Google AI Studio等)を活用し、プログラミング経験がなくてもアイデアを形に。マインドマップ、ガントチャート、カンバンボードなど6つの多機能Webアプリを紹介します。">
+    <meta name="keywords" content="JavaScript, シングルページアプリケーション, SPA, 生成AI, Google AI Studio, プログラミング不要, アイデア具現化, マインドマップ, スケジュール管理, 付箋, ガントチャート, カンバンボード, ToDoリスト, Webアプリ, 無料ツール">
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Custom CSS -->
@@ -48,6 +48,9 @@
                                 <li><a class="dropdown-item" href="apps/kanban-board/index.html">カンバンボード</a></li>
                                 <li><a class="dropdown-item" href="apps/schedule/index.html">スケジュールチェック</a></li>
                                 <li><a class="dropdown-item" href="apps/mindmap/index.html">マインドマップ</a></li>
+                                <!-- ▼ 修正箇所 ▼ -->
+                                <li><a class="dropdown-item" href="apps/todolist/index.html">週間ToDoカレンダー</a></li>
+                                <!-- ▲ 修正箇所 ▲ -->
                             </ul>
                         </li>
                         <li class="nav-item"><a class="nav-link" href="ai-creation.html">AIと創るアイデア</a></li>
@@ -62,7 +65,7 @@
         <section class="hero-section">
             <div class="container">
                 <h1>そのアイデア、AIと共に形にしませんか？</h1>
-                <p class="lead">JavaScriptの力と生成AIのサポートがあれば、コーディング経験がなくても高度なWebアプリケーションを創り出せます。このサイトでは、その実例となる5つのツールと、AIを活用した開発プロセスを紹介します。</p>
+                <p class="lead">JavaScriptの力と生成AIのサポートがあれば、コーディング経験がなくても高度なWebアプリケーションを創り出せます。このサイトでは、その実例となる6つのツールと、AIを活用した開発プロセスを紹介します。</p>
                 <a href="#apps" class="btn btn-primary btn-lg">アプリを試す</a>
                 <a href="ai-creation.html" class="btn btn-outline-light btn-lg ms-2">AI活用ストーリーを読む</a>
             </div>
@@ -75,7 +78,6 @@
                 <!-- 付箋アプリ -->
                 <div class="col-lg-4 col-md-6">
                     <div class="card app-card">
-                        <!-- ここに付箋アプリのスクリーンショット画像を挿入 -->
                         <img src="assets/images/sticky-notes-screenshot.png" class="card-img-top" alt="付箋アプリ スクリーンショット">
                         <div class="card-body">
                             <h5 class="card-title">📝 付箋アプリ</h5>
@@ -87,7 +89,6 @@
                 <!-- ガントチャート -->
                 <div class="col-lg-4 col-md-6">
                     <div class="card app-card">
-                        <!-- ここにガントチャートのスクリーンショット画像を挿入 -->
                         <img src="assets/images/gantt-chart-screenshot.png" class="card-img-top" alt="ガントチャート スクリーンショット">
                         <div class="card-body">
                             <h5 class="card-title">📊 ガントチャート</h5>
@@ -99,7 +100,6 @@
                 <!-- カンバンボード -->
                 <div class="col-lg-4 col-md-6">
                     <div class="card app-card">
-                        <!-- ここにカンバンボードのスクリーンショット画像を挿入 -->
                         <img src="assets/images/kanban-board-screenshot.png" class="card-img-top" alt="カンバンボード スクリーンショット">
                         <div class="card-body">
                             <h5 class="card-title">📋 カンバンボード</h5>
@@ -111,7 +111,6 @@
                 <!-- スケジュールチェック -->
                 <div class="col-lg-4 col-md-6">
                     <div class="card app-card">
-                        <!-- ここにスケジュールチェックのスクリーンショット画像を挿入 -->
                         <img src="assets/images/schedule-screenshot.png" class="card-img-top" alt="スケジュールチェック スクリーンショット">
                         <div class="card-body">
                             <h5 class="card-title">📅 スケジュールチェック</h5>
@@ -123,7 +122,6 @@
                 <!-- マインドマップ -->
                 <div class="col-lg-4 col-md-6">
                     <div class="card app-card">
-                        <!-- ここにマインドマップのスクリーンショット画像を挿入 -->
                         <img src="assets/images/mindmap-screenshot.png" class="card-img-top" alt="マインドマップ スクリーンショット">
                         <div class="card-body">
                             <h5 class="card-title">💡 マインドマップ</h5>
@@ -132,7 +130,22 @@
                         </div>
                     </div>
                 </div>
-            </div>
+                <!-- ▼ 修正箇所 ▼ -->
+                <!-- 週間ToDoカレンダー -->
+                <div class="col-lg-4 col-md-6">
+                    <div class="card app-card">
+                        <!-- ▼ 要差し替え: 週間ToDoカレンダーのスクリーンショット画像 ▼ -->
+                        <img src="assets/images/todolist-screenshot.png" class="card-img-top" alt="週間ToDoカレンダー スクリーンショット">
+                        <!-- ▲ 要差し替え: 週間ToDoカレンダーのスクリーンショット画像 ▲ -->
+                        <div class="card-body">
+                            <h5 class="card-title">✅ 週間ToDoカレンダー</h5>
+                            <p class="card-text">週単位でタスクを管理。繰り返し設定、優先度、完了チェック、祝日表示に対応。柔軟なカスタマイズとJSON保存/読込が可能。</p>
+                            <a href="apps/todolist/index.html" class="btn btn-outline-primary mt-auto">詳細と使い方</a>
+                        </div>
+                    </div>
+                </div>
+                 <!-- ▲ 修正箇所 ▲ -->
+            </div> <!-- この </div class="row g-4"> の直前に追加 -->
         </section>
 
         <!-- コンセプトセクション -->
