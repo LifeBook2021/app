@@ -127,6 +127,28 @@
         .comment-edit-area textarea { font-size: 0.9rem; min-height: 60px; }
         .comment-actions button { margin-left: 0.25rem; }
 
+        /* --- 表形式表示 --- */
+        .table-view-container { flex-grow: 1; overflow-y: auto; padding-top: 0; }
+        .table-view-container table { table-layout: fixed; }
+        .table-view-container thead.sticky-top {
+            position: -webkit-sticky; /* Safari */
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            background-color: #f8f9fa;
+        }
+        .table-view-container td, .table-view-container th {
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis; vertical-align: middle;
+            padding: 0.5rem;
+        }
+        .table-view-container th { cursor: pointer; user-select: none;}
+        .table-view-container th .sort-icon { margin-left: 0.25em; opacity: 0.5; }
+        .table-view-container th.active .sort-icon { opacity: 1; }
+        .table-view-container td.task-title-cell { white-space: normal; }
+        .table-view-container .color-indicator-cell span { display: inline-block; width: 12px; height: 12px; border-radius: 50%; border: 1px solid #ccc; }
+        .table-view-container tbody tr:hover { background-color: #f1f1f1; }
+
+
         /* --- ユーティリティ --- */
         input::placeholder{ color: #6c757d; opacity: 0.7; }
         .btn-xs { padding: 0.1rem 0.3rem; font-size: 0.75rem; line-height: 1.2; border-radius: 0.2rem; }
@@ -149,8 +171,20 @@
                 <span v-if="formattedLastLoadedTime" class="text-white-50 small me-3" title="最終読込日時">
                     <i class="bi bi-clock me-1"></i>{{ formattedLastLoadedTime }}
                 </span>
-                <!-- ボタン群 -->
-                <button class="btn btn-outline-light btn-sm me-2" @click="addGroup" title="リスト追加"><i class="bi bi-plus-lg me-1"></i> リスト追加</button>
+
+                <!-- リスト追加ボタン (カンバン表示時のみ) -->
+                <button class="btn btn-outline-light btn-sm me-2" @click="addGroup" title="リスト追加" v-if="currentView === 'kanban'"><i class="bi bi-plus-lg me-1"></i> リスト追加</button>
+
+                <!-- カード追加ボタン (表形式表示時のみ) -->
+                <button class="btn btn-outline-light btn-sm me-2" @click="openNewCardModalForTable" title="カード追加" v-if="currentView === 'table' && tasks.length > 0"><i class="bi bi-plus-lg me-1"></i> カード追加</button>
+
+                <!-- 表示切替ボタン -->
+                <button class="btn btn-outline-light btn-sm me-2" @click="toggleView" title="表示切替">
+                    <i :class="currentView === 'kanban' ? 'bi bi-table' : 'bi bi-kanban-fill'"></i>
+                    {{ currentView === 'kanban' ? '表形式' : 'カンバン' }}
+                </button>
+
+                <!-- その他のボタン群 -->
                 <label for="fileInput" class="btn btn-outline-light btn-sm me-2" title="JSON読込"><i class="bi bi-box-arrow-up me-1"></i> JSON読込</label>
                 <input type="file" id="fileInput" accept=".json" @change="loadDataFromFile" style="display: none;">
                 <button :class="['btn', 'btn-sm', isDataChanged ? 'btn-warning' : 'btn-outline-light', 'me-2']" @click="saveDataToFile" :title="isDataChanged ? '変更あり！JSON保存' : 'JSON保存'">
@@ -161,44 +195,134 @@
 
         <!-- ボード本体 -->
         <div class="container-fluid board-container">
-            <div class="kanban-board">
-                <draggable :list="tasks" ghost-class="ghost" handle=".list-drag-handle" group="lists" class="d-flex h-100">
-                    <div class="kanban-list-wrapper" v-for="(list, listIndex) in tasks" :key="list.id">
-                        <div class="kanban-list">
-                            <div class="list-header d-flex justify-content-between align-items-center mb-3">
-                                <i class="bi bi-grip-vertical drag-handle list-drag-handle me-2" title="リスト移動"></i>
-                                <input type="text" class="form-control list-header-input flex-grow-1" v-model="list.name" placeholder="リスト名">
-                                <button class="btn btn-outline-secondary btn-xs ms-2" @click="delGroup(listIndex)" title="リスト削除"><i class="bi bi-trash"></i></button>
-                            </div>
-                            <div class="list-content">
-                                <draggable :list="list.cards" ghost-class="ghost" group="cards" handle=".card-drag-handle" class="h-100">
-                                    <div class="kanban-card" v-for="(card, cardIndex) in list.cards" :key="card.id" @click="openTaskModal(card, list.id)" title="詳細表示/編集" :style="{ backgroundColor: getCardBackgroundColor(card.color) }">
-                                        <div class="d-flex justify-content-between align-items-start mb-2">
-                                            <span class="fw-bold flex-grow-1 me-2 fs-sm">{{ card.title || '(無題)' }}</span>
-                                            <div class="d-flex align-items-center flex-shrink-0">
-                                                <i class="bi bi-grip-vertical drag-handle card-drag-handle ms-2" @click.stop title="カード移動"></i>
-                                                <button class="btn btn-outline-secondary btn-xs ms-1" @click.stop="confirmDeleteCard(list.cards, cardIndex, card.title)" title="カード削除"><i class="bi bi-x-lg"></i></button>
+            <!-- カンバン表示 -->
+            <div v-if="currentView === 'kanban'" class="kanban-board-wrapper" style="display: flex; flex-direction: column; flex-grow: 1; overflow: hidden;">
+                <div class="kanban-board">
+                    <draggable :list="tasks" ghost-class="ghost" handle=".list-drag-handle" group="lists" class="d-flex h-100">
+                        <div class="kanban-list-wrapper" v-for="(list, listIndex) in tasks" :key="list.id">
+                            <div class="kanban-list">
+                                <div class="list-header d-flex justify-content-between align-items-center mb-3">
+                                    <i class="bi bi-grip-vertical drag-handle list-drag-handle me-2" title="リスト移動"></i>
+                                    <input type="text" class="form-control list-header-input flex-grow-1" v-model="list.name" placeholder="リスト名">
+                                    <button class="btn btn-outline-secondary btn-xs ms-2" @click="delGroup(listIndex)" title="リスト削除"><i class="bi bi-trash"></i></button>
+                                </div>
+                                <div class="list-content">
+                                    <draggable :list="list.cards" ghost-class="ghost" group="cards" handle=".card-drag-handle" class="h-100">
+                                        <div class="kanban-card" v-for="(card, cardIndex) in list.cards" :key="card.id" @click="openTaskModal(card, list.id)" title="詳細表示/編集" :style="{ backgroundColor: getCardBackgroundColor(card.color) }">
+                                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                                <span class="fw-bold flex-grow-1 me-2 fs-sm">{{ card.title || '(無題)' }}</span>
+                                                <div class="d-flex align-items-center flex-shrink-0">
+                                                    <i class="bi bi-grip-vertical drag-handle card-drag-handle ms-2" @click.stop title="カード移動"></i>
+                                                    <button class="btn btn-outline-secondary btn-xs ms-1" @click.stop="confirmDeleteCard(list.cards, cardIndex, card.title)" title="カード削除"><i class="bi bi-x-lg"></i></button>
+                                                </div>
                                             </div>
+                                            <div class="mb-1" v-if="card.assignee"><span class="fs-sm text-muted"><i class="bi bi-person"></i> {{ card.assignee }}</span></div>
+                                            <div class="d-flex align-items-center mb-2" v-if="card.dueDate">
+                                                <span class="fs-sm text-muted me-2"><i class="bi bi-calendar-event"></i> 期限:</span>
+                                                <span :class="getDueDateBadgeClass(card.dueDate)" class="due-date-badge" :title="getDueDateTooltip(card.dueDate)">{{ formatDueDate(card.dueDate) }}</span>
+                                            </div>
+                                            <div class="card-labels" v-if="card.labels && card.labels.length > 0">
+                                                <span v-for="(label, idx) in card.labels" :key="idx" class="badge card-label-badge" :style="{ backgroundColor: getLabelColor(label) }">{{ label }}</span>
+                                            </div>
+                                            <div class="fs-sm text-muted mt-2" v-if="card.updatedAt" title="最終更新日時"><i class="bi bi-pencil-square"></i> {{ formatGeneralTimestamp(card.updatedAt) }}</div>
                                         </div>
-                                        <div class="mb-1" v-if="card.assignee"><span class="fs-sm text-muted"><i class="bi bi-person"></i> {{ card.assignee }}</span></div>
-                                        <div class="d-flex align-items-center mb-2" v-if="card.dueDate">
-                                            <span class="fs-sm text-muted me-2"><i class="bi bi-calendar-event"></i> 期限:</span>
-                                            <span :class="getDueDateBadgeClass(card.dueDate)" class="due-date-badge" :title="getDueDateTooltip(card.dueDate)">{{ formatDueDate(card.dueDate) }}</span>
-                                        </div>
-                                        <div class="card-labels" v-if="card.labels && card.labels.length > 0">
-                                            <span v-for="(label, idx) in card.labels" :key="idx" class="badge card-label-badge" :style="{ backgroundColor: getLabelColor(label) }">{{ label }}</span>
-                                        </div>
-                                    </div>
-                                </draggable>
-                            </div>
-                            <div class="mt-3 flex-shrink-0">
-                                <button class="btn btn-outline-secondary btn-sm w-100" @click="openNewCardModal(list)"><i class="bi bi-plus-lg"></i> カード追加</button>
+                                    </draggable>
+                                </div>
+                                <div class="mt-3 flex-shrink-0">
+                                    <button class="btn btn-outline-secondary btn-sm w-100" @click="openNewCardModal(list)"><i class="bi bi-plus-lg"></i> カード追加</button>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                </draggable>
+                    </draggable>
+                </div>
+                <div v-if="tasks.length === 0 && !isLoading" class="alert alert-light text-center border mt-3">リストがありません...</div>
             </div>
-            <div v-if="tasks.length === 0 && !isLoading" class="alert alert-light text-center border mt-4">リストがありません...</div>
+
+            <!-- 表形式表示 -->
+            <div v-if="currentView === 'table'" class="table-view-container">
+                <table class="table table-hover table-sm">
+                    <thead class="table-light sticky-top">
+                        <tr>
+                            <th scope="col" style="width: 30px;" @click="sortBy('card.color')" :class="{ active: sortKey === 'card.color' }">
+                                色
+                                <span v-if="sortKey === 'card.color'" class="sort-icon">
+                                    <i :class="sortOrders['card.color'] === 'asc' ? 'bi bi-arrow-up' : 'bi bi-arrow-down'"></i>
+                                </span>
+                            </th>
+                            <th scope="col" style="width: 30%;" @click="sortBy('card.title')" :class="{ active: sortKey === 'card.title' }">
+                                タスク名
+                                <span v-if="sortKey === 'card.title'" class="sort-icon">
+                                    <i :class="sortOrders['card.title'] === 'asc' ? 'bi bi-arrow-up' : 'bi bi-arrow-down'"></i>
+                                </span>
+                            </th>
+                            <th scope="col" style="width: 15%;" @click="sortBy('listName')" :class="{ active: sortKey === 'listName' }">
+                                リスト
+                                <span v-if="sortKey === 'listName'" class="sort-icon">
+                                    <i :class="sortOrders['listName'] === 'asc' ? 'bi bi-arrow-up' : 'bi bi-arrow-down'"></i>
+                                </span>
+                            </th>
+                            <th scope="col" style="width: 15%;" @click="sortBy('card.assignee')" :class="{ active: sortKey === 'card.assignee' }">
+                                担当者
+                                <span v-if="sortKey === 'card.assignee'" class="sort-icon">
+                                    <i :class="sortOrders['card.assignee'] === 'asc' ? 'bi bi-arrow-up' : 'bi bi-arrow-down'"></i>
+                                </span>
+                            </th>
+                            <th scope="col" style="width: 15%;" @click="sortBy('card.dueDate')" :class="{ active: sortKey === 'card.dueDate' }">
+                                期限日
+                                <span v-if="sortKey === 'card.dueDate'" class="sort-icon">
+                                    <i :class="sortOrders['card.dueDate'] === 'asc' ? 'bi bi-arrow-up' : 'bi bi-arrow-down'"></i>
+                                </span>
+                            </th>
+                            <th scope="col" @click="sortBy('card.labels')" :class="{ active: sortKey === 'card.labels' }">
+                                ラベル
+                                <span v-if="sortKey === 'card.labels'" class="sort-icon">
+                                    <i :class="sortOrders['card.labels'] === 'asc' ? 'bi bi-arrow-up' : 'bi bi-arrow-down'"></i>
+                                </span>
+                            </th>
+                            <th scope="col" style="width: 10%;" @click="sortBy('progress')" :class="{ active: sortKey === 'progress' }">
+                                進捗
+                                <span v-if="sortKey === 'progress'" class="sort-icon">
+                                    <i :class="sortOrders['progress'] === 'asc' ? 'bi bi-arrow-up' : 'bi bi-arrow-down'"></i>
+                                </span>
+                            </th>
+                            <th scope="col" style="width: 15%;" @click="sortBy('card.updatedAt')" :class="{ active: sortKey === 'card.updatedAt' }">
+                                更新日時
+                                <span v-if="sortKey === 'card.updatedAt'" class="sort-icon">
+                                    <i :class="sortOrders['card.updatedAt'] === 'asc' ? 'bi bi-arrow-up' : 'bi bi-arrow-down'"></i>
+                                </span>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-if="sortedTableData.length === 0 && !isLoading">
+                            <td colspan="8" class="text-center text-muted p-3">表示するタスクがありません。</td>
+                        </tr>
+                        <tr v-for="item in sortedTableData" :key="item.card.id" @click="openTaskModal(item.card, item.listId)" style="cursor: pointer;">
+                            <td class="color-indicator-cell text-center">
+                                <span :style="{ backgroundColor: getCardBackgroundColor(item.card.color) }" :title="getCardColorName(item.card.color) || 'デフォルト色'"></span>
+                            </td>
+                            <td class="task-title-cell"><strong>{{ item.card.title || '(無題)' }}</strong></td>
+                            <td>{{ item.listName }}</td>
+                            <td>{{ item.card.assignee || '-' }}</td>
+                            <td>
+                                <span v-if="item.card.dueDate" :class="getDueDateBadgeClass(item.card.dueDate) + ' p-1'" :title="getDueDateTooltip(item.card.dueDate)">
+                                    {{ formatDueDate(item.card.dueDate) }}
+                                </span>
+                                <span v-else>-</span>
+                            </td>
+                            <td>
+                                <span v-if="item.card.labels && item.card.labels.length > 0">
+                                    <span v-for="(label, idx) in item.card.labels" :key="idx" class="badge me-1" :style="{ backgroundColor: getLabelColor(label) }">{{ label }}</span>
+                                </span>
+                                <span v-else>-</span>
+                            </td>
+                            <td class="text-center">{{ getChecklistProgress(item.card).text || '-' }}</td>
+                            <td>{{ formatGeneralTimestamp(item.card.updatedAt) }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
             <div v-if="isLoading" class="alert alert-info text-center mt-4"><div class="spinner-border spinner-border-sm me-2"></div>読込中...</div>
         </div>
 
@@ -281,6 +405,9 @@
                                     </div>
                                 </div>
                             </div>
+                        </div>
+                        <div v-if="editingCard && editingCard.updatedAt && !isNewCard" class="text-muted small mt-n2 mb-3">
+                            最終更新: {{ formatGeneralTimestamp(editingCard.updatedAt) }}
                         </div>
 
                         <hr>
@@ -389,6 +516,7 @@
                 </div><!-- /.modal-content -->
             </div><!-- /.modal-dialog -->
         </div><!-- /#taskDetailModal -->
+
     </div> <!-- /#app -->
 
     <!-- CDN Scripts -->
@@ -410,7 +538,19 @@
                     availableLabels: [],
                     newLabelInput: '',
                     labelColorCache: {},
-                    lastLoadedTime: null, // 最後にJSONを読み込んだ日時
+                    lastLoadedTime: null,
+                    currentView: 'kanban',
+                    sortKey: 'card.title',
+                    sortOrders: {
+                        'card.color': 'asc',
+                        'card.title': 'asc',
+                        'listName': 'asc',
+                        'card.assignee': 'asc',
+                        'card.dueDate': 'asc',
+                        'card.labels': 'asc',
+                        'progress': 'asc',
+                        'card.updatedAt': 'desc', // 追加：更新日時でのソート順
+                    },
                     availableCardColors: [
                         { id: 'yellow', name: '黄', code: '#fffacd' },
                         { id: 'blue', name: '水色', code: '#e7f5ff' },
@@ -432,12 +572,72 @@
                         (input === '' || label.toLowerCase().includes(input))
                     ).sort();
                 },
-                // 最後に読み込んだ日時をフォーマット
                 formattedLastLoadedTime() {
                     if (!this.lastLoadedTime) return null;
                     const d = this.lastLoadedTime;
                     const pad = (n) => String(n).padStart(2, '0');
                     return `${d.getFullYear()}/${pad(d.getMonth() + 1)}/${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+                },
+                sortedTableData() {
+                    if (this.currentView !== 'table') return [];
+                    let flatTasks = [];
+                    this.tasks.forEach(list => {
+                        list.cards.forEach(card => {
+                            flatTasks.push({
+                                listId: list.id,
+                                listName: list.name,
+                                card: card,
+                                progressData: this.getChecklistProgress(card)
+                            });
+                        });
+                    });
+
+                    if (this.sortKey) {
+                        const order = this.sortOrders[this.sortKey] === 'asc' ? 1 : -1;
+                        flatTasks.sort((a, b) => {
+                            let valA, valB;
+
+                            if (this.sortKey === 'progress') {
+                                valA = a.progressData.percentage;
+                                valB = b.progressData.percentage;
+                            } else if (this.sortKey === 'card.labels') {
+                                valA = (a.card.labels && a.card.labels.length > 0) ? a.card.labels[0].toLowerCase() : '';
+                                valB = (b.card.labels && b.card.labels.length > 0) ? b.card.labels[0].toLowerCase() : '';
+                            } else if (this.sortKey === 'card.color') {
+                                valA = this.getCardColorName(a.card.color)?.toLowerCase() || '';
+                                valB = this.getCardColorName(b.card.color)?.toLowerCase() || '';
+                            } else {
+                                valA = this.getValueByPath(a, this.sortKey);
+                                valB = this.getValueByPath(b, this.sortKey);
+                            }
+
+                            valA = (valA === null || typeof valA === 'undefined') ? '' : valA;
+                            valB = (valB === null || typeof valB === 'undefined') ? '' : valB;
+
+
+                            if (this.sortKey === 'card.dueDate') {
+                                if (!valA && valB) return order === 1 ? 1 : -1;
+                                if (valA && !valB) return order === 1 ? -1 : 1;
+                                if (!valA && !valB) return 0;
+                                valA = new Date(valA).getTime();
+                                valB = new Date(valB).getTime();
+                            } else if (this.sortKey === 'card.updatedAt') { // updatedAt のソート
+                                const timeA = valA ? new Date(valA).getTime() : (order === 1 ? Infinity : -Infinity);
+                                const timeB = valB ? new Date(valB).getTime() : (order === 1 ? Infinity : -Infinity);
+                                if (timeA < timeB) return -1 * order;
+                                if (timeA > timeB) return 1 * order;
+                                return 0;
+                            } else if (typeof valA === 'string') {
+                                valA = valA.toLowerCase();
+                                valB = valB.toLowerCase();
+                            }
+
+                            if (valA < valB) return -1 * order;
+                            if (valA > valB) return 1 * order;
+                            return 0;
+                        });
+                    }
+                    return flatTasks;
                 }
             },
             mounted() {
@@ -455,11 +655,26 @@
                 this.updateAvailableLabels();
             },
             methods: {
-                // --- 基本ユーティリティ ---
+                toggleView() {
+                    this.currentView = this.currentView === 'kanban' ? 'table' : 'kanban';
+                },
+                sortBy(key) {
+                    if (this.sortKey === key) {
+                        this.sortOrders[key] = this.sortOrders[key] === 'asc' ? 'desc' : 'asc';
+                    } else {
+                        this.sortKey = key;
+                        if (!this.sortOrders[key]) {
+                             this.$set(this.sortOrders, key, 'asc');
+                        }
+                    }
+                },
+                getValueByPath(obj, path) {
+                    if (!path) return obj;
+                    const properties = path.split('.');
+                    return properties.reduce((prev, curr) => (prev && prev[curr]) ? prev[curr] : null, obj);
+                },
                 generateId() { return '_' + Math.random().toString(36).substr(2, 9); },
                 markDataChanged() { if (!this._isInternalChange) this.isDataChanged = true; },
-
-                // --- データ永続化 (JSON) ---
                 saveDataToFile() {
                     const data = { title: this.boardTitle, tasks: this.tasks };
                     if (data.tasks.length === 0 && !(data.title||'').trim()) {
@@ -512,7 +727,7 @@
                             this.$set(this,'tasks', tasks);
                             this.isDataChanged = false;
                             this.updateAvailableLabels();
-                            this.lastLoadedTime = new Date(); // 読み込み日時を記録
+                            this.lastLoadedTime = new Date();
                             alert("データの読み込みが完了しました。");
                         } catch(err) {
                             console.error("JSONデータの読み込みまたは解析中にエラーが発生しました:", err);
@@ -531,7 +746,7 @@
                 },
                 validateTasksData(tasks) {
                     const validColorIds = this.availableCardColors.map(c => c.id);
-                    const defaultColorId = this.availableCardColors[0]?.id || 'yellow';
+                    const defaultColorId = this.availableCardColors.find(c => c.id === 'gray')?.id || this.availableCardColors[0]?.id || 'yellow';
                     return Array.isArray(tasks) ? tasks.map(list => {
                         if(!list || typeof list !=='object') return null;
                         const listId = list.id || this.generateId();
@@ -555,7 +770,8 @@
                                 checklists: checklists,
                                 comments: comments,
                                 labels: labels,
-                                color: cardColor
+                                color: cardColor,
+                                updatedAt: card.updatedAt || new Date().toISOString() // updatedAt の初期化
                             };
                         }).filter(card => card !== null);
                         return { id: listId, name: String(list.name || '無題'), cards: cards };
@@ -578,8 +794,6 @@
                         return { text: String(c.text), timestamp: String(c.timestamp) };
                     }).filter(c => c !== null) : [];
                 },
-
-                // --- リスト操作 ---
                 addGroup() {
                     this.tasks.push({ id:this.generateId(), name:'新しいリスト', cards:[] });
                 },
@@ -589,8 +803,6 @@
                         this.tasks.splice(listIndex, 1);
                     }
                 },
-
-                // --- カード操作 ---
                 confirmDeleteCard(cardList, cardIndex, cardTitle) {
                     const title = cardTitle || '(無題のカード)';
                     if(confirm(`カード「${title}」を削除しますか？`)) {
@@ -616,7 +828,8 @@
                     });
                     const duplicatedComments = JSON.parse(JSON.stringify(this.editingCard.comments || []));
                     const duplicatedLabels = JSON.parse(JSON.stringify(this.editingCard.labels || []));
-                    const defaultColorId = this.availableCardColors[0]?.id || 'yellow';
+                    const defaultColorId = this.availableCardColors.find(c => c.id === 'gray')?.id || this.availableCardColors[0]?.id || 'yellow';
+
                     const newCard = {
                         id: this.generateId(),
                         title: `${this.editingCard.title || '(無題)'} (コピー)`,
@@ -626,15 +839,14 @@
                         checklists: duplicatedChecklists,
                         comments: duplicatedComments,
                         labels: duplicatedLabels,
-                        color: this.editingCard.color || defaultColorId
+                        color: this.editingCard.color || defaultColorId,
+                        updatedAt: new Date().toISOString() // updatedAt を設定
                     };
                     originalList.cards.push(newCard);
                     this.updateAvailableLabels();
                     if (this.taskModalInstance) this.taskModalInstance.hide();
                     this.$nextTick(() => alert(`カード「${newCard.title}」をコピーしました。`));
                 },
-
-                // --- テキスト処理 / フォーマット ---
                 linkify(text) {
                     if (!text) return '';
                     let escapedText = text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
@@ -695,8 +907,17 @@
                         return '日数計算エラー';
                     }
                 },
-
-                // --- モーダル関連 ---
+                formatGeneralTimestamp(timestampString) { // 追加：汎用日時フォーマット
+                    if (!timestampString) return '-';
+                    try {
+                        const date = new Date(timestampString);
+                        if (isNaN(date.getTime())) return '無効な日時';
+                        const pad = (n) => String(n).padStart(2, '0');
+                        return `${date.getFullYear()}/${pad(date.getMonth() + 1)}/${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
+                    } catch (e) {
+                        return '日時エラー';
+                    }
+                },
                 openTaskModal(card, listId) {
                     if (!card?.id || !listId) {
                         console.error("タスクモーダルを開けません: 不正なカードまたはリストIDです。", card, listId);
@@ -704,8 +925,7 @@
                     }
                     this.isNewCard = false;
                     this.isEditingMode = false;
-                    const defaultColorId = this.availableCardColors[0]?.id || 'yellow';
-                    // Deep copy card data to avoid modifying original data directly
+                    const defaultColorId = this.availableCardColors.find(c => c.id === 'gray')?.id || this.availableCardColors[0]?.id || 'yellow';
                     this.editingCard = JSON.parse(JSON.stringify({
                         ...card,
                         dueDate: card.dueDate === "" ? null : card.dueDate,
@@ -714,10 +934,11 @@
                         comments: Array.isArray(card.comments) ? card.comments : [],
                         labels: Array.isArray(card.labels) ? card.labels : [],
                         color: card.color || defaultColorId,
-                        currentListId: listId, // Store original list ID
-                        targetListId: listId   // Initialize target list ID for editing
+                        updatedAt: card.updatedAt || new Date().toISOString(), // 既存データになければ現在日時
+                        currentListId: listId,
+                        targetListId: listId
                     }));
-                    this.newLabelInput = ''; // Reset label input
+                    this.newLabelInput = '';
                     if (this.taskModalInstance) this.taskModalInstance.show();
                 },
                 openNewCardModal(list) {
@@ -727,56 +948,69 @@
                     }
                     this.isNewCard = true;
                     this.isEditingMode = true;
-                    const defaultColorId = this.availableCardColors[0]?.id || 'yellow';
+                    const defaultColorId = this.availableCardColors.find(c => c.id === 'gray')?.id || this.availableCardColors[0]?.id || 'yellow';
                     this.editingCard = {
                         id: null, title: '', assignee: '', dueDate: null, description: '',
                         checklists: [], comments: [], labels: [],
                         color: defaultColorId,
-                        currentListId: list.id, // Store target list ID
+                        updatedAt: new Date().toISOString(), // 新規作成時にupdatedAtを設定
+                        currentListId: list.id,
                         targetListId: list.id
                     };
-                    this.newLabelInput = ''; // Reset label input
+                    this.newLabelInput = '';
                     if (this.taskModalInstance) {
                         this.taskModalInstance.show();
-                        // Focus the title input after the modal is shown
-                        this.$nextTick(() => {
-                            document.getElementById('modalTaskTitle')?.focus();
-                        });
+                        this.$nextTick(() => { document.getElementById('modalTaskTitle')?.focus(); });
+                    }
+                },
+                openNewCardModalForTable() {
+                    if (this.tasks.length === 0) {
+                        alert("カードを追加するリストがありません。まずカンバン表示でリストを作成してください。");
+                        return;
+                    }
+                    this.isNewCard = true;
+                    this.isEditingMode = true;
+                    const defaultColorId = this.availableCardColors.find(c => c.id === 'gray')?.id || this.availableCardColors[0]?.id || 'yellow';
+                    const defaultListId = this.tasks[0].id;
+                    this.editingCard = {
+                        id: null, title: '', assignee: '', dueDate: null, description: '',
+                        checklists: [], comments: [], labels: [],
+                        color: defaultColorId,
+                        updatedAt: new Date().toISOString(), // 新規作成時にupdatedAtを設定
+                        currentListId: defaultListId,
+                        targetListId: defaultListId
+                    };
+                    this.newLabelInput = '';
+                    if (this.taskModalInstance) {
+                        this.taskModalInstance.show();
+                        this.$nextTick(() => { document.getElementById('modalTaskTitle')?.focus(); });
                     }
                 },
                 switchToEditMode() {
                     if(!this.isEditingMode){
                         this.isEditingMode = true;
-                        // Focus the title input when switching to edit mode
                         this.$nextTick(() => {
                             const titleInput = document.getElementById('modalTaskTitle');
                             if(titleInput && !titleInput.disabled){
                                 titleInput.focus();
-                                if(titleInput.select) titleInput.select(); // Select text if possible
+                                if(titleInput.select) titleInput.select();
                             }
                         });
                     }
                 },
                 cancelEdit() {
                     if(this.isNewCard){
-                        // Just hide the modal for a new card
                         if(this.taskModalInstance) this.taskModalInstance.hide();
                     } else if(this.editingCard){
-                        // Re-open the modal with original data
                         const originalList = this.tasks.find(l => l.id === this.editingCard.currentListId);
                         const originalCard = originalList?.cards.find(c => c.id === this.editingCard.id);
                         if(originalCard){
-                            // Preserve scroll position
                             const modalBody = document.querySelector('#taskDetailModal .modal-body');
                             const currentScrollTop = modalBody ? modalBody.scrollTop : 0;
-                            this.openTaskModal(originalCard, this.editingCard.currentListId);
-                            // Restore scroll position after modal is re-rendered
-                            this.$nextTick(() => {
-                                if(modalBody) modalBody.scrollTop = currentScrollTop;
-                            });
+                            this.openTaskModal(originalCard, this.editingCard.currentListId); // 再度開くことで元に戻す
+                            this.$nextTick(() => { if(modalBody) modalBody.scrollTop = currentScrollTop; });
                         } else {
-                            // Fallback: just switch back to view mode if original card not found (should not happen normally)
-                            this.isEditingMode = false;
+                            this.isEditingMode = false; // 万が一カードが見つからない場合
                         }
                     }
                 },
@@ -785,14 +1019,10 @@
                         alert("カードの保存先リストが指定されていません。");
                         return;
                     }
-
-                    // Handle empty date string
                     if (this.editingCard.dueDate === "") {
                         this.editingCard.dueDate = null;
                     }
-                    const defaultColorId = this.availableCardColors[0]?.id || 'yellow';
-
-                    // Prepare card data, ensuring comments only contain necessary fields
+                    const defaultColorId = this.availableCardColors.find(c => c.id === 'gray')?.id || this.availableCardColors[0]?.id || 'yellow';
                     const cardDataToSave = {
                         id: this.editingCard.id,
                         title: this.editingCard.title || '',
@@ -800,189 +1030,132 @@
                         dueDate: this.editingCard.dueDate,
                         description: this.editingCard.description || '',
                         checklists: this.editingCard.checklists || [],
-                        comments: this.editingCard.comments?.map(c => ({ text: c.text, timestamp: c.timestamp })) || [], // Remove temporary 'isEditing' flags
+                        comments: this.editingCard.comments?.map(c => ({ text: c.text, timestamp: c.timestamp })) || [],
                         labels: this.editingCard.labels || [],
-                        color: this.editingCard.color || defaultColorId
+                        color: this.editingCard.color || defaultColorId,
+                        updatedAt: new Date().toISOString() // 保存時にupdatedAtを更新
                     };
-
                     const targetListId = this.editingCard.targetListId;
-
                     if (this.isNewCard) {
-                        // Add new card
-                        cardDataToSave.id = this.generateId(); // Generate ID for the new card
+                        cardDataToSave.id = this.generateId();
                         const targetList = this.tasks.find(l => l.id === targetListId);
-                        if (!targetList) {
-                            alert("保存先のリストが見つかりません。");
-                            return;
-                        }
+                        if (!targetList) { alert("保存先のリストが見つかりません。"); return; }
                         targetList.cards.push(cardDataToSave);
                     } else {
-                        // Update existing card
                         const currentListId = this.editingCard.currentListId;
                         const cardId = this.editingCard.id;
-                        if (!currentListId || !cardId) {
-                             alert("カード情報の更新中にエラーが発生しました。(ID不一致)");
-                             return;
-                        }
-
+                        if (!currentListId || !cardId) { alert("カード情報の更新中にエラーが発生しました。(ID不一致)"); return; }
                         const originalList = this.tasks.find(l => l.id === currentListId);
-                        if (!originalList) {
-                            alert("元のリストが見つかりません。");
-                            return;
-                        }
+                        if (!originalList) { alert("元のリストが見つかりません。"); return; }
                         const originalCardIndex = originalList.cards.findIndex(c => c.id === cardId);
-                        if (originalCardIndex === -1) {
-                            alert("更新対象のカードが見つかりません。");
-                            return;
-                        }
-
+                        if (originalCardIndex === -1) { alert("更新対象のカードが見つかりません。"); return; }
                         if (currentListId === targetListId) {
-                            // Card stays in the same list, just update data
                             this.$set(originalList.cards, originalCardIndex, cardDataToSave);
                         } else {
-                            // Card moved to a different list
                             const targetList = this.tasks.find(l => l.id === targetListId);
-                            if (!targetList) {
-                                alert("移動先のリストが見つかりません。");
-                                return;
-                            }
-                            // Remove from original list and add to target list
+                            if (!targetList) { alert("移動先のリストが見つかりません。"); return; }
                             originalList.cards.splice(originalCardIndex, 1);
                             targetList.cards.push(cardDataToSave);
                         }
                     }
-                    this.updateAvailableLabels(); // Update label list after save
+                    this.updateAvailableLabels();
                     if (this.taskModalInstance) this.taskModalInstance.hide();
                 },
-                closeModalOnEsc(event) {
-                    // Example: If you want ESC in comment textarea to close modal
-                    // if (event.target.id === 'newCommentText' && !event.shiftKey) {
-                    //     this.taskModalInstance.hide();
-                    // }
-                },
-
-                // --- ボードタイトル編集 ---
+                closeModalOnEsc(event) { },
                 startEditingBoardTitle() {
                     if(!this.isEditingBoardTitle){
-                        this.originalBoardTitle = this.boardTitle; // Store original title
+                        this.originalBoardTitle = this.boardTitle;
                         this.isEditingBoardTitle = true;
-                        // Focus the input after it becomes visible
-                        this.$nextTick(()=>{
-                            if(this.$refs.boardTitleInput){
-                                this.$refs.boardTitleInput.focus();
-                                this.$refs.boardTitleInput.select(); // Select text for easy replacement
-                            }
-                        });
+                        this.$nextTick(()=>{ if(this.$refs.boardTitleInput){ this.$refs.boardTitleInput.focus(); this.$refs.boardTitleInput.select(); } });
                     }
                 },
                 finishEditingBoardTitle() {
                     if(this.isEditingBoardTitle){
                         const trimmedTitle = this.boardTitle.trim();
-                        if(!trimmedTitle) {
-                            this.boardTitle = this.originalBoardTitle || 'カンバンボード'; // Restore original or default if empty
-                        } else if (this.boardTitle !== trimmedTitle) {
-                            this.boardTitle = trimmedTitle; // Update if only whitespace was trimmed
-                        }
+                        if(!trimmedTitle) { this.boardTitle = this.originalBoardTitle || 'カンバンボード'; }
+                        else if (this.boardTitle !== trimmedTitle) { this.boardTitle = trimmedTitle; }
                         this.isEditingBoardTitle = false;
                     }
                 },
                 cancelEditingBoardTitle() {
                     if(this.isEditingBoardTitle){
-                        // Restore original title only if it was actually changed
-                        if(this.boardTitle !== this.originalBoardTitle) {
-                            this.boardTitle = this.originalBoardTitle;
-                        }
+                        if(this.boardTitle !== this.originalBoardTitle) { this.boardTitle = this.originalBoardTitle; }
                         this.isEditingBoardTitle = false;
                     }
                 },
-
-                // --- チェックリスト操作 ---
                 addChecklist() {
                     if(!this.editingCard) return;
-                    // Ensure checklists array exists
-                    if(!Array.isArray(this.editingCard.checklists)) {
-                        this.$set(this.editingCard, 'checklists', []);
-                    }
+                    if(!Array.isArray(this.editingCard.checklists)) { this.$set(this.editingCard, 'checklists', []); }
                     this.editingCard.checklists.push({id: this.generateId(), title: '', items: []});
                 },
                 confirmDeleteChecklist(checklistIndex) {
                     const checklistTitle = this.editingCard?.checklists[checklistIndex]?.title || '(無題のチェックリスト)';
-                    if(confirm(`チェックリスト「${checklistTitle}」を削除しますか？`)) {
-                        this.deleteChecklist(checklistIndex);
-                    }
+                    if(confirm(`チェックリスト「${checklistTitle}」を削除しますか？`)) { this.deleteChecklist(checklistIndex); }
                 },
-                deleteChecklist(checklistIndex) {
-                    if(this.editingCard?.checklists) {
-                        this.editingCard.checklists.splice(checklistIndex, 1);
-                    }
-                },
-                addChecklistItem(checklist) {
-                    if(checklist && Array.isArray(checklist.items)) {
-                        checklist.items.push({id: this.generateId(), text: '', completed: false});
-                    }
-                },
+                deleteChecklist(checklistIndex) { if(this.editingCard?.checklists) { this.editingCard.checklists.splice(checklistIndex, 1); } },
+                addChecklistItem(checklist) { if(checklist && Array.isArray(checklist.items)) { checklist.items.push({id: this.generateId(), text: '', completed: false}); } },
                 confirmDeleteChecklistItem(checklist, itemIndex) {
                      const itemText = checklist?.items[itemIndex]?.text || '(未入力の項目)';
-                     if(confirm(`チェック項目「${itemText}」を削除しますか？`)) {
-                        this.deleteChecklistItem(checklist, itemIndex);
-                     }
+                     if(confirm(`チェック項目「${itemText}」を削除しますか？`)) { this.deleteChecklistItem(checklist, itemIndex); }
                 },
-                deleteChecklistItem(checklist, itemIndex) {
-                    if(checklist?.items) {
-                        checklist.items.splice(itemIndex, 1);
-                    }
-                },
+                deleteChecklistItem(checklist, itemIndex) { if(checklist?.items) { checklist.items.splice(itemIndex, 1); } },
                 toggleChecklistItemCompletion(event, listId, cardId, checklistId, itemId) {
-                    // This method updates the underlying data directly, even in view mode
                     const isCompleted = event.target.checked;
                     const listIndex = this.tasks.findIndex(l => l.id === listId); if(listIndex === -1) return;
                     const cardIndex = this.tasks[listIndex].cards.findIndex(c => c.id === cardId); if(cardIndex === -1) return;
-                    const card = this.tasks[listIndex].cards[cardIndex];
-                    if(!card.checklists) return;
-                    const checklistIndex = card.checklists.findIndex(cl => cl.id === checklistId); if(checklistIndex === -1) return;
-                    const itemIndex = card.checklists[checklistIndex].items.findIndex(i => i.id === itemId); if(itemIndex === -1) return;
 
-                    // Update the actual task data using $set for reactivity
-                    this.$set(this.tasks[listIndex].cards[cardIndex].checklists[checklistIndex].items[itemIndex], 'completed', isCompleted);
+                    const cardToUpdate = this.tasks[listIndex].cards[cardIndex];
+                    if(!cardToUpdate.checklists) return;
+                    const checklistIndex = cardToUpdate.checklists.findIndex(cl => cl.id === checklistId); if(checklistIndex === -1) return;
+                    const itemIndex = cardToUpdate.checklists[checklistIndex].items.findIndex(i => i.id === itemId); if(itemIndex === -1) return;
 
-                    // Also update the editingCard if it's the same item (for instant UI update in modal)
+                    this.$set(cardToUpdate.checklists[checklistIndex].items[itemIndex], 'completed', isCompleted);
+                    this.$set(cardToUpdate, 'updatedAt', new Date().toISOString()); // 実データの updatedAt 更新
+
                     if(this.editingCard && this.editingCard.id === cardId){
                         const editingCl = this.editingCard.checklists?.find(cl => cl.id === checklistId);
                         const editingItem = editingCl?.items.find(i => i.id === itemId);
                         if(editingItem) this.$set(editingItem, 'completed', isCompleted);
+                        this.$set(this.editingCard, 'updatedAt', new Date().toISOString()); // モーダル内データの updatedAt も更新
                     }
-                    // No need to call saveTaskDetails here, change is applied directly
+                    this.markDataChanged();
                 },
-
-                // --- コメント操作 ---
+                getChecklistProgress(card) {
+                    if (!card.checklists || card.checklists.length === 0) return { text: '', percentage: 0 };
+                    let totalItems = 0;
+                    let completedItems = 0;
+                    card.checklists.forEach(cl => {
+                        cl.items.forEach(item => {
+                            totalItems++;
+                            if (item.completed) completedItems++;
+                        });
+                    });
+                    const percentage = totalItems > 0 ? (completedItems / totalItems) * 100 : 0;
+                    const text = totalItems > 0 ? `${completedItems}/${totalItems}` : '';
+                    return { text, percentage };
+                },
                 addComment() {
                     if (!this.editingCard || !this.newCommentText.trim()) return;
                     const text = this.newCommentText.trim();
                     const timestamp = new Date().toISOString();
-                    const newComment = { text: text, timestamp: timestamp, isEditing: false }; // Add temporary flag for editing state
+                    const newComment = { text: text, timestamp: timestamp, isEditing: false };
 
-                    // Ensure comments array exists in editingCard
-                    if (!Array.isArray(this.editingCard.comments)) {
-                        this.$set(this.editingCard, 'comments', []);
-                    }
+                    if (!Array.isArray(this.editingCard.comments)) { this.$set(this.editingCard, 'comments', []); }
                     this.editingCard.comments.push(newComment);
+                    this.$set(this.editingCard, 'updatedAt', new Date().toISOString()); // モーダル内データの updatedAt 更新
 
-                    // If in view mode, also update the actual card data immediately
                     if (!this.isEditingMode && !this.isNewCard) {
                         const { currentListId, id: cardId } = this.editingCard;
-                        if (!currentListId || !cardId) return; // Should not happen
+                        if (!currentListId || !cardId) return;
                         const listIndex = this.tasks.findIndex(l => l.id === currentListId); if (listIndex === -1) return;
                         const cardIndex = this.tasks[listIndex].cards.findIndex(c => c.id === cardId); if (cardIndex === -1) return;
                         const card = this.tasks[listIndex].cards[cardIndex];
-                        if (!Array.isArray(card.comments)) {
-                            this.$set(card, 'comments', []); // Ensure array exists in actual data too
-                        }
-                        // Push only the necessary data, not the temporary 'isEditing' flag
+                        if (!Array.isArray(card.comments)) { this.$set(card, 'comments', []); }
                         card.comments.push({ text: newComment.text, timestamp: newComment.timestamp });
-                        this.markDataChanged(); // Mark data as changed since we modified the main tasks array
+                        this.$set(card, 'updatedAt', new Date().toISOString()); // 実データの updatedAt 更新
+                        this.markDataChanged();
                     }
-
-                    this.newCommentText = ''; // Clear input field
+                    this.newCommentText = '';
                 },
                 formatCommentTimestamp(timestampString) {
                     if (!timestampString) return '';
@@ -991,220 +1164,140 @@
                         if (isNaN(date.getTime())) return '無効な日時';
                         const pad = (n) => String(n).padStart(2, '0');
                         return `${date.getFullYear()}/${pad(date.getMonth() + 1)}/${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
-                    } catch(e) {
-                        return '日時フォーマットエラー';
-                    }
+                    } catch(e) { return '日時フォーマットエラー'; }
                 },
                  startEditingComment(comment, index) {
-                    // Ensure only one comment is edited at a time
-                    this.editingCard.comments.forEach((c, i) => {
-                        if(c.isEditing && i !== index) {
-                            this.cancelCommentEdit(c); // Cancel other edits if any
-                        }
-                    });
-                    // Set editing flag and store original text for cancel
+                    this.editingCard.comments.forEach((c, i) => { if(c.isEditing && i !== index) { this.cancelCommentEdit(c); } });
                     this.$set(comment, 'isEditing', true);
-                    this.$set(comment, 'originalText', comment.text); // Store original text
+                    this.$set(comment, 'originalText', comment.text);
                 },
                 saveCommentEdit(comment, index) {
-                    if (!comment || !comment.text.trim()) {
-                        alert("コメント本文を入力してください。");
-                        return;
-                    }
-                    // Clear editing flags
-                    this.$set(comment, 'isEditing', false);
-                    delete comment.originalText; // Remove original text copy
+                    if (!comment || !comment.text.trim()) { alert("コメント本文を入力してください。"); return; }
+                    
+                    const originalTimestamp = comment.timestamp;
+                    const newText = comment.text.trim();
 
-                    // If in view mode, update the actual card data immediately
+                    this.$set(this.editingCard.comments[index], 'text', newText);
+                    this.$set(this.editingCard.comments[index], 'isEditing', false);
+                    delete this.editingCard.comments[index].originalText;
+                    this.$set(this.editingCard, 'updatedAt', new Date().toISOString()); // モーダル内データの updatedAt 更新
+
                     if (!this.isEditingMode && !this.isNewCard) {
                          const { currentListId, id: cardId } = this.editingCard;
                          if (!currentListId || !cardId) return;
                          const listIndex = this.tasks.findIndex(l => l.id === currentListId); if (listIndex === -1) return;
-                         const cardIndex = this.tasks[listIndex].cards.findIndex(c => c.id === cardId); if (cardIndex === -1) return;
-                         const card = this.tasks[listIndex].cards[cardIndex];
-                         if (card?.comments?.[index]) {
-                            // Update using $set for reactivity, only save text and timestamp
-                            this.$set(card.comments, index, { text: comment.text, timestamp: comment.timestamp });
+                         const cardIndexInList = this.tasks[listIndex].cards.findIndex(c => c.id === cardId); if (cardIndexInList === -1) return;
+                         
+                         const targetCard = this.tasks[listIndex].cards[cardIndexInList];
+                         const commentIndexInCard = targetCard.comments.findIndex(c => c.timestamp === originalTimestamp);
+
+                         if (commentIndexInCard !== -1) {
+                            this.$set(targetCard.comments[commentIndexInCard], 'text', newText);
+                            this.$set(targetCard, 'updatedAt', new Date().toISOString()); // 実データの updatedAt 更新
                             this.markDataChanged();
                          }
                     }
                 },
                 cancelCommentEdit(comment) {
-                    // Restore original text if it exists
-                    if (typeof comment.originalText === 'string') {
-                        comment.text = comment.originalText;
-                    }
-                    // Clear editing flags
+                    if (typeof comment.originalText === 'string') { comment.text = comment.originalText; }
                     this.$set(comment, 'isEditing', false);
                     delete comment.originalText;
                 },
-                confirmDeleteComment(index) {
-                    if (confirm("このコメントを削除しますか？この操作は元に戻せません。")) {
-                        this.deleteComment(index);
-                    }
-                },
+                confirmDeleteComment(index) { if (confirm("このコメントを削除しますか？この操作は元に戻せません。")) { this.deleteComment(index); } },
                 deleteComment(index) {
-                    if (!this.editingCard?.comments?.[index]) {
-                         console.error("コメント削除エラー: 不正なインデックスまたはコメントデータです。", index);
-                         return;
-                    }
-                    // Remove from editingCard first (for UI update)
-                    this.editingCard.comments.splice(index, 1);
+                    if (!this.editingCard?.comments?.[index]) { console.error("コメント削除エラー", index); return; }
+                    
+                    const deletedCommentTimestamp = this.editingCard.comments[index].timestamp;
 
-                    // If in view mode, also remove from the actual card data immediately
+                    this.editingCard.comments.splice(index, 1);
+                    this.$set(this.editingCard, 'updatedAt', new Date().toISOString()); // モーダル内データの updatedAt 更新
+
                     if (!this.isEditingMode && !this.isNewCard) {
                         const { currentListId, id: cardId } = this.editingCard;
                         if (!currentListId || !cardId) return;
                         const listIndex = this.tasks.findIndex(l => l.id === currentListId); if (listIndex === -1) return;
-                        const cardIndex = this.tasks[listIndex].cards.findIndex(c => c.id === cardId); if (cardIndex === -1) return;
-                        const card = this.tasks[listIndex].cards[cardIndex];
-                        if (card?.comments?.[index]) { // Check if it still exists in actual data
-                            card.comments.splice(index, 1);
+                        const cardIndexInList = this.tasks[listIndex].cards.findIndex(c => c.id === cardId); if (cardIndexInList === -1) return;
+                        
+                        const targetCard = this.tasks[listIndex].cards[cardIndexInList];
+                        const commentIndexInCard = targetCard.comments.findIndex(c => c.timestamp === deletedCommentTimestamp);
+
+                        if (commentIndexInCard !== -1) {
+                            targetCard.comments.splice(commentIndexInCard, 1);
+                            this.$set(targetCard, 'updatedAt', new Date().toISOString()); // 実データの updatedAt 更新
                             this.markDataChanged();
                         }
                     }
                 },
-
-                // --- ラベル操作 ---
                 updateAvailableLabels() {
                     const allLabels = new Set();
                     this.tasks.forEach(list => {
-                        list.cards.forEach(card => {
-                            if (Array.isArray(card.labels)) {
-                                card.labels.forEach(label => allLabels.add(label));
-                            }
-                        });
+                        list.cards.forEach(card => { if (Array.isArray(card.labels)) { card.labels.forEach(label => allLabels.add(label)); } });
                     });
                     this.availableLabels = Array.from(allLabels).sort();
-                    this.labelColorCache = {}; // Clear color cache as labels might change
+                    this.labelColorCache = {};
                 },
                 addLabelToCard() {
                     if (!this.editingCard || !this.newLabelInput.trim()) return;
                     const newLabel = this.newLabelInput.trim();
-
-                    // Ensure labels array exists
-                    if (!Array.isArray(this.editingCard.labels)) {
-                        this.$set(this.editingCard, 'labels', []);
-                    }
-
-                    // Check if label (case-insensitive) already exists on the card
+                    if (!Array.isArray(this.editingCard.labels)) { this.$set(this.editingCard, 'labels', []); }
                     const labelExists = this.editingCard.labels.some(l => l.toLowerCase() === newLabel.toLowerCase());
-
                     if (!labelExists) {
-                        // Check if a label with different casing but same meaning exists globally
                         const existingLabel = this.availableLabels.find(l => l.toLowerCase() === newLabel.toLowerCase());
-                        const labelToAdd = existingLabel || newLabel; // Use existing casing if found
-
+                        const labelToAdd = existingLabel || newLabel;
                         this.editingCard.labels.push(labelToAdd);
-                        this.editingCard.labels.sort(); // Keep labels sorted
-
-                        // If it was a truly new label, add it to the global available labels
-                        if (!existingLabel) {
-                            this.availableLabels.push(labelToAdd);
-                            this.availableLabels.sort();
-                        }
-                    } else {
-                        alert(`ラベル「${newLabel}」は既に追加されています。`);
-                    }
-                    this.newLabelInput = ''; // Clear input
+                        this.editingCard.labels.sort();
+                        if (!existingLabel) { this.availableLabels.push(labelToAdd); this.availableLabels.sort(); }
+                    } else { alert(`ラベル「${newLabel}」は既に追加されています。`); }
+                    this.newLabelInput = '';
                 },
-                addExistingLabel(label) {
-                    // Helper to add label when clicked from the available list
-                    this.newLabelInput = label;
-                    this.addLabelToCard();
-                },
-                removeLabelFromCard(index) {
-                    if (this.editingCard?.labels && index >= 0 && index < this.editingCard.labels.length) {
-                        this.editingCard.labels.splice(index, 1);
-                        // Note: We don't automatically remove the label from availableLabels here.
-                        // It might still be used on other cards.
-                        // A cleanup mechanism could be added if needed.
-                    }
-                },
+                addExistingLabel(label) { this.newLabelInput = label; this.addLabelToCard(); },
+                removeLabelFromCard(index) { if (this.editingCard?.labels && index >= 0 && index < this.editingCard.labels.length) { this.editingCard.labels.splice(index, 1); } },
                 getLabelColor(label) {
-                    // Cache generated colors for consistency
-                    if (this.labelColorCache[label]) {
-                        return this.labelColorCache[label];
-                    }
-                    // Simple hash function to generate a color based on the label string
+                    if (this.labelColorCache[label]) { return this.labelColorCache[label]; }
                     let hash = 0;
-                    for (let i = 0; i < label.length; i++) {
-                        hash = label.charCodeAt(i) + ((hash << 5) - hash);
-                        hash = hash & hash; // Convert to 32bit integer
-                    }
-                    const hue = Math.abs(hash % 360); // Hue (0-359)
-                    const saturation = 70; // Saturation (keep it consistent)
-                    const lightness = 80; // Lightness (keep it light for readability)
-                    const color = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
-                    this.labelColorCache[label] = color; // Store in cache
+                    for (let i = 0; i < label.length; i++) { hash = label.charCodeAt(i) + ((hash << 5) - hash); hash = hash & hash; }
+                    const hue = Math.abs(hash % 360);
+                    const color = `hsl(${hue}, 70%, 80%)`;
+                    this.labelColorCache[label] = color;
                     return color;
                 },
-
-                // --- カード色関連メソッド ---
                 getCardBackgroundColor(colorId) {
                     const color = this.availableCardColors.find(c => c.id === colorId);
-                    const defaultColorCode = this.availableCardColors[0]?.code || '#fffacd'; // Fallback color
+                    const defaultColorCode = this.availableCardColors.find(c => c.id === 'gray')?.code || this.availableCardColors[0]?.code || '#fffacd';
                     return color ? color.code : defaultColorCode;
                 },
                 getCardColorName(colorId) {
                     const color = this.availableCardColors.find(c => c.id === colorId);
-                    const defaultColorName = this.availableCardColors[0]?.name || 'デフォルト'; // Fallback name
+                    const defaultColorName = this.availableCardColors.find(c => c.id === 'gray')?.name || this.availableCardColors[0]?.name || 'デフォルト';
                     return color ? color.name : defaultColorName;
                 },
-                // 表示モードでカード色を即時変更
                 changeCardColorImmediately(newColorId) {
-                    if (!this.editingCard || this.isEditingMode || this.isNewCard) {
-                        return; // Only works in view mode for existing cards
-                    }
-                    if (this.editingCard.color === newColorId) {
-                        return; // No change needed
-                    }
-
+                    if (!this.editingCard || this.isEditingMode || this.isNewCard) { return; }
+                    if (this.editingCard.color === newColorId) { return; }
+                    
                     const cardId = this.editingCard.id;
                     const listId = this.editingCard.currentListId;
-
-                    // 1. Update editingCard color (for instant modal UI update)
+                    
                     this.editingCard.color = newColorId;
+                    this.$set(this.editingCard, 'updatedAt', new Date().toISOString()); // モーダル内データの updatedAt 更新
 
-                    // 2. Update the actual card data in the tasks array
                     const listIndex = this.tasks.findIndex(l => l.id === listId);
                     if (listIndex !== -1) {
                         const cardIndex = this.tasks[listIndex].cards.findIndex(c => c.id === cardId);
                         if (cardIndex !== -1) {
-                            // Use $set to ensure reactivity
                             this.$set(this.tasks[listIndex].cards[cardIndex], 'color', newColorId);
-                            // 3. Mark data as changed for save indication
+                            this.$set(this.tasks[listIndex].cards[cardIndex], 'updatedAt', new Date().toISOString()); // 実データの updatedAt 更新
                             this.markDataChanged();
-                        } else {
-                            console.error("色変更エラー: tasks 内のカードが見つかりません。", listId, cardId);
-                            alert("カードの色の変更中にエラーが発生しました。");
-                            // Optionally revert editingCard color here
-                        }
-                    } else {
-                        console.error("色変更エラー: tasks 内のリストが見つかりません。", listId);
-                        alert("カードの色の変更中にエラーが発生しました。");
-                         // Optionally revert editingCard color here
-                    }
+                        } else { console.error("色変更エラー: カードが見つかりません。", listId, cardId); alert("カードの色の変更中にエラーが発生しました。"); }
+                    } else { console.error("色変更エラー: リストが見つかりません。", listId); alert("カードの色の変更中にエラーが発生しました。"); }
                 }
             },
             watch: {
-                // Watch for changes in tasks array (deep watch for nested changes)
                 tasks: {
-                    handler(newTasks, oldTasks) {
-                        // Mark data as changed only if the change wasn't internal (like loading)
-                        if (!this.isLoading && !this._isInternalChange) {
-                            this.markDataChanged();
-                        }
-                    },
+                    handler(newTasks, oldTasks) { if (!this.isLoading && !this._isInternalChange) { this.markDataChanged(); } },
                     deep: true
                 },
-                // Watch for changes in board title
-                boardTitle(newValue, oldValue) {
-                     // Mark data as changed only if not currently editing and not an internal change
-                    if (!this._isInternalChange && !this.isEditingBoardTitle && newValue !== oldValue) {
-                        this.markDataChanged();
-                    }
-                }
+                boardTitle(newValue, oldValue) { if (!this._isInternalChange && !this.isEditingBoardTitle && newValue !== oldValue) { this.markDataChanged(); } }
             }
         });
     </script>
