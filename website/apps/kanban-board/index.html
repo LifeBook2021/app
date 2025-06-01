@@ -13,7 +13,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>カンバンボード - AIと創るJavaScriptツールキット</title>
-    <meta name="description" content="タスクをカードで管理し、リスト間をドラッグ＆ドロップで移動できるカンバンボード。詳細編集、ラベル、チェックリスト、コメント機能付き。Vue.jsとAIで開発。">
+    <meta name="description" content="タスクをカードで管理し、リスト間をドラッグ＆ドロップで移動できるカンバンボード。表形式表示や更新日時ソート機能も追加！詳細編集、ラベル、チェックリスト、コメント機能付き。Vue.jsとAIで開発。">
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Bootstrap Icons -->
@@ -26,6 +26,17 @@
       body {
         padding-top: 59px;
       }
+      .screenshot { /* スクリーンショット画像用のスタイルを少し調整 */
+        max-width: 100%;
+        height: auto;
+        border: 1px solid #dee2e6;
+        border-radius: .25rem;
+        margin-bottom: 1rem;
+        box-shadow: 0 .125rem .25rem rgba(0,0,0,.075);
+      }
+      .list-group-item-info { /* 新機能のハイライト用 */
+          background-color: #e7f3fe; /* Bootstrap 5.0 beta1 の info 背景色に近いもの */
+      }
     </style>
 </head>
 <body>
@@ -34,7 +45,7 @@
         <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
             <div class="container">
                  <a class="navbar-brand" href="../.././">
-                    <img src="../../assets/images/logo.png" alt="サイトロゴ">                    
+                    <img src="../../assets/images/logo.png" alt="サイトロゴ">
                     <span class="fw-bold">AIと創るJavaScriptツールキット</span>
                 </a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
@@ -67,12 +78,14 @@
         <div class="row">
             <div class="col-lg-8">
                  <article class="manual-section">
-                    <h1 class="mb-4">📋 カンバンボード (Kanban Board)</h1>
-                    <p class="lead">タスクをカードとして視覚化し、「To Do」「進行中」「完了」などのリスト間をドラッグ＆ドロップで移動させて進捗を管理するツールです。</p>
+                    <h1 class="mb-4">📋 カンバンボード (Kanban Board) <span class="badge bg-info text-dark ms-2">機能UP!</span></h1>
+                    <p class="lead">タスクをカードとして視覚化し、「To Do」「進行中」「完了」などのリスト間をドラッグ＆ドロップで移動させて進捗を管理するツールです。<strong class="text-primary">新たに表形式表示と更新日時ソート機能が加わり、より柔軟なタスク管理が可能になりました！</strong></p>
 
                     <div class="text-center my-4">
-                        <!-- ここにカンバンボードのメインスクリーンショット画像を挿入 -->
-                        <img src="../../assets/images/kanban-board-screenshot.png" alt="カンバンボードの画面" class="img-fluid rounded border shadow-sm mb-3 screenshot">
+                        <!-- ▼▼▼ メインスクリーンショット更新推奨 ▼▼▼ -->
+                        <!-- 例: 新機能が少し見える画像、またはカンバンと表形式を組み合わせた画像など -->
+                        <img src="../../assets/images/kanban-board-screenshot-new.png" alt="カンバンボードの画面（新機能対応）" class="img-fluid rounded border shadow-sm mb-3 screenshot">
+                        <!-- ▲▲▲ メインスクリーンショット更新推奨 ▲▲▲ -->
                         <a href="https://LifeBook2021.github.io/app/Kanban/" target="_blank" rel="noopener noreferrer" class="btn btn-success btn-lg">
                             <i class="bi bi-play-circle me-2"></i>カンバンボードを使ってみる (無料)
                         </a>
@@ -80,62 +93,101 @@
 
                     <h2>主な特徴</h2>
                      <ul class="list-unstyled">
-                        <li><i class="bi bi-check-circle-fill text-success me-2"></i><strong>ドラッグ＆ドロップ:</strong> カードやリストを直感的に移動・並べ替えできます。</li>
-                        <li><i class="bi bi-check-circle-fill text-success me-2"></i><strong>タスク詳細編集:</strong> モーダルウィンドウでタイトル、詳細、担当者、期限日を編集できます。</li>
+                        <li><i class="bi bi-check-circle-fill text-success me-2"></i><strong>ドラッグ＆ドロップ:</strong> カードやリストを直感的に移動・並べ替えできます (カンバン表示時)。</li>
+                        <li><i class="bi bi-check-circle-fill text-success me-2"></i><strong>タスク詳細編集:</strong> モーダルウィンドウでタイトル、詳細、担当者、期限日などを編集できます。</li>
                         <li><i class="bi bi-check-circle-fill text-success me-2"></i><strong>ラベル機能:</strong> タスクに複数のラベルを付け、色分けして分類できます。</li>
                         <li><i class="bi bi-check-circle-fill text-success me-2"></i><strong>チェックリスト:</strong> タスク内にサブタスクリストを作成し、完了状況を管理できます。</li>
                         <li><i class="bi bi-check-circle-fill text-success me-2"></i><strong>コメント機能:</strong> タスクに関するメモや議論を時系列で記録できます。</li>
-                         <li><i class="bi bi-check-circle-fill text-success me-2"></i><strong>カードの色分け:</strong> カードごとに背景色を設定できます。</li>
-                         <li><i class="bi bi-check-circle-fill text-success me-2"></i><strong>ボードタイトル編集:</strong> ボード全体のタイトルを編集できます。</li>
+                        <li><i class="bi bi-check-circle-fill text-success me-2"></i><strong>カードの色分け:</strong> カードごとに背景色を設定できます。</li>
+                        <li><i class="bi bi-check-circle-fill text-success me-2"></i><strong>ボードタイトル編集:</strong> ボード全体のタイトルを編集できます。</li>
                         <li><i class="bi bi-check-circle-fill text-success me-2"></i><strong>データ保存/読込:</strong> ボード全体の状態をJSONファイルとして保存・読み込みできます。</li>
+                        <!-- ▼▼▼ 新機能追加 ▼▼▼ -->
+                        <li><i class="bi bi-table text-primary me-2"></i><strong><span class="badge bg-info text-dark me-1">NEW!</span>表形式表示:</strong> タスクを一覧性の高い表形式で表示・確認できます。</li>
+                        <li><i class="bi bi-sort-down text-primary me-2"></i><strong><span class="badge bg-info text-dark me-1">NEW!</span>更新日時表示とソート:</strong> 表形式で各カードの最終更新日時を表示。タスク名、期限日、更新日時などでタスクをソートできます。</li>
+                        <!-- ▲▲▲ 新機能追加 ▲▲▲ -->
                     </ul>
 
                     <h2>使い方マニュアル</h2>
 
                     <h3>画面構成</h3>
-                    <!-- ここにカンバンボードの画面構成を示す画像を挿入 (ヘッダー、リスト、カードを指し示す) -->
-                    <img src="../../assets/images/kanban-board-layout.png" alt="カンバンボード 画面構成" class="screenshot">
+                    <p>カンバンボードは、用途に合わせて「カンバン表示」と「表形式表示」を切り替えることができます。</p>
+
+                    <h4>カンバン表示</h4>
+                    <img src="../../assets/images/kanban-board-layout.png" alt="カンバンボード 画面構成（カンバン表示）" class="screenshot">
                     <ol>
-                        <li><strong>ヘッダー:</strong> ボードタイトル（クリックで編集可）、リスト追加ボタン、JSON保存/読込ボタンがあります。</li>
-                        <li><strong>ボード:</strong> 複数のリスト（列）で構成されます。ボード全体を左右にスクロールできます。</li>
-                        <li><strong>リスト:</strong> タスクカードを格納する列です。「To Do」「進行中」などのステータスを表します。
+                        <li><strong>ヘッダー:</strong>
                             <ul>
-                                <li><strong>リストヘッダー:</strong> リスト名（編集可）、リスト移動ハンドル<i class="bi bi-grip-vertical"></i>、リスト削除ボタン<i class="bi bi-trash"></i>があります。</li>
-                                <li><strong>リストコンテンツ:</strong> タスクカードが配置されるエリアです。</li>
-                                <li><strong>カード追加ボタン:</strong> リストの末尾にあり、クリックすると新規カード作成モーダルが開きます。</li>
+                                <li><strong>ボードタイトル:</strong> クリックで編集可能です。</li>
+                                <li><strong><i class="bi bi-layout-three-columns"></i> リスト追加ボタン:</strong> 新しいリスト（列）を作成します。</li>
+                                <li><strong><i class="bi bi-card-list"></i> 表形式ボタン:</strong> 表形式示形式に切り替えます。</li>
+                                <li><strong><i class="bi bi-download"></i> JSON保存ボタン / <i class="bi bi-upload"></i> JSON読込ボタン:</strong> ボードデータの保存と読込を行います。</li>
                             </ul>
                         </li>
-                        <li><strong>カード:</strong> 個々のタスクを表します。クリックすると詳細モーダルが開きます。
-                             <ul>
-                                <li>タイトル、担当者、期限日、ラベルなどが表示されます。</li>
-                                <li>カード移動ハンドル<i class="bi bi-grip-vertical"></i>、カード削除ボタン<i class="bi bi-x-lg"></i>があります。</li>
+                        <li><strong>ボードエリア:</strong> 複数のリストで構成され、左右にスクロール可能です。</li>
+                        <li><strong>リスト:</strong> 「To Do」「進行中」などのタスクステータスを表す列です。
+                            <ul>
+                                <li><strong>リストヘッダー:</strong> リスト名（編集可）、リスト移動ハンドル<i class="bi bi-grip-vertical"></i>、リスト削除ボタン<i class="bi bi-trash"></i>があります。</li>
+                                <li><strong><i class="bi bi-plus-circle"></i> カード追加ボタン:</strong> リストの末尾にあり、新規カード作成モーダルを開きます。</li>
+                            </ul>
+                        </li>
+                        <li><strong>カード:</strong> 個々のタスクです。クリックで詳細モーダルが開きます。移動ハンドル<i class="bi bi-grip-vertical"></i>、削除ボタン<i class="bi bi-x-lg"></i>があります。</li>
+                    </ol>
+
+                    <!-- ▼▼▼ 表形式表示の画面構成を追加 ▼▼▼ -->
+                    <h4>表形式表示</h4>
+                    <img src="../../assets/images/kanban-board-table-view.png" alt="カンバンボード 画面構成（表形式表示）" class="screenshot">
+                    <ol>
+                        <li><strong>ヘッダー:</strong> カンバン表示時と同様です。カンバンボタンでカンバン表示に戻せます。</li>
+                        <li><strong>タスクテーブルエリア:</strong>
+                            <ul>
+                                <li><strong>テーブルヘッダー:</strong> 「タスク名」「リスト」「担当者」「期限日」「進捗」「<strong class="text-info">更新日時</strong>」などの列名が表示されます。各ヘッダーをクリックすると、その列のデータでタスクを昇順/降順にソートできます。</li>
+                                <li><strong>タスク行:</strong> 各タスクの情報が1行で表示されます。行をクリックすると、タスク詳細モーダルが開きます。</li>
+                                <li><strong>カード追加ボタン:</strong> ヘッダ部に「カード追加」ボタンがあり、クリックすると新規カード作成モーダルが開きます。</li>
                             </ul>
                         </li>
                     </ol>
+                    <!-- ▲▲▲ 表形式表示の画面構成を追加 ▲▲▲ -->
+
 
                     <h3>基本的な使い方</h3>
                      <ul class="list-group list-group-flush">
-                        <li class="list-group-item"><strong>リストの追加:</strong> ヘッダーの<kbd>リスト追加</kbd>ボタンをクリックします。</li>
-                        <li class="list-group-item"><strong>リスト名の編集:</strong> リストヘッダーのリスト名部分をクリックして編集します。</li>
-                        <li class="list-group-item"><strong>リストの移動:</strong> リストヘッダーの移動ハンドル<i class="bi bi-grip-vertical"></i>をドラッグ＆ドロップします。</li>
-                        <li class="list-group-item"><strong>リストの削除:</strong> リストヘッダーの削除ボタン<i class="bi bi-trash"></i>をクリックします（中のカードも削除されます）。</li>
-                        <li class="list-group-item"><strong>カードの追加:</strong> 各リストの下部にある<kbd>カード追加</kbd>ボタンをクリックします。モーダルが開くので、タイトルなどを入力して保存します。</li>
-                        <li class="list-group-item"><strong>カードの移動:</strong> カードの移動ハンドル<i class="bi bi-grip-vertical"></i>をドラッグし、同じリスト内または別のリストにドロップします。</li>
-                         <li class="list-group-item"><strong>カードの削除:</strong> カード右上の削除ボタン<i class="bi bi-x-lg"></i>をクリックします。</li>
-                        <li class="list-group-item"><strong>カード詳細の表示・編集:</strong> カード本体をクリックすると詳細モーダルが開きます。
+                        <!-- ▼▼▼ 新機能の説明を先頭に移動・追記 ▼▼▼ -->
+                        <li class="list-group-item list-group-item-info">
+                            <strong><span class="badge bg-primary me-1">NEW</span>表示形式の切り替え:</strong>
+                            ヘッダーにある<kbd><i class="bi bi-table"></i> カンバン</kbd>ボタンをクリックすることで、元のカンバン表示に切り替えることができます。
+                        </li>
+                        <li class="list-group-item list-group-item-info">
+                            <strong><span class="badge bg-primary me-1">NEW</span>表形式でのタスクソート:</strong>
+                            表形式表示の際、テーブルの各列ヘッダー（「タスク名」「担当者」「期限日」「<strong class="fw-bold">更新日時</strong>」など）をクリックすると、その列のデータに基づいてタスクが昇順にソートされます。もう一度クリックすると降順にソートされます。これにより、例えば<strong class="fw-bold">「更新日時」でソートすれば、直近で作業したタスクや変更があったタスクを簡単に見つけることができます。</strong>
+                        </li>
+                        <!-- ▲▲▲ 新機能の説明を先頭に移動・追記 ▲▲▲ -->
+
+                        <li class="list-group-item"><strong>リストの追加 (カンバン表示時):</strong> ヘッダーの<kbd><i class="bi bi-layout-three-columns"></i> リスト追加</kbd>ボタンをクリックします。</li>
+                        <li class="list-group-item"><strong>リスト名の編集 (カンバン表示時):</strong> リストヘッダーのリスト名部分をクリックして編集します。</li>
+                        <li class="list-group-item"><strong>リストの移動 (カンバン表示時):</strong> リストヘッダーの移動ハンドル<i class="bi bi-grip-vertical"></i>をドラッグ＆ドロップします。</li>
+                        <li class="list-group-item"><strong>リストの削除 (カンバン表示時):</strong> リストヘッダーの削除ボタン<i class="bi bi-trash"></i>をクリックします（中のカードも削除されます）。</li>
+                        <li class="list-group-item"><strong>カードの追加:</strong>
                             <ul>
-                                <li>表示モードでは、タイトルや詳細などをダブルクリックすると編集モードに切り替わります。</li>
-                                <li>または、モーダル下部の<kbd>編集</kbd>ボタンをクリックします。</li>
-                                <li>編集後、<kbd>保存</kbd>ボタンで変更を確定します。</li>
+                                <li><strong>カンバン表示時:</strong> 各リストの下部にある<kbd><i class="bi bi-plus-circle"></i> カード追加</kbd>ボタンをクリックします。</li>
+                                <li><strong>表形式表示時:</strong> ヘッダ部の<kbd>カード追加</kbd>ボタンをクリックします。</li>
                             </ul>
+                            モーダルが開くので、タイトルなどを入力して保存します。
+                        </li>
+                        <li class="list-group-item"><strong>カードの移動 (カンバン表示時):</strong> カードの移動ハンドル<i class="bi bi-grip-vertical"></i>をドラッグし、同じリスト内または別のリストにドロップします。</li>
+                        <li class="list-group-item"><strong>カードの削除 (カンバン表示時):</strong> カード右上の削除ボタン<i class="bi bi-x-lg"></i>をクリックします。詳細モーダル内からも削除可能です。</li>
+                        <li class="list-group-item"><strong>カード詳細の表示・編集:</strong>
+                            <ul>
+                                <li><strong>カンバン表示時:</strong> カード本体をクリックします。</li>
+                                <li><strong>表形式表示時:</strong> タスク行をクリックします。</li>
+                            </ul>
+                            詳細モーダルが開きます。表示モードでは、タイトルや詳細などをダブルクリックすると編集モードに切り替わります。または、モーダル下部の<kbd>編集</kbd>ボタンをクリックします。編集後、<kbd>保存</kbd>ボタンで変更を確定します。カードの<strong class="text-info">更新日時</strong>は、この保存時に自動的に記録されます。
                          </li>
                     </ul>
 
                     <h3>タスク詳細モーダル</h3>
-                    <!-- ここにタスク詳細モーダルのスクリーンショットを挿入 -->
                     <img src="../../assets/images/kanban-board-modal.png" alt="タスク詳細モーダル" class="screenshot">
                     <ul class="list-group list-group-flush">
-                        <li class="list-group-item"><strong>基本情報:</strong> タイトル、詳細、担当者、期限日、ステータス（所属リスト）、カード色を編集できます。</li>
+                        <li class="list-group-item"><strong>基本情報:</strong> タイトル、詳細、担当者、期限日、ステータス（所属リスト）、カード色を編集できます。モーダル下部には<strong class="text-info">最終更新日時</strong>が表示されます。</li>
                         <li class="list-group-item"><strong>ラベル:</strong>
                             <ul>
                                 <li>既存のラベルが表示されます。編集モードで<kbd>×</kbd>をクリックして削除できます。</li>
@@ -163,8 +215,8 @@
 
                     <h3>データの保存と読込</h3>
                      <ul class="list-group list-group-flush">
-                        <li class="list-group-item"><strong>保存:</strong> ヘッダー右側の<kbd>JSON保存</kbd>ボタンをクリックします。変更がある場合、ボタンは黄色<span class="badge bg-warning text-dark">!</span>で強調表示されます。<code>KBD[日付時刻].json</code>というファイル名でダウンロードされます。</li>
-                        <li class="list-group-item"><strong>読込:</strong> ヘッダー右側の<kbd>JSON読込</kbd>ボタンをクリックし、保存したJSONファイルを選択します。現在のボード内容は上書きされます。読み込んだ日時はボタンの隣に表示されます。</li>
+                        <li class="list-group-item"><strong>保存:</strong> ヘッダー右側の<kbd><i class="bi bi-download"></i> JSON保存</kbd>ボタンをクリックします。変更がある場合、ボタンは黄色<span class="badge bg-warning text-dark">!</span>で強調表示されます。<code>KBD[日付時刻].json</code>というファイル名でダウンロードされます。</li>
+                        <li class="list-group-item"><strong>読込:</strong> ヘッダー右側の<kbd><i class="bi bi-upload"></i> JSON読込</kbd>ボタンをクリックし、保存したJSONファイルを選択します。現在のボード内容は上書きされます。読み込んだ日時はボタンの隣に表示されます。</li>
                     </ul>
 
                  </article>
@@ -175,8 +227,10 @@
                         <div class="card-body">
                             <h5 class="card-title">アプリ情報</h5>
                             <ul class="list-unstyled">
-                                <li><strong>バージョン:</strong> 1.0</li>
-                                <li><strong>最終更新:</strong> 2025/04/30</li> <!-- 適宜更新 -->
+                                <!-- ▼▼▼ バージョンと最終更新日を更新 ▼▼▼ -->
+                                <li><strong>バージョン:</strong> 1.1 (仮)</li>
+                                <li><strong>最終更新:</strong> 2024/07/26 (仮)</li> <!-- ←今日の日付などに適宜更新 -->
+                                <!-- ▲▲▲ バージョンと最終更新日を更新 ▲▲▲ -->
                                 <li><strong>技術:</strong> HTML, CSS, Vue.js 2, Bootstrap 5, Vue.Draggable (SortableJS)</li>
                                 <li><strong>開発協力:</strong> Google AI Studio</li>
                             </ul>
@@ -200,7 +254,7 @@
                      <div class="card mt-4">
                          <div class="card-body">
                              <h5 class="card-title">開発ストーリー</h5>
-                             <p class="small">「Trelloのようなカンバンボードを作りたい」という動機から、AIにVue.jsを使った実装を依頼。基本的なドラッグ＆ドロップ機能から始め、モーダルでの詳細編集、ラベル、チェックリスト、コメント機能などをAIとの対話を通じて段階的に追加していきました。Vue.jsのリアクティビティとコンポーネント化の理解が鍵となりました。</p>
+                             <p class="small">「Trelloのようなカンバンボードを作りたい」という動機から、AIにVue.jsを使った実装を依頼。基本的なドラッグ＆ドロップ機能から始め、モーダルでの詳細編集、ラベル、チェックリスト、コメント機能などをAIとの対話を通じて段階的に追加。さらにユーザービリティ向上のため、<strong class="text-info">表形式表示と更新日によるソート機能</strong>をAIに相談しながら実装しました。Vue.jsのリアクティビティとコンポーネント化の理解が鍵となりました。</p>
                              <a href="../../ai-creation.html" class="btn btn-outline-info btn-sm">AIとの開発をもっと詳しく</a>
                          </div>
                      </div>
