@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-XE2CWFLT80"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-XE2CWFLT80');
+</script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>アサイン管理 - AIと創るJavaScriptツールキット</title>
+    <meta name="description" content="メンバーと業務のリソース状況をタイムラインで可視化するアサイン管理ツール。月別の負荷状況の把握や、新規業務のアサインシミュレーション機能で、人員配置計画を強力にサポートします。">
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="../../assets/css/style.css"> <!-- 相対パス注意 -->
+    <!-- Favicon -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>👥</text></svg>">
+    <style>
+      body {
+        padding-top: 59px;
+      }
+      .screenshot { /* スクリーンショット画像用のスタイル */
+        max-width: 100%;
+        height: auto;
+        border: 1px solid #dee2e6;
+        border-radius: .25rem;
+        margin-bottom: 1rem;
+        box-shadow: 0 .125rem .25rem rgba(0,0,0,.075);
+      }
+    </style>
+</head>
+<body>
+
+    <header>
+        <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+            <div class="container">
+                 <a class="navbar-brand" href="../.././">
+                    <img src="../../assets/images/logo.png" alt="サイトロゴ">
+                    <span class="fw-bold">AIと創るJavaScriptツールキット</span>
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarNav">
+                     <ul class="navbar-nav ms-auto">
+                        <li class="nav-item"><a class="nav-link" href="../.././">ホーム</a></li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle active" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                アプリ紹介
+                            </a>
+                             <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                                <li><a class="dropdown-item" href="../sticky-notes/index.html">付箋アプリ</a></li>
+                                <li><a class="dropdown-item" href="../gantt-chart/index.html">ガントチャート</a></li>
+                                <li><a class="dropdown-item" href="../kanban-board/index.html">カンバンボード</a></li>
+                                <li><a class="dropdown-item" href="../schedule/index.html">スケジュールチェック</a></li>
+                                <li><a class="dropdown-item" href="../mindmap/index.html">マインドマップ</a></li>
+                                <li><a class="dropdown-item" href="../todolist/index.html">週間ToDoカレンダー</a></li>
+                                <li><a class="dropdown-item active" aria-current="page" href="index.html">アサイン管理</a></li>
+                            </ul>
+                        </li>
+                        <li class="nav-item"><a class="nav-link" href="../../ai-creation.html">AIと創るアイデア</a></li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container mt-4">
+        <div class="row">
+            <div class="col-lg-8">
+                 <article class="manual-section">
+                    <h1 class="mb-4">👥 アサイン管理 (Assign Management) <span class="badge bg-danger ms-2">NEW!</span></h1>
+                    <p class="lead">メンバーと業務（タスク）のリソース状況を月別のタイムライン形式で可視化するツールです。<strong class="text-primary">メンバーごとの負荷状況の確認や、新規業務のアサインシミュレーション</strong>ができ、プロジェクトの人員配置計画を強力にサポートします。</p>
+
+                    <div class="text-center my-4">
+                        <img src="../../assets/images/assign-management-screenshot.png" alt="アサイン管理の画面" class="img-fluid rounded border shadow-sm mb-3 screenshot">
+                        <a href="https://LifeBook2021.github.io/app/assign-management/" target="_blank" rel="noopener noreferrer" class="btn btn-success btn-lg">
+                            <i class="bi bi-play-circle me-2"></i>アサイン管理を使ってみる (無料)
+                        </a>
+                    </div>
+
+                    <h2>主な特徴</h2>
+                     <ul class="list-unstyled">
+                        <li><i class="bi bi-check-circle-fill text-success me-2"></i><strong>タイムライン表示:</strong> メンバー別・業務別の2つのモードでリソース状況を月ごとに確認できます。</li>
+                        <li><i class="bi bi-check-circle-fill text-success me-2"></i><strong>負荷状況の可視化:</strong> 月間の標準人日を超えたメンバーをハイライト表示し、高負荷状態を即座に把握できます。</li>
+                        <li><i class="bi bi-check-circle-fill text-success me-2"></i><strong>アサインシミュレーション:</strong> 新規業務の期間・工数・必要スキルを指定し、アサイン可能なメンバーを自動でリストアップします。</li>
+                        <li><i class="bi bi-check-circle-fill text-success me-2"></i><strong>柔軟なデータ管理:</strong> メンバー情報、業務情報、ラベル（スキル等）を自由に追加・編集・削除できます。</li>
+                        <li><i class="bi bi-check-circle-fill text-success me-2"></i><strong>ドラッグ＆ドロップ:</strong> メンバーや業務の表示順を直感的に並べ替えられます。</li>
+                        <li><i class="bi bi-check-circle-fill text-success me-2"></i><strong>データ保存/読込:</strong> 全ての状態をJSONファイルとして保存・読み込みでき、チームでの共有やバックアップが容易です。</li>
+                    </ul>
+
+                    <h2>使い方マニュアル</h2>
+
+                    <h3>画面構成</h3>
+                    <p>画面は大きく「コントロールエリア」「タイムラインエリア」「シミュレーションエリア」の3つに分かれています。</p>
+                    <img src="../../assets/images/assign-management-layout.png" alt="アサイン管理 画面構成" class="screenshot">
+                    <ol>
+                        <li><strong>コントロールエリア (上部):</strong>
+                            <ul>
+                                <li><strong>管理ボタン:</strong> <kbd>メンバー管理</kbd>、<kbd>ラベル管理</kbd>、<kbd>業務登録</kbd>の各モーダルを開きます。</li>
+                                <li><strong>データ入出力:</strong> <kbd>JSON読込</kbd>と<kbd>JSON保存</kbd>ボタンでデータを管理します。</li>
+                                <li><strong>表示設定:</strong> 表示モード（メンバー別/業務別）、表示開始月、表示期間、月間標準人日を設定します。</li>
+                            </ul>
+                        </li>
+                        <li><strong>タイムラインエリア (中央):</strong>
+                            <ul>
+                                <li>設定に応じて、メンバーまたは業務を縦軸、年月を横軸とした表が表示されます。</li>
+                                <li>各セルには、その月にアサインされている業務（またはメンバー）と、計算された工数が人日単位で表示されます。</li>
+                                <li>メンバー別表示では、合計人日が標準を超えるとセルが赤くハイライトされます。</li>
+                            </ul>
+                        </li>
+                        <li><strong>シミュレーションエリア (下部):</strong>
+                            <ul>
+                                <li>新規業務の情報を入力し、<kbd>この期間の空き状況を表示</kbd>ボタンでシミュレーションを実行します。</li>
+                                <li>結果エリアに、アサイン可能なメンバー、または不可の場合はその理由が表示されます。</li>
+                            </ul>
+                        </li>
+                    </ol>
+
+                    <h3>基本的な使い方</h3>
+                     <ul class="list-group list-group-flush">
+                        <li class="list-group-item">
+                            <strong>1. メンバーとラベルの登録:</strong>
+                            <ul>
+                                <li>まず、<kbd>メンバー管理</kbd>ボタンからメンバーを登録します。メンバーに紐付けるスキルや資格などの「ラベル」も、<kbd>ラベル管理</kbd>ボタンから登録しておくと便利です。</li>
+                            </ul>
+                        </li>
+                        <li class="list-group-item">
+                            <strong>2. 業務の登録:</strong>
+                            <ul>
+                                <li><kbd>業務登録</kbd>ボタンから、業務名、期間、総工数などを入力します。</li>
+                                <li>「メンバーアサイン」セクションで、担当するメンバーと、その業務に対する作業割合（%）を設定します。</li>
+                            </ul>
+                        </li>
+                        <li class="list-group-item">
+                            <strong>3. タイムラインの確認:</strong>
+                            <ul>
+                                <li>業務を登録すると、タイムラインに自動で反映されます。</li>
+                                <li>「表示モード」を切り替えて、メンバー軸・業務軸それぞれの視点からリソース状況を確認します。高負荷になっている箇所がないかチェックしましょう。</li>
+                            </ul>
+                        </li>
+                        <li class="list-group-item">
+                            <strong>4. 新規業務のシミュレーション:</strong>
+                            <ul>
+                                <li>新しい業務の相談があった場合、シミュレーションエリアに期間や工数、必須スキル（ラベル）を入力して<kbd>この期間の空き状況を表示</kbd>ボタンをクリックします。</li>
+                                <li>これにより、既存の業務に影響を与えずに、誰がアサイン可能かを素早く判断できます。</li>
+                            </ul>
+                        </li>
+                         <li class="list-group-item">
+                            <strong>5. データの保存:</strong>
+                            <ul>
+                                <li>作業が終わったら<kbd>JSON保存</kbd>ボタンでデータを保存します。次回は<kbd>JSON読込</kbd>から作業を再開できます。</li>
+                            </ul>
+                        </li>
+                    </ul>
+
+                    <h3>主な機能詳細</h3>
+                    
+                    <h4>メンバー管理とラベル管理</h4>
+                    <img src="../../assets/images/assign-management-member-modal.png" alt="メンバー管理モーダル" class="screenshot">
+                    <p>メンバー管理モーダルでは、メンバーの追加・編集・削除ができます。各メンバーには、ラベル管理モーダルで作成したラベル（例：「PM経験」「Java」「資格A」など）を複数設定できます。一覧はドラッグ＆ドロップで並べ替えが可能です。</p>
+
+                    <h4>業務の登録と編集</h4>
+                    <p>業務登録モーダルでは、業務の基本情報（期間、総工数など）に加え、複数のメンバーをアサインできます。各メンバーに「作業割合」をパーセントで指定することで、総工数をメンバー間で分担する計算が行われます。業務別タイムラインで業務名をクリックすると、詳細確認・編集モーダルが開きます。</p>
+
+                    <h4>データの保存と読込</h4>
+                     <ul class="list-group list-group-flush">
+                        <li class="list-group-item"><strong>保存:</strong> コントロールエリアの<kbd>JSON保存</kbd>ボタンをクリックします。<code>ASM[日付時刻].json</code>というファイル名でダウンロードされます。</li>
+                        <li class="list-group-item"><strong>読込:</strong> <kbd>JSON読込</kbd>ボタンをクリックし、保存したJSONファイルを選択します。現在のデータは上書きされます。</li>
+                    </ul>
+                 </article>
+            </div>
+             <div class="col-lg-4">
+                 <aside>
+                     <div class="card mt-4 mt-lg-0">
+                        <div class="card-body">
+                            <h5 class="card-title">アプリ情報</h5>
+                            <ul class="list-unstyled">
+                                <li><strong>バージョン:</strong> 1.0 </li>
+                                <li><strong>最終更新:</strong> 2025/06/08</li>
+                                <li><strong>技術:</strong> HTML, CSS, JavaScript, SortableJS, Bootstrap 5</li>
+                                <li><strong>開発協力:</strong> Google AI Studio</li>
+                            </ul>
+                            <a href="https://LifeBook2021.github.io/app/assign-management/" target="_blank" rel="noopener noreferrer" class="btn btn-success w-100 mb-2">
+                                <i class="bi bi-play-circle me-2"></i>アプリを起動
+                            </a>
+                             <div>
+                                <small class="text-muted">
+                                    このアプリのソースコード (HTML, CSS, JavaScript) は、以下の手順で確認・保存できます。
+                                    <ul class="list-unstyled mt-2 mb-0" style="padding-left: 1em; text-indent: -1em;">
+                                        <li class="mb-1">1. 上記「アプリを起動」ボタンでアプリページを開きます。</li>
+                                        <li class="mb-1">2. ページ上で右クリックし、「ページのソースを表示」(または類似の名称) を選択します。</li>
+                                        <li class="mb-1">3. 表示されたコードを全選択 (<kbd>Ctrl</kbd>+<kbd>A</kbd> / <kbd>Cmd</kbd>+<kbd>A</kbd>) し、コピー (<kbd>Ctrl</kbd>+<kbd>C</kbd> / <kbd>Cmd</kbd>+<kbd>C</kbd>) します。</li>
+                                        <li class="mb-1">4. テキストエディタ (メモ帳, VS Code等) に貼り付け (<kbd>Ctrl</kbd>+<kbd>V</kbd> / <kbd>Cmd</kbd>+<kbd>V</kbd>) ます。</li>
+                                        <li>5. ファイル名を付けて保存します。HTMLファイル (<code>.html</code>) として保存し、文字コードは「UTF-8」を推奨します。</li>
+                                    </ul>
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                     <div class="card mt-4">
+                         <div class="card-body">
+                             <h5 class="card-title">開発ストーリー</h5>
+                             <p class="small">「Excelでのアサイン管理が煩雑…」という課題から、Webアプリ化を発案。AIに「メンバーとタスクの負荷をタイムラインで見たい」と相談し、コアとなる人日計算ロジックと描画機能を実装。その後、メンバー管理、ラベル機能、そして「この条件で誰かアサインできる？」という実務的な問いに答えるためのシミュレーション機能をAIとの対話を通じて追加開発しました。</p>
+                             <a href="../../ai-creation.html" class="btn btn-outline-info btn-sm">AIとの開発をもっと詳しく</a>
+                         </div>
+                     </div>
+                 </aside>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer mt-auto">
+        <div class="container text-center">
+            <span class="text-muted">&copy; 2025 AIと創るJavaScriptツールキット. All Rights Reserved.</span>
+
+            <div class="mt-2">
+                <i class="bi bi-envelope me-1"></i>
+                <a href="mailto:lifebook20210120@gmail.com">lifebook20210120@gmail.com</a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
