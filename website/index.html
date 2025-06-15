@@ -14,7 +14,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AIと創るJavaScriptツールキット | 高度なWebアプリをコード不要で</title>
     <meta name="description" content="JavaScriptと生成AI(Google AI Studio等)を活用し、プログラミング経験がなくてもアイデアを形に。マインドマップ、ガントチャート、カンバンボードなど7つの多機能Webアプリを紹介します。">
-    <meta name="keywords" content="JavaScript, シングルページアプリケーション, SPA, 生成AI, Google AI Studio, プログラミング不要, アイデア具現化, マインドマップ, スケジュール管理, 付箋, ガントチャート, カンバンボード, ToDoリスト, アサイン管理, Webアプリ, 無料ツール">
+    <!-- 変更点: 「バイブスコーディング」を「バイブコーディング」に修正 -->
+    <meta name="keywords" content="JavaScript, シングルページアプリケーション, SPA, 生成AI, Google AI Studio, プログラミング不要, バイブコーディング, Vibe Coding, アイデア具現化, マインドマップ, スケジュール管理, 付箋, ガントチャート, カンバンボード, ToDoリスト, アサイン管理, Webアプリ, 無料ツール">
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Custom CSS -->
@@ -69,7 +70,8 @@
         <section class="hero-section">
             <div class="container">
                 <h1>そのアイデア、AIと共に形にしませんか？</h1>
-                <p class="lead">JavaScriptの力と生成AIのサポートがあれば、コーディング経験がなくても高度なWebアプリケーションを創り出せます。このサイトでは、その実例となる7つのツールと、AIを活用した開発プロセスを紹介します。</p>
+                <!-- 変更点: リード文の用語を修正 -->
+                <p class="lead">JavaScriptの力と生成AIのサポートがあれば、コーディング経験がなくても高度なWebアプリケーションを創り出せます。昨今「<strong class="text-info">バイブコーディング (Vibe Coding)</strong>」とも呼ばれるこの手法で、あなたのアイデアを形にしませんか？このサイトでは、その実例となる7つのツールと、AIを活用した開発プロセスを紹介します。</p>
                 <a href="#apps" class="btn btn-primary btn-lg">アプリを試す</a>
                 <a href="ai-creation.html" class="btn btn-outline-light btn-lg ms-2">AI活用ストーリーを読む</a>
             </div>
@@ -150,12 +152,17 @@
                         </div>
                     </div>
                 </div>
+                <!-- アサイン管理 (前回の修正を維持) -->
                 <div class="col-lg-4 col-md-6">
                     <div class="card app-card">
                         <img src="assets/images/assign-management-screenshot.png" class="card-img-top" alt="アサイン管理 スクリーンショット">
                         <div class="card-body">
-                            <h5 class="card-title">👥 アサイン管理 <span class="badge bg-danger">NEW!</span></h5>
-                            <p class="card-text">メンバーと業務のリソースを月別タイムラインで可視化。負荷状況の把握や新規業務のアサインシミュレーションが可能。人員配置の計画を強力にサポートします。</p>
+                            <h5 class="card-title">👥 アサイン管理 <span class="badge bg-info text-dark">機能UP!</span></h5>
+                            <p class="card-text">
+                                メンバーと業務の負荷を月別タイムラインで可視化。
+                                <strong class="text-success">新たにメンバー表示フィルタ機能を追加！</strong>
+                                業務別表示の際に、特定の担当者が関わる業務のみを絞り込んで確認できるようになりました。人員配置計画を強力にサポートします。
+                            </p>
                             <a href="apps/assign-management/index.html" class="btn btn-outline-primary mt-auto">詳細と使い方</a>
                         </div>
                     </div>
@@ -167,9 +174,10 @@
         <section class="container mt-5 py-5 bg-light rounded">
             <div class="row align-items-center">
                 <div class="col-md-6">
-                    <h2>コードが書けなくても、アイデアは形にできる</h2>
+                    <!-- 変更点: コンセプトセクションの用語を修正 -->
+                    <h2>コードよりも「雰囲気」で創る、バイブコーディング</h2>
                     <p>「こんなツールがあったら便利なのに…」そう思ったことはありませんか？</p>
-                    <p>これらのアプリは、プログラミングの専門知識がなくても、Google AI Studioのような生成AIとの対話を通じて開発されました。初期の簡単なプロトタイプから、要件を追加し、試行錯誤を繰り返すことで、多機能なWebアプリケーションへと進化させることができたのです。</p>
+                    <p>これらのアプリは、プログラミングの専門知識がなくても、Google AI Studioのような生成AIとの対話を通じて開発されました。これは「<strong class="text-info">バイブコーディング (Vibe Coding)</strong>」とも呼ばれ、完璧なコードを書くことよりも、実現したいアイデアや「雰囲気（Vibe）」をAIに伝えることを重視する新しい開発スタイルです。</p>
                     <p>あなたも、AIをパートナーにして、頭の中のアイデアを実現してみませんか？</p>
                     <a href="ai-creation.html" class="btn btn-info">AIとの開発ストーリーをもっと知る</a>
                 </div>
