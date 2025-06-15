@@ -184,7 +184,8 @@
             gap: 10px;
         }
         #memberModal .modal-header, 
-        #labelModal .modal-header {
+        #labelModal .modal-header,
+        #memberFilterModal .modal-header {
             background-color: var(--theme-color);
         }
         #newTaskModal .modal-header,
@@ -283,13 +284,18 @@
         .timeline-table td:first-child { display: flex; align-items: center; }
         .timeline-table td:first-child .drag-handle { padding: 0; margin-right: 12px; }
         
+        #timelineBody.sort-disabled .drag-handle {
+            cursor: not-allowed;
+            opacity: 0.4;
+        }
+
         .task-description {
             font-size: 0.9em; color: var(--text-muted-color); margin: 4px 0 8px 0;
             padding-left: 12px; border-left: 2px solid #e9ecef; white-space: pre-wrap; word-break: break-all;
         }
         .checkbox-container {
             display: flex; flex-wrap: wrap; gap: 10px 16px; padding: 12px;
-            border: 1px solid var(--border-color); border-radius: 8px; max-height: 150px; overflow-y: auto; background-color: #f8f9fa;
+            border: 1px solid var(--border-color); border-radius: 8px; max-height: 250px; overflow-y: auto; background-color: #f8f9fa;
         }
         .checkbox-item { display: flex; align-items: center; }
         .checkbox-item input[type="checkbox"] { margin-right: 6px; width: auto; }
@@ -308,6 +314,34 @@
             padding: 3px 10px; border-radius: 12px; font-size: 0.85em;
             font-weight: 500;
         }
+
+        #taskDetailModal .modal-footer button {
+            padding: 10px 20px;
+            font-size: 0.95em;
+        }
+        .form-row .form-group > input,
+        .form-row .form-group > select,
+        .form-row .form-group > textarea {
+            width: 100%;
+        }
+        .assignment-row .assign-member {
+            flex-grow: 3;
+            flex-basis: 0;
+        }
+        .assignment-row .assign-mandays {
+            flex-grow: 2;
+            flex-basis: 0;
+        }
+        .assignment-row .assign-button {
+            flex: 0 0 auto;
+            margin-bottom: 5px; 
+        }
+        .remove-assignment-btn {
+            padding: 8px 16px;
+            font-size: 0.9em;
+            white-space: nowrap;
+        }
+
     </style>
 </head>
 <body class="theme-member">
@@ -344,6 +378,9 @@
             <div class="controls-group">
                 <label for="monthlyWorkDays">月間標準人日</label>
                 <input type="number" id="monthlyWorkDays" value="20" min="1" max="31" title="メンバー1人あたりの月間稼働上限の目安です。" style="width: 80px;">
+            </div>
+            <div class="controls-group" id="memberFilterBtnContainer" style="display: none;">
+                <button id="openMemberFilterModalBtn">メンバー表示フィルタ</button>
             </div>
         </div>
 
@@ -544,6 +581,22 @@
         </div>
     </div>
 
+    <div id="memberFilterModal" class="modal">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+                <h2>メンバー表示フィルタ</h2>
+                <span class="close-button" data-modal-id="memberFilterModal">&times;</span>
+            </div>
+            <div class="modal-body">
+                <p>表示したいメンバーを選択してください。（全員の選択を解除すると、全ての業務が表示されます）</p>
+                <div id="filterModalCheckboxesContainer" class="checkbox-container"></div>
+            </div>
+            <div class="modal-footer">
+                <button id="applyMemberFilterBtn" class="success-button">適用して閉じる</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         const DEFAULT_MONTHLY_WORK_DAYS = 20;
         let members = [];
@@ -554,7 +607,8 @@
             timelineViewMode: 'member',
             timelineStartMonth: '',
             timelineMonths: 6,
-            monthlyWorkDays: DEFAULT_MONTHLY_WORK_DAYS
+            monthlyWorkDays: DEFAULT_MONTHLY_WORK_DAYS,
+            filteredMemberIds: []
         };
         let currentEditingTaskId = null;
         let openMemberModalBtn, openLabelModalBtn, openNewTaskModalBtn, exportJsonBtn, importJsonInput, importJsonBtn;
@@ -572,6 +626,8 @@
         let timelineViewModeSelect, timelineStartMonthInput, timelineMonthsInput, monthlyWorkDaysInput, timelineTitleH2, timelineHeaderRow, timelineBody;
         let simStartDateInput, simEndDateInput, simEffortInput, simParticipantsInput, simLabelsCheckboxes, simulateBtn, simulationResultDiv; 
         let closeButtons;
+
+        let memberFilterBtnContainer, openMemberFilterModalBtn, memberFilterModal, filterModalCheckboxesContainer, applyMemberFilterBtn;
 
         let sortableMember = null;
         let sortableTimeline = null;
@@ -664,7 +720,6 @@
             return memberDailyEffort * overlappingWorkingDays;
         }
 
-        // --- 修正済みの関数 ---
         function getAdjustedAssignmentDetails(task) {
             const finalDetails = {};
 
@@ -717,13 +772,12 @@
             
             return { finalDetails };
         }
-        // --- 修正ここまで ---
 
         function openModal(modalId) {
             const modalElement = document.getElementById(modalId);
             if (!modalElement) return;
             modalElement.style.display = 'flex';
-            if (modalId === 'memberModal' || modalId === 'labelModal') {
+            if (modalId === 'memberModal' || modalId === 'labelModal' || modalId === 'memberFilterModal') {
                 document.body.className = 'theme-member';
             }
             if (modalId === 'newTaskModal' || modalId === 'taskDetailModal') {
@@ -996,6 +1050,7 @@
             if (confirm(`メンバー「${memberToDelete.name}」を削除しますか？関連するアサインも全て削除されます。`)) { 
                 members = members.filter(m => m.id !== memberId); 
                 assignments = assignments.filter(a => a.memberId !== memberId); 
+                appSettings.filteredMemberIds = appSettings.filteredMemberIds.filter(id => id !== memberId);
                 renderMemberManagementList(); 
                 renderCurrentTimeline();
                 populateMemberSelectOptions(document.querySelectorAll('.assignment-member-select'));
@@ -1025,7 +1080,8 @@
             workRatioGroup.appendChild(workRatioInputEl);
             const actionGroup = document.createElement('div'); actionGroup.classList.add('form-group', 'assign-button');
             const removeBtn = document.createElement('button'); removeBtn.type = 'button'; removeBtn.textContent = '解除';
-            removeBtn.classList.add('remove-assignment-btn'); removeBtn.onclick = () => row.remove(); actionGroup.appendChild(removeBtn);
+            removeBtn.classList.add('remove-assignment-btn', 'danger-button');
+            removeBtn.onclick = () => row.remove(); actionGroup.appendChild(removeBtn);
             row.appendChild(memberGroup); row.appendChild(workRatioGroup); row.appendChild(actionGroup); container.appendChild(row);
         }
         function populateMemberSelectOptions(selectElements, selectedMemberId = '') {
@@ -1156,6 +1212,13 @@
             if(timelineStartMonthInput) appSettings.timelineStartMonth = timelineStartMonthInput.value;
             if(timelineMonthsInput) appSettings.timelineMonths = parseInt(timelineMonthsInput.value) || 6;
             if(monthlyWorkDaysInput) appSettings.monthlyWorkDays = parseInt(monthlyWorkDaysInput.value) || DEFAULT_MONTHLY_WORK_DAYS;
+            
+            if (appSettings.timelineViewMode === 'task') {
+                if (memberFilterBtnContainer) memberFilterBtnContainer.style.display = 'flex';
+            } else {
+                if (memberFilterBtnContainer) memberFilterBtnContainer.style.display = 'none';
+            }
+            
             document.body.className = appSettings.timelineViewMode === 'member' ? 'theme-member' : 'theme-task';
             renderCurrentTimeline();
         }
@@ -1242,10 +1305,30 @@
             if (!headerData) { if (timelineBody) timelineBody.innerHTML = `<tr><td colspan="2">タイムラインの開始月を選択してください。</td></tr>`; return; }
             if (timelineHeaderRow) timelineHeaderRow.innerHTML = '<th>業務</th>'; 
             if (timelineHeaderRow && headerData.headerCells) headerData.headerCells.forEach(th => timelineHeaderRow.appendChild(th));
-            if (timelineBody) timelineBody.innerHTML = ''; else return;
-            if (tasks.length === 0) { if (timelineBody) timelineBody.innerHTML = `<tr><td colspan="${(headerData.monthDates ? headerData.monthDates.length : 0) + 1}">業務登録なし。</td></tr>`; return; }
             
-            tasks.forEach(task => {
+            let filteredTasks = tasks;
+            if (appSettings.filteredMemberIds.length > 0) {
+                const filteredTaskIds = new Set();
+                assignments.forEach(a => {
+                    if (appSettings.filteredMemberIds.includes(a.memberId)) {
+                        filteredTaskIds.add(a.taskId);
+                    }
+                });
+                filteredTasks = tasks.filter(t => filteredTaskIds.has(t.id));
+            }
+
+            if (timelineBody) timelineBody.innerHTML = ''; else return;
+
+            if (filteredTasks.length === 0) {
+                let message = '業務登録なし。';
+                if (tasks.length > 0 && appSettings.filteredMemberIds.length > 0) {
+                    message = '指定されたメンバーがアサインされている業務はありません。';
+                }
+                if (timelineBody) timelineBody.innerHTML = `<tr><td colspan="${(headerData.monthDates ? headerData.monthDates.length : 0) + 1}">${message}</td></tr>`; 
+                return;
+            }
+            
+            filteredTasks.forEach(task => {
                 const tr = document.createElement('tr'); tr.dataset.taskId = task.id;
                 const tdTask = document.createElement('td');
                 const handle = document.createElement('span'); handle.className = 'drag-handle'; handle.innerHTML = '&#9776;';
@@ -1313,14 +1396,56 @@
                 }
                 timelineBody.appendChild(tr);
             });
+            
+            const isSortDisabled = appSettings.filteredMemberIds.length > 0;
+            if(timelineBody) {
+                timelineBody.classList.toggle('sort-disabled', isSortDisabled);
+            }
+
             sortableTimeline = new Sortable(timelineBody, {
-                handle: '.drag-handle', animation: 150, ghostClass: 'sortable-ghost',
+                handle: '.drag-handle',
+                animation: 150,
+                ghostClass: 'sortable-ghost',
+                disabled: isSortDisabled,
                 onEnd: (evt) => {
                     const movedItem = tasks.splice(evt.oldIndex, 1)[0];
                     tasks.splice(evt.newIndex, 0, movedItem);
                 }
             });
         }
+        
+        function openMemberFilterModal() {
+            renderMemberFilterModalCheckboxes();
+            openModal('memberFilterModal');
+        }
+
+        function renderMemberFilterModalCheckboxes() {
+            if (!filterModalCheckboxesContainer) return;
+            filterModalCheckboxesContainer.innerHTML = '';
+            if (members.length === 0) {
+                filterModalCheckboxesContainer.innerHTML = '<span style="color: var(--text-muted-color); font-size: 0.9em;">メンバーがいません。</span>';
+                return;
+            }
+
+            members.forEach(member => {
+                const id = `modal-filter-member-${member.id}`;
+                const item = document.createElement('div');
+                item.className = 'checkbox-item';
+                item.innerHTML = `
+                    <input type="checkbox" id="${id}" value="${member.id}" ${appSettings.filteredMemberIds.includes(member.id) ? 'checked' : ''}>
+                    <label for="${id}">${member.name}</label>
+                `;
+                filterModalCheckboxesContainer.appendChild(item);
+            });
+        }
+
+        function applyAndCloseMemberFilter() {
+            if (!filterModalCheckboxesContainer) return;
+            appSettings.filteredMemberIds = Array.from(filterModalCheckboxesContainer.querySelectorAll('input:checked')).map(cb => cb.value);
+            renderCurrentTimeline();
+            closeModal('memberFilterModal');
+        }
+
         function handleSimulation() { 
             const simStartStr = simStartDateInput ? simStartDateInput.value : null;
             const simEndStr = simEndDateInput ? simEndDateInput.value : null;
@@ -1439,7 +1564,7 @@
                         if (allLabels.length === 0) { updateAllLabels(); }
 
                         if (importedData.settings) {
-                            const defaultAppSettings = { timelineViewMode: 'member', timelineStartMonth: getInputMonthValue(new Date()), timelineMonths: 6, monthlyWorkDays: DEFAULT_MONTHLY_WORK_DAYS };
+                            const defaultAppSettings = { timelineViewMode: 'member', timelineStartMonth: getInputMonthValue(new Date()), timelineMonths: 6, monthlyWorkDays: DEFAULT_MONTHLY_WORK_DAYS, filteredMemberIds: [] };
                             appSettings = { ...defaultAppSettings, ...importedData.settings };
                             if(timelineViewModeSelect) timelineViewModeSelect.value = appSettings.timelineViewMode; 
                             if(timelineStartMonthInput) timelineStartMonthInput.value = appSettings.timelineStartMonth;
@@ -1449,7 +1574,7 @@
                         
                         document.body.className = appSettings.timelineViewMode === 'member' ? 'theme-member' : 'theme-task';
                         renderMemberManagementList(); 
-                        renderCurrentTimeline();
+                        updateSettingsAndRenderTimeline();
                         populateMemberSelectOptions(document.querySelectorAll('.assignment-member-select')); 
                         renderLabelCheckboxes(simLabelsCheckboxes, allLabels);
                         alert('データインポート完了。');
@@ -1498,10 +1623,19 @@
             simulateBtn = document.getElementById('simulateBtn'); simulationResultDiv = document.getElementById('simulationResult');
             closeButtons = document.querySelectorAll('.close-button, .close-modal-btn');
             
+            memberFilterBtnContainer = document.getElementById('memberFilterBtnContainer');
+            openMemberFilterModalBtn = document.getElementById('openMemberFilterModalBtn');
+            memberFilterModal = document.getElementById('memberFilterModal');
+            filterModalCheckboxesContainer = document.getElementById('filterModalCheckboxesContainer');
+            applyMemberFilterBtn = document.getElementById('applyMemberFilterBtn');
+            
             // イベントリスナーの設定
             if(openMemberModalBtn) openMemberModalBtn.onclick = () => openModal('memberModal'); 
             if(openLabelModalBtn) openLabelModalBtn.onclick = () => openModal('labelModal');
             if(openNewTaskModalBtn) openNewTaskModalBtn.onclick = () => openModal('newTaskModal');
+            if(openMemberFilterModalBtn) openMemberFilterModalBtn.onclick = openMemberFilterModal;
+            if(applyMemberFilterBtn) applyMemberFilterBtn.onclick = applyAndCloseMemberFilter;
+            
             closeButtons.forEach(btn => { const modalId = btn.dataset.modalId; if (modalId) btn.onclick = () => closeModal(modalId); });
             if(closeLabelModalBtn) closeLabelModalBtn.onclick = () => closeModal('labelModal');
             if(closeTaskDetailNormalBtn) closeTaskDetailNormalBtn.onclick = () => closeModal('taskDetailModal');
@@ -1513,6 +1647,7 @@
                     if (memberModal && memberModal.style.display === 'flex') activeModalId = 'memberModal';
                     else if (labelModal && labelModal.style.display === 'flex') activeModalId = 'labelModal';
                     else if (newTaskModal && newTaskModal.style.display === 'flex') activeModalId = 'newTaskModal';
+                    else if (memberFilterModal && memberFilterModal.style.display === 'flex') activeModalId = 'memberFilterModal';
                     else if (taskDetailModal && taskDetailModal.style.display === 'flex') { if (taskDetailEditMode && taskDetailEditMode.style.display === 'block') { cancelTaskDetailEdit(); return; } activeModalId = 'taskDetailModal'; }
                     if (activeModalId) closeModal(activeModalId);
                 }
@@ -1548,9 +1683,8 @@
             if (simEndDateInput) simEndDateInput.value = getInputDateValue(endOfMonth);
 
             // 初期描画
-            document.body.className = appSettings.timelineViewMode === 'member' ? 'theme-member' : 'theme-task';
             renderMemberManagementList();
-            renderCurrentTimeline();
+            updateSettingsAndRenderTimeline();
             updateAllLabels();
             renderLabelCheckboxes(simLabelsCheckboxes, allLabels);
             clearNewTaskForm();
