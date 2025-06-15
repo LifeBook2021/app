@@ -1,1695 +1,222 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
+    <!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-XE2CWFLT80"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-XE2CWFLT80');
+</script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>アサイン管理</title>
-    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+    <title>アサイン管理 - AIと創るJavaScriptツールキット</title>
+    <meta name="description" content="メンバーと業務のリソース状況をタイムラインで可視化するアサイン管理ツール。月別の負荷状況の把握や、新規業務のアサインシミュレーション機能で、人員配置計画を強力にサポートします。">
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="../../assets/css/style.css"> <!-- 相対パス注意 -->
+    <!-- Favicon -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>👥</text></svg>">
     <style>
-        /* --- Modern UI Design --- */
-        :root {
-            --primary-color: #4A90E2;
-            --primary-hover-color: #357ABD;
-            --success-color: #27ae60;
-            --success-hover-color: #2ecc71;
-            --warning-color: #f39c12;
-            --warning-hover-color: #e67e22;
-            --danger-color: #e74c3c;
-            --danger-hover-color: #c0392b;
-            --background-color: #F8F9FA;
-            --surface-color: #FFFFFF;
-            --stripe-color: #f8f9fa; /* ストライプ行の背景色 */
-            --text-color: #212529;
-            --text-muted-color: #6c757d;
-            --border-color: #e9ecef; /* 少し薄いボーダー色に変更 */
-            --header-bg-color: #f1f3f5;
-            --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji';
-
-            /* Theme Colors */
-            --theme-color: #e9ecef;
-            --theme-stripe-color: #f8f9fa;
-        }
-
-        body.theme-member {
-            --theme-color: #e6f9f0;
-            --theme-stripe-color: #f3fcf7;
-        }
-        body.theme-task {
-            --theme-color: #e7f5ff;
-            --theme-stripe-color: #f1f9ff;
-        }
-
-        body {
-            font-family: var(--font-family);
-            margin: 0;
-            padding: 24px;
-            background-color: var(--background-color);
-            color: var(--text-color);
-            font-size: 14px;
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
-        }
-
-        .container {
-            margin: 0 auto;
-            background-color: var(--surface-color);
-            padding: 24px 32px;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-        }
-
-        h1, h2, h3 {
-            color: var(--text-color);
-            border-bottom: 1px solid var(--border-color);
-            padding-bottom: 12px;
-            margin-top: 24px;
-            margin-bottom: 20px;
-            font-weight: 600;
-        }
-        h1 { font-size: 1.8em; margin-top: 0; }
-        h2 { font-size: 1.5em; }
-        h3 { font-size: 1.2em; border-bottom: none; }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            border-spacing: 0;
-            margin-bottom: 24px;
-            table-layout: fixed;
-        }
-        th, td {
-            padding: 12px 16px;
-            text-align: left;
-            word-wrap: break-word;
-            vertical-align: top;
-        }
-        th {
-            background-color: var(--header-bg-color);
-            font-weight: 600;
-            border-bottom: 1px solid #d1d9e0;
-        }
-        #timelineBody tr:nth-child(even) {
-            background-color: var(--theme-stripe-color);
-        }
-        #timelineBody tr:nth-child(even) td:first-child {
-            background-color: var(--theme-stripe-color);
-        }
-        #timelineBody tr {
-            border-bottom: 1px solid var(--border-color);
-        }
-        #timelineBody tr:last-child {
-            border-bottom: none;
-        }
-
-
-        button, input[type="button"], input[type="submit"] {
-            background-color: var(--primary-color);
-            color: white;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            margin: 5px 2px;
-            transition: all 0.2s ease;
-            font-size: 0.95em;
-            font-weight: 500;
-        }
-        button:hover, input[type="button"]:hover, input[type="submit"]:hover {
-            background-color: var(--primary-hover-color);
-            transform: translateY(-1px);
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
-        
-        .warning-button { background-color: var(--warning-color); }
-        .warning-button:hover { background-color: var(--warning-hover-color); }
-        .success-button { background-color: var(--success-color); }
-        .success-button:hover { background-color: var(--success-hover-color); }
-        .danger-button { background-color: var(--danger-color); }
-        .danger-button:hover { background-color: var(--danger-hover-color); }
-        
-        input[type="text"], input[type="date"], input[type="number"], input[type="month"], select, textarea {
-            padding: 10px 12px;
-            margin: 0;
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            box-sizing: border-box;
-            font-family: inherit;
-            font-size: 1em;
-            transition: border-color 0.2s, box-shadow 0.2s;
-        }
-        input:focus, select:focus, textarea:focus {
-            outline: none;
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.2);
-        }
-        textarea { width: 100%; resize: vertical; }
-
-        .form-group { margin-bottom: 20px; }
-        .form-group label { display: block; margin-bottom: 8px; font-weight: 500; }
-        .form-row { display: flex; gap: 20px; align-items: flex-end; }
-        .form-row .form-group { flex: 1; }
-
-        .modal {
-            display: none; position: fixed; z-index: 1000; left: 0; top: 0;
-            width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.5);
-            align-items: center; justify-content: center; backdrop-filter: blur(4px);
-        }
-        .modal-content {
-            background-color: var(--surface-color); margin: auto; padding: 0;
-            border: none; width: 90%; max-width: 750px; 
-            border-radius: 12px;
-            box-shadow: 0 8px 30px rgba(0,0,0,0.15);
-            max-height: 90vh; overflow-y: auto;
-        }
-        .modal-header {
-            padding: 20px 32px;
-            border-bottom: 1px solid var(--border-color);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .modal-header h2 {
-            border: none;
-            margin: 0;
-            padding: 0;
-        }
-        .modal-body { padding: 24px 32px; }
-        .modal-footer {
-            padding: 16px 32px;
-            background-color: #f8f9fa;
-            border-top: 1px solid var(--border-color);
-            text-align: right;
-            display: flex;
-            justify-content: flex-end;
-            gap: 10px;
-        }
-        #memberModal .modal-header, 
-        #labelModal .modal-header,
-        #memberFilterModal .modal-header {
-            background-color: var(--theme-color);
-        }
-        #newTaskModal .modal-header,
-        #taskDetailModal .modal-header {
-            background-color: var(--theme-color);
-        }
-
-
-        .close-button {
-            color: #aaa;
-            font-size: 28px;
-            font-weight: bold;
-            line-height: 1;
-            cursor: pointer;
-            transition: color 0.2s;
-        }
-        .close-button:hover, .close-button:focus { color: var(--text-color); text-decoration: none; }
-        
-        .controls { display: flex; flex-wrap: wrap; align-items: center; margin-bottom: 24px; padding-bottom: 20px; border-bottom: 1px solid var(--border-color); gap: 16px;}
-        .controls label { font-weight: 500; }
-        .controls-group { display: flex; align-items: center; gap: 8px;}
-
-        .timeline-table-container { overflow-x: auto; margin-bottom: 24px; border: 1px solid var(--border-color); border-radius: 8px; }
-
-        .timeline-table th {
-            position: sticky;
-            top: 0;
-            z-index: 10;
-        }
-        .timeline-table td:first-child {
-            position: sticky;
-            left: 0;
-            z-index: 5;
-            background-color: var(--surface-color);
-            border-bottom: 1px solid transparent;
-        }
-        .timeline-table th:first-child {
-            min-width: 200px;
-            position: sticky;
-            left: 0;
-            z-index: 11;
-            border-right: 1px solid var(--border-color);
-        }
-
-        .timeline-table td:first-child a { color: var(--primary-color); text-decoration: none; font-weight: 500; }
-        .timeline-table td:first-child a:hover { text-decoration: underline; }
-
-        .load-cell .assignment-item {
-            font-size: 0.85em; margin-bottom: 4px; padding: 4px 8px; 
-            background-color: #e9ecef; border-radius: 6px; 
-            border-left: 3px solid #6c757d;
-            overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-        }
-        .load-cell .assignment-item .mandays { font-weight: 500; color: var(--text-color); font-size:0.9em; }
-        .load-cell .total-mandays-member, .load-cell .total-mandays-task { 
-            margin-top: 8px; font-weight: bold; font-size: 0.9em; 
-            padding: 4px 8px; border-radius: 6px;
-            color: var(--text-color); background-color: #f1f3f5; display:inline-block;
-        }
-        .load-cell.mandays-over-limit .total-mandays-member {
-            border: 1px solid var(--danger-color) !important;
-            background-color: #fadadd !important;
-            color: var(--danger-color);
-        }
-
-        #simulationResult { margin-top: 24px; padding: 20px; background-color: #e6f7ff; border-left: 5px solid var(--primary-color); border-radius: 8px;}
-        #simulationResult ul { list-style-type: none; padding-left: 0; margin: 0; }
-        #simulationResult li { margin-bottom: 8px; }
-        #simulationResult .shortage { color: var(--danger-color); font-weight: bold; }
-        #simulationResult .sufficient { color: var(--success-color); }
-        #simulationResult .no-match { color: var(--text-muted-color); }
-        
-        .member-card {
-            border: 1px solid var(--border-color); padding: 16px; margin-bottom: 12px;
-            border-radius: 8px; background-color: var(--surface-color);
-            transition: box-shadow 0.2s ease;
-        }
-        .member-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
-
-        .member-item-content { display: flex; justify-content: space-between; align-items: center; width: 100%; }
-        .member-item-content h4 { margin: 0; font-weight: 600; font-size: 1.1em; flex-grow: 1; margin-left: 12px; }
-        .action-button-group { margin-left: auto; white-space: nowrap; }
-        .action-button-group button { margin-left: 8px; padding: 6px 10px; font-size: 0.85em; }
-
-        #taskDetailModalContent .info-grid { display: grid; grid-template-columns: 100px 1fr; gap: 12px 16px; margin-bottom: 24px; }
-        #taskDetailModalContent .info-grid dt { font-weight: 600; color: var(--text-muted-color); text-align: right; }
-        #taskDetailModalContent .info-grid dd { margin-left: 0; white-space: pre-wrap; word-break: break-all; }
-        #taskDetailModalContent .assignments-list { list-style-type: none; padding-left: 0; }
-        #taskDetailModalContent .assignments-list li { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border-color); }
-        #taskDetailModalContent .assignments-list li:last-child { border-bottom: none; }
-        #taskDetailModalContent .assignments-list strong { flex-basis: 150px; font-weight: 500;}
-
-        .drag-handle { cursor: move; font-size: 1.2em; color: #adb5bd; padding: 0 10px; user-select: none; }
-        .drag-handle:hover { color: var(--text-color); }
-        .sortable-ghost { opacity: 0.4; background-color: #dbeaff; }
-        .timeline-table td:first-child { display: flex; align-items: center; }
-        .timeline-table td:first-child .drag-handle { padding: 0; margin-right: 12px; }
-        
-        #timelineBody.sort-disabled .drag-handle {
-            cursor: not-allowed;
-            opacity: 0.4;
-        }
-
-        .task-description {
-            font-size: 0.9em; color: var(--text-muted-color); margin: 4px 0 8px 0;
-            padding-left: 12px; border-left: 2px solid #e9ecef; white-space: pre-wrap; word-break: break-all;
-        }
-        .checkbox-container {
-            display: flex; flex-wrap: wrap; gap: 10px 16px; padding: 12px;
-            border: 1px solid var(--border-color); border-radius: 8px; max-height: 250px; overflow-y: auto; background-color: #f8f9fa;
-        }
-        .checkbox-item { display: flex; align-items: center; }
-        .checkbox-item input[type="checkbox"] { margin-right: 6px; width: auto; }
-        .checkbox-item label { font-weight: normal; margin-bottom: 0 !important; cursor: pointer;}
-        #newLabelInput { flex: 1; margin: 0; }
-        #addNewLabelBtn { margin: 0 0 0 10px; }
-        
-        #labelManagementList .label-item { display: flex; align-items: center; padding: 10px; border-bottom: 1px solid #f1f3f5; }
-        #labelManagementList .label-item:last-child { border-bottom: none; }
-        #labelManagementList .label-text { flex-grow: 1; margin-left: 12px; }
-        #labelManagementList .label-item input.label-edit-input { width: 100%; }
-
-        .member-labels-container { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 6px; }
-        .label-badge {
-            display: inline-block; background-color: #e0eaf0; color: #586a78;
-            padding: 3px 10px; border-radius: 12px; font-size: 0.85em;
-            font-weight: 500;
-        }
-
-        #taskDetailModal .modal-footer button {
-            padding: 10px 20px;
-            font-size: 0.95em;
-        }
-        .form-row .form-group > input,
-        .form-row .form-group > select,
-        .form-row .form-group > textarea {
-            width: 100%;
-        }
-        .assignment-row .assign-member {
-            flex-grow: 3;
-            flex-basis: 0;
-        }
-        .assignment-row .assign-mandays {
-            flex-grow: 2;
-            flex-basis: 0;
-        }
-        .assignment-row .assign-button {
-            flex: 0 0 auto;
-            margin-bottom: 5px; 
-        }
-        .remove-assignment-btn {
-            padding: 8px 16px;
-            font-size: 0.9em;
-            white-space: nowrap;
-        }
-
+      body {
+        padding-top: 59px;
+      }
+      .screenshot { /* スクリーンショット画像用のスタイル */
+        max-width: 100%;
+        height: auto;
+        border: 1px solid #dee2e6;
+        border-radius: .25rem;
+        margin-bottom: 1rem;
+        box-shadow: 0 .125rem .25rem rgba(0,0,0,.075);
+      }
     </style>
 </head>
-<body class="theme-member">
-    <div class="container">
-        <h1>アサイン管理</h1>
-        <div class="controls">
-            <div class="controls-group">
-                <button id="openMemberModalBtn">メンバー管理</button>
-                <button id="openLabelModalBtn">ラベル管理</button>
-                <button id="openNewTaskModalBtn">業務登録</button> 
-            </div>
-            <div class="controls-group">
-                <input type="file" id="importJsonInput" accept=".json" style="display: none;">
-                <button id="importJsonBtn">JSON読込</button> 
-                <button id="exportJsonBtn">JSON保存</button> 
-            </div>
-        </div>
-        <div class="controls">
-             <div class="controls-group">
-                <label for="timelineViewMode">表示モード</label>
-                <select id="timelineViewMode">
-                    <option value="member">メンバー別</option>
-                    <option value="task">業務別</option>
-                </select>
-            </div>
-            <div class="controls-group">
-                <label for="timelineStartMonth">表示開始月</label>
-                <input type="month" id="timelineStartMonth">
-            </div>
-            <div class="controls-group">
-                <label for="timelineMonths">表示期間(月)</label>
-                <input type="number" id="timelineMonths" value="6" min="1" max="24" style="width: 80px;">
-            </div>
-            <div class="controls-group">
-                <label for="monthlyWorkDays">月間標準人日</label>
-                <input type="number" id="monthlyWorkDays" value="20" min="1" max="31" title="メンバー1人あたりの月間稼働上限の目安です。" style="width: 80px;">
-            </div>
-            <div class="controls-group" id="memberFilterBtnContainer" style="display: none;">
-                <button id="openMemberFilterModalBtn">メンバー表示フィルタ</button>
-            </div>
-        </div>
+<body>
 
-        <h2 id="timelineTitle">リソース状況タイムライン</h2>
-        <div id="timelineViewWrapper" class="timeline-table-container">
-            <table id="timelineTable" class="timeline-table">
-                <thead>
-                    <tr id="timelineHeaderRow"></tr>
-                </thead>
-                <tbody id="timelineBody"></tbody>
-            </table>
-        </div>
+    <header>
+        <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+            <div class="container">
+                 <a class="navbar-brand" href="../.././">
+                    <img src="../../assets/images/logo.png" alt="サイトロゴ">
+                    <span class="fw-bold">AIと創るJavaScriptツールキット</span>
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarNav">
+                     <ul class="navbar-nav ms-auto">
+                        <li class="nav-item"><a class="nav-link" href="../.././">ホーム</a></li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle active" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                アプリ紹介
+                            </a>
+                             <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                                <li><a class="dropdown-item" href="../sticky-notes/index.html">付箋アプリ</a></li>
+                                <li><a class="dropdown-item" href="../gantt-chart/index.html">ガントチャート</a></li>
+                                <li><a class="dropdown-item" href="../kanban-board/index.html">カンバンボード</a></li>
+                                <li><a class="dropdown-item" href="../schedule/index.html">スケジュールチェック</a></li>
+                                <li><a class="dropdown-item" href="../mindmap/index.html">マインドマップ</a></li>
+                                <li><a class="dropdown-item" href="../todolist/index.html">週間ToDoカレンダー</a></li>
+                                <li><a class="dropdown-item active" aria-current="page" href="index.html">アサイン管理</a></li>
+                            </ul>
+                        </li>
+                        <li class="nav-item"><a class="nav-link" href="../../ai-creation.html">AIと創るアイデア</a></li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+    </header>
 
-        <h2>新規業務アサインシミュレーション</h2>
-        <div class="form-row">
-            <div class="form-group">
-                <label for="simStartDate">新規業務 開始日</label>
-                <input type="date" id="simStartDate">
-            </div>
-            <div class="form-group">
-                <label for="simEndDate">新規業務 終了日</label>
-                <input type="date" id="simEndDate">
-            </div>
-        </div>
-        <div class="form-row">
-            <div class="form-group">
-                <label for="simEffort">新規業務 想定工数(総人日)</label>
-                <input type="number" id="simEffort" placeholder="例: 30.5" min="0" step="0.1">
-            </div>
-            <div class="form-group">
-                <label for="simParticipants">参加人数</label>
-                <input type="number" id="simParticipants" placeholder="例: 2" min="1" value="1">
-            </div>
-        </div>
-        <div class="form-group">
-            <label>必須スキル/資格 (AND検索)</label>
-            <div id="simLabelsCheckboxes" class="checkbox-container"></div>
-        </div>
-        <button id="simulateBtn">この期間の空き状況を表示</button>
-        <div id="simulationResult">
-            シミュレーション結果がここに表示されます。
-        </div>
-    </div>
+    <main class="container mt-4">
+        <div class="row">
+            <div class="col-lg-8">
+                 <article class="manual-section">
+                    <h1 class="mb-4">👥 アサイン管理 (Assign Management) <span class="badge bg-info text-dark ms-2">機能UP!</span></h1>
+                    <p class="lead">メンバーと業務（タスク）のリソース状況を月別のタイムライン形式で可視化するツールです。<strong class="text-primary">メンバーごとの負荷状況の確認や、新規業務のアサインシミュレーション</strong>ができ、プロジェクトの人員配置計画を強力にサポートします。</p>
 
-    <div id="memberModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>メンバー管理</h2>
-                <span class="close-button" data-modal-id="memberModal">&times;</span>
-            </div>
-            <div class="modal-body">
-                <div class="form-group">
-                    <label for="memberIdInput" style="display:none;">ID:</label>
-                    <input type="hidden" id="memberIdInput"> 
-                    <label for="memberNameInput">メンバー名</label>
-                    <input type="text" id="memberNameInput" placeholder="例: 山田 太郎">
-                </div>
-                <div class="form-group">
-                    <label>ラベル</label>
-                    <div id="memberLabelsCheckboxes" class="checkbox-container"></div>
-                </div>
-                <div style="margin-bottom: 24px;">
-                    <button id="saveMemberBtn">メンバー保存</button>
-                    <button id="clearMemberFormBtn" class="warning-button" style="display:none;">新規入力に戻す</button>
-                </div>
-                <h3>メンバー一覧</h3>
-                <div id="memberManagementList"></div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="close-modal-btn" data-modal-id="memberModal">閉じる</button>
-            </div>
-        </div>
-    </div>
-    
-    <div id="labelModal" class="modal">
-        <div class="modal-content">
-             <div class="modal-header">
-                <h2>ラベル管理</h2>
-                <span class="close-button" data-modal-id="labelModal">&times;</span>
-            </div>
-            <div class="modal-body">
-                <p style="font-size:0.9em; color:#555;">ドラッグ＆ドロップでラベルの表示順を変更できます。</p>
-                <div id="labelManagementList" style="border: 1px solid #ddd; border-radius: 4px; padding: 5px; margin-bottom: 15px;"></div>
-                <div class="form-group form-row" style="align-items: center;">
-                    <input type="text" id="newLabelInput" placeholder="新規ラベルを追加" style="margin: 0;">
-                    <button type="button" id="addNewLabelBtn" style="margin: 0 0 0 10px;">追加</button>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button id="closeLabelModalBtn">閉じる</button>
-            </div>
-        </div>
-    </div>
+                    <div class="text-center my-4">
+                        <img src="../../assets/images/assign-management-screenshot.png" alt="アサイン管理の画面" class="img-fluid rounded border shadow-sm mb-3 screenshot">
+                        <a href="https://LifeBook2021.github.io/app/assign-management/" target="_blank" rel="noopener noreferrer" class="btn btn-success btn-lg">
+                            <i class="bi bi-play-circle me-2"></i>アサイン管理を使ってみる (無料)
+                        </a>
+                    </div>
 
-    <div id="newTaskModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2 id="newTaskModalTitle">新規業務登録</h2>
-                <span class="close-button" data-modal-id="newTaskModal">&times;</span>
-            </div>
-            <div class="modal-body">
-                <input type="hidden" id="newTaskIdInput"> 
-                <div class="form-group">
-                    <label for="newTaskNameInput">業務名</label>
-                    <input type="text" id="newTaskNameInput" placeholder="例: 新システム設計">
-                </div>
-                <div class="form-group">
-                    <label for="newTaskDescriptionInput">業務内容</label>
-                    <textarea id="newTaskDescriptionInput" rows="3" placeholder="業務の詳細な内容を記述します。"></textarea>
-                </div>
-                <div class="form-row"> 
-                    <div class="form-group half-width">
-                        <label for="newTaskStartDateInput">開始日</label>
-                        <input type="date" id="newTaskStartDateInput">
-                    </div>
-                    <div class="form-group half-width">
-                        <label for="newTaskEndDateInput">終了日</label>
-                        <input type="date" id="newTaskEndDateInput">
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label for="newTaskEffortInput">想定工数(総人日)</label>
-                    <input type="number" id="newTaskEffortInput" placeholder="例: 20.5" min="0" step="0.1">
-                </div>
-                <h3>メンバーアサイン</h3>
-                <div id="newTaskAssignmentsContainer"></div>
-                <button type="button" id="addNewTaskAssignmentRowBtn" style="margin-top: 5px; margin-bottom: 15px;">アサインメンバー追加</button>
-            </div>
-            <div class="modal-footer">
-                <button id="saveNewTaskBtn">業務登録</button>
-                <button type="button" class="close-modal-btn" data-modal-id="newTaskModal">閉じる</button>
-            </div>
-        </div>
-    </div>
+                    <h2>主な特徴</h2>
+                     <ul class="list-unstyled">
+                        <li><i class="bi bi-check-circle-fill text-success me-2"></i><strong>タイムライン表示:</strong> メンバー別・業務別の2つのモードでリソース状況を月ごとに確認できます。</li>
+                        <li><i class="bi bi-check-circle-fill text-success me-2"></i><strong>メンバー表示フィルタ (新機能):</strong> 業務別表示の際に、特定のメンバーが関わる業務だけを絞り込んで表示できます。</li>
+                        <li><i class="bi bi-check-circle-fill text-success me-2"></i><strong>負荷状況の可視化:</strong> 月間の標準人日を超えたメンバーをハイライト表示し、高負荷状態を即座に把握できます。</li>
+                        <li><i class="bi bi-check-circle-fill text-success me-2"></i><strong>アサインシミュレーション:</strong> 新規業務の期間・工数・必要スキルを指定し、アサイン可能なメンバーを自動でリストアップします。</li>
+                        <li><i class="bi bi-check-circle-fill text-success me-2"></i><strong>柔軟なデータ管理:</strong> メンバー情報、業務情報、ラベル（スキル等）を自由に追加・編集・削除できます。</li>
+                        <li><i class="bi bi-check-circle-fill text-success me-2"></i><strong>ドラッグ＆ドロップ:</strong> メンバーや業務の表示順を直感的に並べ替えられます。</li>
+                        <li><i class="bi bi-check-circle-fill text-success me-2"></i><strong>データ保存/読込:</strong> 全ての状態をJSONファイルとして保存・読み込みでき、チームでの共有やバックアップが容易です。</li>
+                    </ul>
 
-    <div id="taskDetailModal" class="modal">
-        <div class="modal-content" id="taskDetailModalContent">
-            <div id="taskDetailViewMode">
-                 <div class="modal-header">
-                    <h2 id="taskDetailTitle">業務詳細</h2>
-                    <span class="close-button" data-modal-id="taskDetailModal">&times;</span>
-                </div>
-                <div class="modal-body">
-                    <dl class="info-grid">
-                        <dt>業務名</dt><dd id="detailTaskName"></dd>
-                        <dt>業務内容</dt><dd id="detailTaskDescription"></dd>
-                        <dt>期間</dt><dd id="detailTaskPeriod"></dd>
-                        <dt>想定工数</dt><dd id="detailTaskEffort"></dd>
-                    </dl>
-                    <h3>アサイン状況:</h3>
-                    <ul id="detailTaskAssignmentsList" class="assignments-list"></ul>
-                </div>
-                <div class="modal-footer">
-                    <div class="action-button-group">
-                        <button id="editTaskDetailBtn" class="warning-button">編集</button>
-                        <button id="deleteTaskFromDetailBtn" type="button" class="danger-button">業務削除</button>
-                    </div>
-                    <button id="closeTaskDetailNormalBtn" type="button">閉じる</button>
-                </div>
+                    <h2>使い方マニュアル</h2>
+
+                    <!-- 変更点: 「画面構成」セクションを復活させ、構成を整理 -->
+                    <h3>画面構成</h3>
+                    <p>画面は大きく「コントロールエリア」「タイムラインエリア」「シミュレーションエリア」の3つに分かれています。</p>
+                    <img src="../../assets/images/assign-management-layout.png" alt="アサイン管理 画面構成" class="screenshot">
+                    <ol>
+                        <li><strong>コントロールエリア (上部):</strong>
+                            <ul>
+                                <li><strong>管理ボタン:</strong> <kbd>メンバー管理</kbd>、<kbd>ラベル管理</kbd>、<kbd>業務登録</kbd>の各モーダルを開きます。</li>
+                                <li><strong>データ入出力:</strong> <kbd>JSON読込</kbd>と<kbd>JSON保存</kbd>ボタンでデータを管理します。</li>
+                                <li><strong>表示設定:</strong> 表示モード（メンバー別/業務別）、表示開始月、表示期間、月間標準人日を設定します。業務別表示の際には<kbd>メンバー表示フィルタ</kbd>ボタンが表示されます。</li>
+                            </ul>
+                        </li>
+                        <li><strong>タイムラインエリア (中央):</strong>
+                            <ul>
+                                <li>設定に応じて、メンバーまたは業務を縦軸、年月を横軸とした表が表示されます。</li>
+                                <li>各セルには、その月にアサインされている業務（またはメンバー）と、計算された工数が人日単位で表示されます。</li>
+                                <li>メンバー別表示では、合計人日が標準を超えるとセルが赤くハイライトされます。</li>
+                            </ul>
+                        </li>
+                        <li><strong>シミュレーションエリア (下部):</strong>
+                            <ul>
+                                <li>新規業務の情報を入力し、<kbd>この期間の空き状況を表示</kbd>ボタンでシミュレーションを実行します。</li>
+                                <li>結果エリアに、アサイン可能なメンバー、または不可の場合はその理由が表示されます。</li>
+                            </ul>
+                        </li>
+                    </ol>
+                    
+                    <h3>基本的な使い方</h3>
+                     <ul class="list-group list-group-flush mb-4">
+                        <li class="list-group-item"><strong>1. メンバーとラベルの登録:</strong> <kbd>メンバー管理</kbd>と<kbd>ラベル管理</kbd>から、プロジェクトのメンバーと必要なスキル（ラベル）を登録します。</li>
+                        <li class="list-group-item"><strong>2. 業務の登録:</strong> <kbd>業務登録</kbd>から、業務の期間や総工数、担当するメンバーとその作業割合を設定します。</li>
+                        <li class="list-group-item"><strong>3. タイムラインで状況確認:</strong> 登録した情報がタイムラインに反映されます。「表示モード」を切り替えて、リソース状況を多角的に分析します。</li>
+                        <li class="list-group-item"><strong>4. (応用) メンバーで絞り込み:</strong> 「業務別」表示中に<kbd>メンバー表示フィルタ</kbd>を使い、特定メンバーが関わる業務だけを表示させて、個人のタスクを俯瞰します。</li>
+                        <li class="list-group-item"><strong>5. 新規業務をシミュレーション:</strong> 新しい仕事の相談があったら、シミュレーションエリアに条件を入力し、誰が対応可能か素早く判断します。</li>
+                        <li class="list-group-item"><strong>6. データの保存:</strong> <kbd>JSON保存</kbd>で作業内容を保存し、次回<kbd>JSON読込</kbd>から再開できます。</li>
+                    </ul>
+
+                    <!-- 変更点: タイムラインとシミュレーションの詳細説明セクションを追加 -->
+                    <h3>主な機能の詳細</h3>
+                    
+                    <h4>タイムラインを使いこなす (2つの表示モード)</h4>
+                    <p>タイムラインは「メンバー別」と「業務別」の2つの視点を切り替えることで、プロジェクトの状況を深く理解できます。</p>
+                    <ul>
+                        <li><strong>メンバー別表示： 「誰が、いつ、忙しいか」を把握する</strong><br>
+                        メンバーを縦軸にした表示です。各メンバーの月ごとの合計負荷（人日）が一目でわかり、設定した「月間標準人日」を超過するとセルが赤くハイライトされます。これにより、特定のメンバーに負荷が偏っていないか、休暇の取得は可能かなどを検討するのに役立ちます。</li>
+                    </ul>
+                    <img src="../../assets/images/assign-management-timeline-member.png" alt="メンバー別タイムラインの表示例（高負荷の月がハイライト）" class="screenshot">
+                    
+                    <ul>
+                        <li><strong>業務別表示： 「どの業務が、どうなっているか」を把握する</strong><br>
+                        業務を縦軸にした表示です。各業務にどのメンバーが、どのくらいの工数で関わっているかを確認できます。新機能の<kbd>メンバー表示フィルタ</kbd>と組み合わせることで、「Aさんの担当業務一覧」のように、特定のメンバーが関与する業務だけを抜き出して表示することも可能です。</li>
+                    </ul>
+                    <img src="../../assets/images/assign-management-timeline-task.png" alt="業務別タイムラインの表示例とメンバー表示フィルタボタン" class="screenshot">
+
+                    <h4>アサインシミュレーションで未来を予測</h4>
+                    <p>「この条件の仕事、誰かお願いできる？」――プロジェクトマネージャーが日々直面するこの問いに、シミュレーション機能が答えます。</p>
+                    <p>「新規業務の期間」「想定工数」「参加人数」「必須スキル（ラベル）」を入力してボタンを押すだけで、既存のアサイン状況を元に、どのメンバーがアサイン可能で、誰が難しいのか（そして、その理由）を自動でリストアップします。これにより、感覚的な判断ではなく、データに基づいた迅速な意思決定が可能になります。</p>
+                    <img src="../../assets/images/assign-management-simulation.png" alt="アサインシミュレーションの入力と結果表示例" class="screenshot">
+                    
+                    <h4>データの保存と読込</h4>
+                     <ul class="list-group list-group-flush">
+                        <li class="list-group-item"><strong>保存:</strong> コントロールエリアの<kbd>JSON保存</kbd>ボタンをクリックします。<code>ASM[日付時刻].json</code>というファイル名でダウンロードされます。</li>
+                        <li class="list-group-item"><strong>読込:</strong> <kbd>JSON読込</kbd>ボタンをクリックし、保存したJSONファイルを選択します。現在のデータは上書きされます。</li>
+                    </ul>
+                 </article>
             </div>
-            <div id="taskDetailEditMode" style="display:none;">
-                 <div class="modal-header">
-                    <h2>業務編集</h2>
-                     <span class="close-button" data-modal-id="taskDetailModal">&times;</span>
-                </div>
-                 <div class="modal-body">
-                    <div class="form-group">
-                        <label for="editingDetailTaskNameInput">業務名</label>
-                        <input type="text" id="editingDetailTaskNameInput">
-                    </div>
-                     <div class="form-group">
-                        <label for="editingDetailTaskDescriptionInput">業務内容</label>
-                        <textarea id="editingDetailTaskDescriptionInput" rows="3"></textarea>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group half-width">
-                            <label for="editingDetailTaskStartDateInput">開始日</label>
-                            <input type="date" id="editingDetailTaskStartDateInput">
-                        </div>
-                        <div class="form-group half-width">
-                            <label for="editingDetailTaskEndDateInput">終了日</label>
-                            <input type="date" id="editingDetailTaskEndDateInput">
+             <div class="col-lg-4">
+                 <aside>
+                     <div class="card mt-4 mt-lg-0">
+                        <div class="card-body">
+                            <h5 class="card-title">アプリ情報</h5>
+                            <ul class="list-unstyled">
+                                <li><strong>バージョン:</strong> 1.3</li>
+                                <li><strong>最終更新:</strong> 2025/06/15</li>
+                                <li><strong>技術:</strong> HTML, CSS, JavaScript, SortableJS, Bootstrap 5</li>
+                                <li><strong>開発協力:</strong> Google AI Studio</li>
+                            </ul>
+                            <a href="https://LifeBook2021.github.io/app/assign-management/" target="_blank" rel="noopener noreferrer" class="btn btn-success w-100 mb-2">
+                                <i class="bi bi-play-circle me-2"></i>アプリを起動
+                            </a>
+                             <div>
+                                <small class="text-muted">
+                                    このアプリのソースコード (HTML, CSS, JavaScript) は、以下の手順で確認・保存できます。
+                                    <ul class="list-unstyled mt-2 mb-0" style="padding-left: 1em; text-indent: -1em;">
+                                        <li class="mb-1">1. 上記「アプリを起動」ボタンでアプリページを開きます。</li>
+                                        <li class="mb-1">2. ページ上で右クリックし、「ページのソースを表示」(または類似の名称) を選択します。</li>
+                                        <li class="mb-1">3. 表示されたコードを全選択 (<kbd>Ctrl</kbd>+<kbd>A</kbd> / <kbd>Cmd</kbd>+<kbd>A</kbd>) し、コピー (<kbd>Ctrl</kbd>+<kbd>C</kbd> / <kbd>Cmd</kbd>+<kbd>C</kbd>) します。</li>
+                                        <li class="mb-1">4. テキストエディタ (メモ帳, VS Code等) に貼り付け (<kbd>Ctrl</kbd>+<kbd>V</kbd> / <kbd>Cmd</kbd>+<kbd>V</kbd>) ます。</li>
+                                        <li>5. ファイル名を付けて保存します。HTMLファイル (<code>.html</code>) として保存し、文字コードは「UTF-8」を推奨します。</li>
+                                    </ul>
+                                </small>
+                            </div>
                         </div>
                     </div>
-                    <div class="form-group">
-                        <label for="editingDetailTaskEffortInput">想定工数(総人日)</label>
-                        <input type="number" id="editingDetailTaskEffortInput" min="0" step="0.1">
-                    </div>
-                    <h3>メンバーアサイン編集</h3>
-                    <div id="taskDetailAssignmentsContainerEditor"></div>
-                    <button type="button" id="addDetailTaskAssignmentRowBtnEditor" style="margin-top: 5px; margin-bottom: 15px;">アサインメンバー追加</button>
-                </div>
-                <div class="modal-footer">
-                    <button id="saveTaskDetailBtn" class="success-button">保存</button>
-                    <button id="cancelTaskDetailEditBtn" type="button">キャンセル</button>
-                </div>
+                     <div class="card mt-4">
+                         <div class="card-body">
+                             <h5 class="card-title">開発ストーリー</h5>
+                             <p class="small">「Excelでのアサイン管理が煩雑…」という課題から、Webアプリ化を発案。AIに「メンバーとタスクの負荷をタイムラインで見たい」と相談し、コアとなる人日計算ロジックと描画機能を実装。その後、メンバー管理、ラベル機能、そして「この条件で誰かアサインできる？」という実務的な問いに答えるためのシミュレーション機能をAIとの対話を通じて追加開発しました。</p>
+                             <a href="../../ai-creation.html" class="btn btn-outline-info btn-sm">AIとの開発をもっと詳しく</a>
+                         </div>
+                     </div>
+                 </aside>
             </div>
         </div>
-    </div>
+    </main>
 
-    <div id="memberFilterModal" class="modal">
-        <div class="modal-content" style="max-width: 500px;">
-            <div class="modal-header">
-                <h2>メンバー表示フィルタ</h2>
-                <span class="close-button" data-modal-id="memberFilterModal">&times;</span>
-            </div>
-            <div class="modal-body">
-                <p>表示したいメンバーを選択してください。（全員の選択を解除すると、全ての業務が表示されます）</p>
-                <div id="filterModalCheckboxesContainer" class="checkbox-container"></div>
-            </div>
-            <div class="modal-footer">
-                <button id="applyMemberFilterBtn" class="success-button">適用して閉じる</button>
+    <footer class="footer mt-auto">
+        <div class="container text-center">
+            <span class="text-muted">&copy; 2025 AIと創るJavaScriptツールキット. All Rights Reserved.</span>
+
+            <div class="mt-2">
+                <i class="bi bi-envelope me-1"></i>
+                <a href="mailto:lifebook20210120@gmail.com">lifebook20210120@gmail.com</a>
             </div>
         </div>
-    </div>
+    </footer>
 
-    <script>
-        const DEFAULT_MONTHLY_WORK_DAYS = 20;
-        let members = [];
-        let tasks = [];
-        let assignments = [];
-        let allLabels = [];
-        let appSettings = {
-            timelineViewMode: 'member',
-            timelineStartMonth: '',
-            timelineMonths: 6,
-            monthlyWorkDays: DEFAULT_MONTHLY_WORK_DAYS,
-            filteredMemberIds: []
-        };
-        let currentEditingTaskId = null;
-        let openMemberModalBtn, openLabelModalBtn, openNewTaskModalBtn, exportJsonBtn, importJsonInput, importJsonBtn;
-        let memberModal, memberIdInput, memberNameInput, memberLabelsCheckboxes, saveMemberBtn, clearMemberFormBtn, memberManagementListDiv;
-        let labelModal, labelManagementList, newLabelInput, addNewLabelBtn, closeLabelModalBtn;
-        let newTaskModal, newTaskModalTitle, newTaskIdInput, newTaskNameInput, newTaskDescriptionInput, newTaskStartDateInput, newTaskEndDateInput, 
-            newTaskEffortInput, newTaskAssignmentsContainer, 
-            addNewTaskAssignmentRowBtn, saveNewTaskBtn;
-        let taskDetailModal, taskDetailTitle, taskDetailViewMode, detailTaskName, detailTaskDescription, detailTaskPeriod, 
-            detailTaskEffort, detailTaskAssignmentsList, editTaskDetailBtn,
-            taskDetailEditMode, editingDetailTaskNameInput, editingDetailTaskDescriptionInput,
-            editingDetailTaskStartDateInput, editingDetailTaskEndDateInput, editingDetailTaskEffortInput,
-            taskDetailAssignmentsContainerEditor, addDetailTaskAssignmentRowBtnEditor,
-            saveTaskDetailBtn, cancelTaskDetailEditBtn, deleteTaskFromDetailBtn, closeTaskDetailNormalBtn;
-        let timelineViewModeSelect, timelineStartMonthInput, timelineMonthsInput, monthlyWorkDaysInput, timelineTitleH2, timelineHeaderRow, timelineBody;
-        let simStartDateInput, simEndDateInput, simEffortInput, simParticipantsInput, simLabelsCheckboxes, simulateBtn, simulationResultDiv; 
-        let closeButtons;
-
-        let memberFilterBtnContainer, openMemberFilterModalBtn, memberFilterModal, filterModalCheckboxesContainer, applyMemberFilterBtn;
-
-        let sortableMember = null;
-        let sortableTimeline = null;
-        let sortableLabels = null;
-
-        function generateId() { return Date.now().toString(36) + Math.random().toString(36).substring(2, 15); }
-        function formatDate(dateStrOrDate) {
-            if (!dateStrOrDate) return '';
-            const date = (typeof dateStrOrDate === 'string') ? new Date(dateStrOrDate + 'T00:00:00Z') : dateStrOrDate;
-            if (isNaN(date.getTime())) return '無効な日付';
-            return `${date.getUTCFullYear()}/${String(date.getUTCMonth() + 1).padStart(2, '0')}/${String(date.getUTCDate()).padStart(2, '0')}`;
-        }
-        function getInputDateValue(date) {
-            if (!date) return '';
-            const d = (typeof date === 'string') ? new Date(date + 'T00:00:00Z') : date;
-            if (isNaN(d.getTime())) return '';
-            return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`;
-        }
-        function getInputMonthValue(date) { 
-            if (!date) return '';
-            const d = (typeof date === 'string') ? new Date(date + 'T00:00:00') : date;
-            if (isNaN(d.getTime())) return '';
-            return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-        }
-        function getMonthStartDate(yearMonthStr) { return new Date(yearMonthStr + '-01T00:00:00Z'); }
-        function getMonthEndDate(date) { return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + 1, 0, 23, 59, 59, 999)); }
-        function addMonths(date, months) { 
-            const result = new Date(date);
-            result.setUTCMonth(result.getUTCMonth() + months); 
-            return result; 
-        }
-
-        function countWorkingDays(startDate, endDate) {
-            let count = 0;
-            const curDate = new Date(startDate.getTime());
-            while (curDate <= endDate) {
-                const dayOfWeek = curDate.getUTCDay();
-                if (dayOfWeek !== 0 && dayOfWeek !== 6) { // 0 = Sunday, 6 = Saturday
-                    count++;
-                }
-                curDate.setUTCDate(curDate.getUTCDate() + 1);
-            }
-            return count;
-        }
-        
-        function getOverlappingWorkingDaysInMonth(taskStartDateStr, taskEndDateStr, targetYearMonthStr) {
-            if (!taskStartDateStr || !taskEndDateStr || !targetYearMonthStr) return 0;
-            const taskStart = new Date(taskStartDateStr + 'T00:00:00Z');
-            const taskEnd = new Date(taskEndDateStr + 'T23:59:59.999Z');
-            const monthStart = getMonthStartDate(targetYearMonthStr);
-            const monthEnd = getMonthEndDate(monthStart);
-
-            if (isNaN(taskStart.getTime()) || isNaN(taskEnd.getTime()) || isNaN(monthStart.getTime()) || isNaN(monthEnd.getTime())) return 0;
-            if (taskEnd < monthStart || taskStart > monthEnd) return 0;
-
-            const overlapStart = new Date(Math.max(taskStart.getTime(), monthStart.getTime()));
-            const overlapEnd = new Date(Math.min(taskEnd.getTime(), monthEnd.getTime()));
-
-            return countWorkingDays(overlapStart, overlapEnd);
-        }
-
-        function calculateTaskTotalWorkingDays(taskStartDateStr, taskEndDateStr) {
-            if (!taskStartDateStr || !taskEndDateStr) return 0;
-            const start = new Date(taskStartDateStr + 'T00:00:00Z');
-            const end = new Date(taskEndDateStr + 'T00:00:00Z');
-            if (isNaN(start.getTime()) || isNaN(end.getTime()) || start > end) return 0;
-            return countWorkingDays(start, end);
-        }
-        
-        function calculateActualManDaysInMonth(task, assignment, targetYearMonthStr) {
-            if (!task || !assignment || !targetYearMonthStr ||
-                task.effort === undefined || task.effort === null || task.effort < 0 ||
-                assignment.workRatioPercent === undefined) {
-                return 0;
-            }
-            const taskTotalEffort = parseFloat(task.effort);
-            if (taskTotalEffort === 0) return 0;
-            const workRatio = parseFloat(assignment.workRatioPercent) || 0;
-            if (workRatio === 0) return 0;
-
-            const memberTotalEffort = taskTotalEffort * (workRatio / 100);
-            const totalTaskWorkingDays = calculateTaskTotalWorkingDays(task.startDate, task.endDate);
-            if (totalTaskWorkingDays <= 0) {
-                return 0;
-            }
-            
-            const memberDailyEffort = memberTotalEffort / totalTaskWorkingDays;
-            const overlappingWorkingDays = getOverlappingWorkingDaysInMonth(task.startDate, task.endDate, targetYearMonthStr);
-            
-            return memberDailyEffort * overlappingWorkingDays;
-        }
-
-        function getAdjustedAssignmentDetails(task) {
-            const finalDetails = {};
-
-            if (!task || task.effort === null) return { finalDetails };
-
-            const taskAssignments = assignments.filter(a => a.taskId === task.id);
-            if (taskAssignments.length === 0) return { finalDetails };
-            
-            const taskStartDateObj = new Date(task.startDate + 'T00:00:00Z');
-            const taskEndDateObj = new Date(task.endDate + 'T00:00:00Z'); // 時刻部分を正規化
-
-            taskAssignments.forEach(assign => {
-                const member = members.find(m => m.id === assign.memberId);
-                if (!member) return;
-
-                finalDetails[assign.memberId] = {};
-                let currentMemberTotal = 0;
-                // タスク期間の最終月を事前に特定
-                const taskEndMonthStr = getInputMonthValue(taskEndDateObj);
-
-                // ループ用の開始月と終了月を「その月の1日」で正規化し、安定性を向上
-                let currentLoopMonth = new Date(Date.UTC(taskStartDateObj.getUTCFullYear(), taskStartDateObj.getUTCMonth(), 1));
-                const loopEndDate = new Date(Date.UTC(taskEndDateObj.getUTCFullYear(), taskEndDateObj.getUTCMonth(), 1));
-
-                // 月ごとにループして工数を計算
-                while (currentLoopMonth.getTime() <= loopEndDate.getTime()) {
-                    const monthStr = getInputMonthValue(currentLoopMonth);
-                    const manDays = calculateActualManDaysInMonth(task, assign, monthStr);
-                    
-                    finalDetails[assign.memberId][monthStr] = manDays;
-                    currentMemberTotal += manDays;
-
-                    // 次の月へ進む
-                    currentLoopMonth.setUTCMonth(currentLoopMonth.getUTCMonth() + 1);
-                }
-
-                const memberTargetEffort = parseFloat(task.effort) * (assign.workRatioPercent / 100);
-                const difference = memberTargetEffort - currentMemberTotal;
-                
-                // 誤差をタスクの「最終月」に加算して調整
-                if (taskEndMonthStr && Math.abs(difference) > 1e-9) { 
-                    if (finalDetails[assign.memberId][taskEndMonthStr] !== undefined) {
-                        finalDetails[assign.memberId][taskEndMonthStr] += difference;
-                    } else {
-                        // ループでエントリが作成されなかった場合（ごく短いタスクなど）も考慮
-                        finalDetails[assign.memberId][taskEndMonthStr] = difference;
-                    }
-                }
-            });
-            
-            return { finalDetails };
-        }
-
-        function openModal(modalId) {
-            const modalElement = document.getElementById(modalId);
-            if (!modalElement) return;
-            modalElement.style.display = 'flex';
-            if (modalId === 'memberModal' || modalId === 'labelModal' || modalId === 'memberFilterModal') {
-                document.body.className = 'theme-member';
-            }
-            if (modalId === 'newTaskModal' || modalId === 'taskDetailModal') {
-                document.body.className = 'theme-task';
-            }
-
-            if (modalId === 'memberModal') {
-                clearMemberForm();
-                if (sortableMember) sortableMember.destroy();
-                sortableMember = new Sortable(memberManagementListDiv, {
-                    handle: '.drag-handle', animation: 150, ghostClass: 'sortable-ghost',
-                    onEnd: (evt) => {
-                        const movedItem = members.splice(evt.oldIndex, 1)[0];
-                        members.splice(evt.newIndex, 0, movedItem);
-                        renderCurrentTimeline();
-                    }
-                });
-            }
-            if (modalId === 'labelModal') {
-                renderLabelManagementList();
-                if (sortableLabels) sortableLabels.destroy();
-                sortableLabels = new Sortable(labelManagementList, {
-                    handle: '.drag-handle', animation: 150, ghostClass: 'sortable-ghost',
-                    onEnd: (evt) => {
-                        const movedItem = allLabels.splice(evt.oldIndex, 1)[0];
-                        allLabels.splice(evt.newIndex, 0, movedItem);
-                        renderLabelCheckboxes(simLabelsCheckboxes, allLabels);
-                    }
-                });
-            }
-            if (modalId === 'newTaskModal') {
-                if (newTaskModalTitle) newTaskModalTitle.textContent = '新規業務登録';
-                if (saveNewTaskBtn) saveNewTaskBtn.textContent = '業務登録';
-                clearNewTaskForm();
-            }
-        }
-        function closeModal(modalId) {
-            const modalElement = document.getElementById(modalId);
-            if (!modalElement) return;
-            modalElement.style.display = 'none';
-            document.body.className = appSettings.timelineViewMode === 'member' ? 'theme-member' : 'theme-task';
-            if (modalId === 'taskDetailModal') {
-                currentEditingTaskId = null;
-                if(taskDetailViewMode) taskDetailViewMode.style.display = 'block';
-                if(taskDetailEditMode) taskDetailEditMode.style.display = 'none';
-                if(newTaskIdInput) newTaskIdInput.value = '';
-            }
-             if (modalId === 'newTaskModal') {
-                if(newTaskIdInput) newTaskIdInput.value = '';
-            }
-        }
-
-        function updateAllLabels() {
-            const labelSet = new Set(allLabels);
-            members.forEach(member => {
-                if (member.labels) {
-                    member.labels.forEach(label => labelSet.add(label));
-                }
-            });
-            const newLabels = Array.from(labelSet);
-            const existingOrder = allLabels.filter(l => newLabels.includes(l));
-            const addedLabels = newLabels.filter(l => !allLabels.includes(l));
-            allLabels = [...existingOrder, ...addedLabels];
-        }
-
-        function renderLabelCheckboxes(container, labelsToRender, checkedLabels = []) {
-            if (!container) return;
-            container.innerHTML = '';
-            if (labelsToRender.length === 0) {
-                container.innerHTML = '<span style="color: #888; font-size: 0.9em;">利用可能なラベルはありません。</span>';
-            }
-            labelsToRender.forEach(label => {
-                const id = `label-${container.id}-${label.replace(/\s/g, '-')}`;
-                const item = document.createElement('div');
-                item.className = 'checkbox-item';
-                item.innerHTML = `
-                    <input type="checkbox" id="${id}" value="${label}" ${checkedLabels.includes(label) ? 'checked' : ''}>
-                    <label for="${id}">${label}</label>
-                `;
-                container.appendChild(item);
-            });
-        }
-
-        function renderLabelManagementList() {
-            if (!labelManagementList) return;
-            labelManagementList.innerHTML = '';
-            allLabels.forEach(label => {
-                const item = document.createElement('div');
-                item.className = 'label-item';
-                item.dataset.label = label;
-                item.innerHTML = `
-                    <span class="drag-handle">&#9776;</span>
-                    <span class="label-text">${label}</span>
-                    <div class="action-button-group">
-                      <button class="warning-button edit-label-btn" style="padding: 3px 6px; font-size: 0.8em;">編集</button>
-                      <button class="danger-button delete-label-btn" style="padding: 3px 6px; font-size: 0.8em;">削除</button>
-                    </div>
-                `;
-                labelManagementList.appendChild(item);
-            });
-            labelManagementList.querySelectorAll('.edit-label-btn').forEach(btn => {
-                const labelItem = btn.closest('.label-item');
-                const labelToEdit = labelItem.dataset.label;
-                btn.onclick = () => switchToLabelEditMode(labelItem, labelToEdit);
-            });
-            labelManagementList.querySelectorAll('.delete-label-btn').forEach(btn => {
-                const labelToDelete = btn.closest('.label-item').dataset.label;
-                btn.onclick = () => handleDeleteLabel(labelToDelete);
-            });
-        }
-        
-        function switchToLabelEditMode(labelItem, oldLabel) {
-            const labelTextSpan = labelItem.querySelector('.label-text');
-            labelTextSpan.innerHTML = '';
-            
-            const input = document.createElement('input');
-            input.type = 'text';
-            input.value = oldLabel;
-            input.className = 'label-edit-input';
-            labelTextSpan.appendChild(input);
-            input.focus();
-            input.select();
-
-            const saveChanges = () => {
-                const newLabel = input.value.trim();
-                if (newLabel && newLabel !== oldLabel) {
-                    if (allLabels.includes(newLabel)) {
-                        alert(`ラベル「${newLabel}」は既に存在します。`);
-                        switchToLabelViewMode(labelItem, oldLabel);
-                    } else {
-                        handleUpdateLabel(oldLabel, newLabel);
-                    }
-                } else {
-                    switchToLabelViewMode(labelItem, oldLabel);
-                }
-            };
-
-            input.addEventListener('blur', saveChanges, { once: true });
-            input.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter') { e.preventDefault(); input.blur(); } 
-                else if (e.key === 'Escape') { e.preventDefault(); switchToLabelViewMode(labelItem, oldLabel); }
-            });
-        }
-
-        function switchToLabelViewMode(labelItem, labelText) {
-            const labelTextSpan = labelItem.querySelector('.label-text');
-            if (labelTextSpan) labelTextSpan.innerHTML = labelText;
-        }
-
-        function handleUpdateLabel(oldLabel, newLabel) {
-            const index = allLabels.indexOf(oldLabel);
-            if (index > -1) { allLabels[index] = newLabel; }
-
-            members.forEach(member => {
-                const labelIndex = (member.labels || []).indexOf(oldLabel);
-                if (labelIndex > -1) { member.labels[labelIndex] = newLabel; }
-            });
-
-            renderLabelManagementList();
-            renderMemberManagementList();
-            renderLabelCheckboxes(simLabelsCheckboxes, allLabels);
-        }
-
-        function handleDeleteLabel(labelToDelete) {
-            const membersWithLabel = members.filter(m => (m.labels || []).includes(labelToDelete));
-            let confirmMsg = `ラベル「${labelToDelete}」を削除しますか？`;
-            if (membersWithLabel.length > 0) {
-                confirmMsg += `\n\nこのラベルは ${membersWithLabel.length} 人のメンバーに設定されています。削除すると、これらのメンバーからもラベルが解除されます。`;
-            }
-            if(confirm(confirmMsg)) {
-                allLabels = allLabels.filter(l => l !== labelToDelete);
-                members.forEach(m => {
-                    m.labels = (m.labels || []).filter(l => l !== labelToDelete);
-                });
-                renderLabelManagementList();
-                renderMemberManagementList();
-                renderLabelCheckboxes(simLabelsCheckboxes, allLabels);
-            }
-        }
-
-        function handleAddNewLabel() {
-            const newLabel = newLabelInput.value.trim();
-            if (newLabel && !allLabels.includes(newLabel)) {
-                allLabels.push(newLabel);
-                renderLabelManagementList();
-                renderLabelCheckboxes(simLabelsCheckboxes, allLabels);
-                newLabelInput.value = '';
-            } else if (allLabels.includes(newLabel)) {
-                alert('そのラベルは既に存在します。');
-            }
-            newLabelInput.focus();
-        }
-
-        function renderMemberManagementList() {
-            if (!memberManagementListDiv) return;
-            memberManagementListDiv.innerHTML = '';
-            if (members.length === 0) { memberManagementListDiv.innerHTML = '<p>メンバーがいません。</p>'; return; }
-            members.forEach(member => {
-                const card = document.createElement('div'); card.classList.add('member-card'); card.dataset.memberId = member.id;
-                const contentWrapper = document.createElement('div'); contentWrapper.classList.add('member-item-content');
-                const handle = document.createElement('span'); handle.className = 'drag-handle'; handle.innerHTML = '&#9776;';
-                const nameHeader = document.createElement('h4'); nameHeader.textContent = member.name;
-                const buttonGroup = document.createElement('div'); buttonGroup.classList.add('action-button-group');
-                buttonGroup.innerHTML = `<button class="warning-button" data-member-id-edit="${member.id}">編集</button><button class="danger-button" data-member-id-delete="${member.id}">削除</button>`;
-                contentWrapper.appendChild(handle); contentWrapper.appendChild(nameHeader); contentWrapper.appendChild(buttonGroup);
-                card.appendChild(contentWrapper);
-
-                if (member.labels && member.labels.length > 0) {
-                    const labelsContainer = document.createElement('div');
-                    labelsContainer.className = 'member-labels-container';
-                    member.labels.forEach(label => {
-                        const badge = document.createElement('span');
-                        badge.className = 'label-badge';
-                        badge.textContent = label;
-                        labelsContainer.appendChild(badge);
-                    });
-                    card.appendChild(labelsContainer);
-                }
-                
-                memberManagementListDiv.appendChild(card); 
-            });
-            memberManagementListDiv.querySelectorAll('[data-member-id-edit]').forEach(btn => btn.onclick = () => loadMemberForEditing(btn.dataset.memberIdEdit));
-            memberManagementListDiv.querySelectorAll('[data-member-id-delete]').forEach(btn => btn.onclick = () => deleteMemberAndAssignments(btn.dataset.memberIdDelete));
-        }
-        function clearMemberForm() { 
-            if(memberIdInput) memberIdInput.value = ''; 
-            if(memberNameInput) memberNameInput.value = ''; 
-            renderLabelCheckboxes(memberLabelsCheckboxes, allLabels);
-            if(saveMemberBtn) saveMemberBtn.textContent = 'メンバー追加'; 
-            if(clearMemberFormBtn) clearMemberFormBtn.style.display = 'none';
-            if(memberNameInput) memberNameInput.focus(); 
-        }
-        function loadMemberForEditing(memberId) {
-            const member = members.find(m => m.id === memberId);
-            if (member) { 
-                clearMemberForm();
-                if(memberIdInput) memberIdInput.value = member.id; 
-                if(memberNameInput) memberNameInput.value = member.name; 
-                renderLabelCheckboxes(memberLabelsCheckboxes, allLabels, member.labels || []);
-                if(saveMemberBtn) saveMemberBtn.textContent = 'メンバー更新'; 
-                if(clearMemberFormBtn) clearMemberFormBtn.style.display = 'inline-block';
-                if(memberNameInput) memberNameInput.focus(); 
-            }
-        }
-        function handleSaveMember() {
-            const id = memberIdInput ? memberIdInput.value : null; 
-            const name = memberNameInput ? memberNameInput.value.trim() : '';
-            const selectedLabels = Array.from(memberLabelsCheckboxes.querySelectorAll('input:checked')).map(cb => cb.value);
-
-            if (!name) { alert('メンバー名を入力してください。'); return; }
-            if (id) {
-                const member = members.find(m => m.id === id); 
-                if (member) { 
-                    if (members.find(m => m.name === name && m.id !== id)) { alert('同じ名前のメンバーが既に存在します。'); return; }
-                    member.name = name; 
-                    member.labels = selectedLabels;
-                }
-            } else {
-                if (members.find(m => m.name === name)) { alert('同じ名前のメンバーが既に存在します。'); return; } 
-                members.push({ id: generateId(), name: name, labels: selectedLabels }); 
-            }
-            clearMemberForm(); 
-            renderMemberManagementList();
-            renderCurrentTimeline();
-            populateMemberSelectOptions(document.querySelectorAll('.assignment-member-select'));
-        }
-        function deleteMemberAndAssignments(memberId) { 
-            const memberToDelete = members.find(m => m.id === memberId);
-            if (!memberToDelete) return;
-            if (confirm(`メンバー「${memberToDelete.name}」を削除しますか？関連するアサインも全て削除されます。`)) { 
-                members = members.filter(m => m.id !== memberId); 
-                assignments = assignments.filter(a => a.memberId !== memberId); 
-                appSettings.filteredMemberIds = appSettings.filteredMemberIds.filter(id => id !== memberId);
-                renderMemberManagementList(); 
-                renderCurrentTimeline();
-                populateMemberSelectOptions(document.querySelectorAll('.assignment-member-select'));
-            }
-        }
-        function clearNewTaskForm() {
-            if(newTaskIdInput) newTaskIdInput.value = ''; 
-            if(newTaskNameInput) newTaskNameInput.value = '';
-            if(newTaskDescriptionInput) newTaskDescriptionInput.value = '';
-            if(newTaskStartDateInput) newTaskStartDateInput.value = ''; 
-            if(newTaskEndDateInput) newTaskEndDateInput.value = '';
-            if(newTaskEffortInput) newTaskEffortInput.value = '';
-            if(newTaskAssignmentsContainer) newTaskAssignmentsContainer.innerHTML = '';
-            if(newTaskAssignmentsContainer) addAssignmentRow(newTaskAssignmentsContainer, 'new'); 
-            if(newTaskNameInput) newTaskNameInput.focus();
-        }
-        function addAssignmentRow(container, type, memberId = '', workRatio = '') { 
-            if (!container) return;
-            const row = document.createElement('div'); row.classList.add('form-row', 'assignment-row');
-            const memberGroup = document.createElement('div'); memberGroup.classList.add('form-group', 'assign-member');
-            const memberSelect = document.createElement('select'); memberSelect.classList.add('assignment-member-select'); 
-            populateMemberSelectOptions([memberSelect], memberId); memberGroup.appendChild(memberSelect);
-            const workRatioGroup = document.createElement('div'); workRatioGroup.classList.add('form-group', 'assign-mandays');
-            const workRatioInputEl = document.createElement('input'); workRatioInputEl.type = 'number';
-            workRatioInputEl.classList.add('assignment-work-ratio-input'); workRatioInputEl.placeholder = '作業割合 (%)'; 
-            workRatioInputEl.min = '0'; workRatioInputEl.max = '100'; workRatioInputEl.step = '1'; workRatioInputEl.value = workRatio;
-            workRatioGroup.appendChild(workRatioInputEl);
-            const actionGroup = document.createElement('div'); actionGroup.classList.add('form-group', 'assign-button');
-            const removeBtn = document.createElement('button'); removeBtn.type = 'button'; removeBtn.textContent = '解除';
-            removeBtn.classList.add('remove-assignment-btn', 'danger-button');
-            removeBtn.onclick = () => row.remove(); actionGroup.appendChild(removeBtn);
-            row.appendChild(memberGroup); row.appendChild(workRatioGroup); row.appendChild(actionGroup); container.appendChild(row);
-        }
-        function populateMemberSelectOptions(selectElements, selectedMemberId = '') {
-            if (!selectElements || selectElements.length === 0) return;
-            const elementsArray = Array.isArray(selectElements) ? selectElements : Array.from(selectElements);
-            elementsArray.forEach(selectElement => {
-                if (!selectElement) return; 
-                const currentVal = selectedMemberId || selectElement.value;
-                selectElement.innerHTML = '<option value="">-- メンバー選択 --</option>';
-                members.forEach(member => {
-                    const option = document.createElement('option'); option.value = member.id; option.textContent = member.name;
-                    if (member.id === currentVal) option.selected = true;
-                    selectElement.appendChild(option);
-                });
-            });
-        }
-        function handleSaveTaskData() {
-            const isEditing = !!(newTaskIdInput && newTaskIdInput.value); 
-            const taskId = isEditing ? newTaskIdInput.value : generateId();
-            const nameInput = isEditing ? editingDetailTaskNameInput : newTaskNameInput;
-            const descriptionInput = isEditing ? editingDetailTaskDescriptionInput : newTaskDescriptionInput;
-            const startDateInput = isEditing ? editingDetailTaskStartDateInput : newTaskStartDateInput;
-            const endDateInput = isEditing ? editingDetailTaskEndDateInput : newTaskEndDateInput;
-            const effortInputEl = isEditing ? editingDetailTaskEffortInput : newTaskEffortInput;
-            const name = nameInput ? nameInput.value.trim() : '';
-            const description = descriptionInput ? descriptionInput.value.trim() : '';
-            const startDate = startDateInput ? startDateInput.value : ''; const endDate = endDateInput ? endDateInput.value : '';
-            const effortStr = effortInputEl ? effortInputEl.value : ''; 
-            if (!name || !startDate || !endDate) { alert('業務名、開始日、終了日を正しく入力してください。'); return false; }
-            if (new Date(startDate + 'T00:00:00Z') > new Date(endDate + 'T00:00:00Z')) { alert('終了日は開始日より後に設定してください。'); return false; }
-            const taskData = { 
-                id: taskId, name: name, description: description,
-                startDate: startDate, endDate: endDate, 
-                effort: effortStr ? parseFloat(effortStr) : null, 
-            };
-            if (isEditing) {
-                const index = tasks.findIndex(p => p.id === taskId);
-                if (index > -1) tasks[index] = taskData; else return false;
-            } else { tasks.push(taskData); }
-            assignments = assignments.filter(a => a.taskId !== taskId);
-            const assignmentRowsContainer = isEditing ? taskDetailAssignmentsContainerEditor : newTaskAssignmentsContainer;
-            if (assignmentRowsContainer) {
-                const assignmentRows = assignmentRowsContainer.querySelectorAll('.assignment-row');
-                assignmentRows.forEach(row => {
-                    const memberSelect = row.querySelector('.assignment-member-select');
-                    const workRatioInputEl = row.querySelector('.assignment-work-ratio-input');
-                    if (memberSelect && workRatioInputEl) {
-                        const memberId = memberSelect.value; const workRatioStr = workRatioInputEl.value;
-                        if (memberId && workRatioStr) {
-                            const workRatioPercent = parseFloat(workRatioStr);
-                            if (!isNaN(workRatioPercent) && workRatioPercent >= 0 && workRatioPercent <= 100) {
-                                assignments.push({ id: generateId(), taskId: taskId, memberId: memberId, workRatioPercent: workRatioPercent });
-                            }
-                        }
-                    }
-                });
-            }
-            renderCurrentTimeline(); return true;
-        }
-        function openTaskDetailModal(taskId) {
-            if (!taskDetailModal) return;
-            document.body.className = 'theme-task';
-            currentEditingTaskId = taskId;
-            const task = tasks.find(p => p.id === taskId);
-            if (!task) { alert('指定された業務が見つかりません。'); return; }
-            if (taskDetailTitle) taskDetailTitle.textContent = `業務詳細 - ${task.name}`;
-            if (detailTaskName) detailTaskName.textContent = task.name;
-            if (detailTaskDescription) detailTaskDescription.textContent = task.description || '未設定';
-            if (detailTaskPeriod) detailTaskPeriod.textContent = `${formatDate(task.startDate)} - ${formatDate(task.endDate)}`;
-            if (detailTaskEffort) detailTaskEffort.textContent = task.effort !== null ? `${task.effort.toFixed(1)} 人日` : '未設定';
-            if (detailTaskAssignmentsList) {
-                detailTaskAssignmentsList.innerHTML = '';
-                const taskAssignments = assignments.filter(a => a.taskId === taskId);
-                if (taskAssignments.length === 0) { detailTaskAssignmentsList.innerHTML = '<li>アサインメンバーなし</li>'; } 
-                else {
-                    taskAssignments.forEach(assign => {
-                        const member = members.find(m => m.id === assign.memberId);
-                        if (member) {
-                            const li = document.createElement('li');
-                            li.innerHTML = `<strong>${member.name}:</strong> ${assign.workRatioPercent.toFixed(1)} %`;
-                            detailTaskAssignmentsList.appendChild(li);
-                        }
-                    });
-                }
-            }
-            if (taskDetailViewMode) taskDetailViewMode.style.display = 'block';
-            if (taskDetailEditMode) taskDetailEditMode.style.display = 'none';
-            openModal('taskDetailModal');
-        }
-        function switchToTaskDetailEditMode() {
-            if (!currentEditingTaskId) return;
-            const task = tasks.find(p => p.id === currentEditingTaskId); if (!task) return;
-            if(newTaskIdInput) newTaskIdInput.value = task.id;
-            if(editingDetailTaskNameInput) editingDetailTaskNameInput.value = task.name;
-            if(editingDetailTaskDescriptionInput) editingDetailTaskDescriptionInput.value = task.description || '';
-            if(editingDetailTaskStartDateInput) editingDetailTaskStartDateInput.value = getInputDateValue(task.startDate);
-            if(editingDetailTaskEndDateInput) editingDetailTaskEndDateInput.value = getInputDateValue(task.endDate);
-            if(editingDetailTaskEffortInput) editingDetailTaskEffortInput.value = task.effort !== null ? task.effort.toFixed(1) : '';
-            if(taskDetailAssignmentsContainerEditor) {
-                taskDetailAssignmentsContainerEditor.innerHTML = '';
-                const taskAssignments = assignments.filter(a => a.taskId === currentEditingTaskId);
-                if (taskAssignments.length > 0) {
-                    taskAssignments.forEach(assign => { addAssignmentRow(taskDetailAssignmentsContainerEditor, 'detail', assign.memberId, assign.workRatioPercent.toFixed(1)); });
-                } else { addAssignmentRow(taskDetailAssignmentsContainerEditor, 'detail'); }
-            }
-            if(taskDetailViewMode) taskDetailViewMode.style.display = 'none';
-            if(taskDetailEditMode) taskDetailEditMode.style.display = 'block';
-        }
-        function cancelTaskDetailEdit() {
-            if(taskDetailViewMode) taskDetailViewMode.style.display = 'block';
-            if(taskDetailEditMode) taskDetailEditMode.style.display = 'none';
-            if(newTaskIdInput) newTaskIdInput.value = '';
-            if(currentEditingTaskId) openTaskDetailModal(currentEditingTaskId); 
-        }
-        function handleDeleteTask() {
-            if (!currentEditingTaskId) return;
-            const taskToDelete = tasks.find(p=>p.id === currentEditingTaskId);
-            if (!taskToDelete) { alert("削除対象の業務が見つかりません。"); return; }
-            if (confirm(`業務「${taskToDelete.name}」を削除しますか？関連するアサインも全て削除されます。`)) {
-                tasks = tasks.filter(p => p.id !== currentEditingTaskId);
-                assignments = assignments.filter(a => a.taskId !== currentEditingTaskId);
-                closeModal('taskDetailModal'); renderCurrentTimeline();
-            }
-        }
-        
-        function updateSettingsAndRenderTimeline() {
-            if(timelineViewModeSelect) appSettings.timelineViewMode = timelineViewModeSelect.value;
-            if(timelineStartMonthInput) appSettings.timelineStartMonth = timelineStartMonthInput.value;
-            if(timelineMonthsInput) appSettings.timelineMonths = parseInt(timelineMonthsInput.value) || 6;
-            if(monthlyWorkDaysInput) appSettings.monthlyWorkDays = parseInt(monthlyWorkDaysInput.value) || DEFAULT_MONTHLY_WORK_DAYS;
-            
-            if (appSettings.timelineViewMode === 'task') {
-                if (memberFilterBtnContainer) memberFilterBtnContainer.style.display = 'flex';
-            } else {
-                if (memberFilterBtnContainer) memberFilterBtnContainer.style.display = 'none';
-            }
-            
-            document.body.className = appSettings.timelineViewMode === 'member' ? 'theme-member' : 'theme-task';
-            renderCurrentTimeline();
-        }
-
-        function renderCurrentTimeline() {
-            if (sortableTimeline) { sortableTimeline.destroy(); sortableTimeline = null; }
-            
-            if(timelineHeaderRow) timelineHeaderRow.innerHTML = ''; if(timelineBody) timelineBody.innerHTML = '';
-            if (!appSettings.timelineStartMonth) { 
-                 appSettings.timelineStartMonth = getInputMonthValue(new Date());
-                 if(timelineStartMonthInput) timelineStartMonthInput.value = appSettings.timelineStartMonth;
-            }
-            if (appSettings.timelineViewMode === 'member') {
-                if(timelineTitleH2) timelineTitleH2.textContent = 'リソース状況タイムライン (メンバー別)'; renderTimelineByMember();
-            } else {
-                if(timelineTitleH2) timelineTitleH2.textContent = 'リソース状況タイムライン (業務別)'; renderTimelineByTask(); 
-            }
-        }
-        function getMonthDateHeaders() { 
-            const startMonthStr = appSettings.timelineStartMonth; if (!startMonthStr) return null;
-            let currentMonthDate = getMonthStartDate(startMonthStr); if (isNaN(currentMonthDate.getTime())) return null;
-            const monthDates = []; const headerCells = [];
-            for (let i = 0; i < appSettings.timelineMonths; i++) {
-                const monthStart = new Date(currentMonthDate); const monthEnd = getMonthEndDate(monthStart);
-                monthDates.push({ start: monthStart, end: monthEnd });
-                const th = document.createElement('th'); th.textContent = `${monthStart.getUTCFullYear()}年 ${monthStart.getUTCMonth() + 1}月`; 
-                headerCells.push(th); currentMonthDate = addMonths(currentMonthDate, 1);
-            }
-            return { monthDates, headerCells };
-        }
-        function renderTimelineByMember() {
-            const headerData = getMonthDateHeaders(); 
-            if (!headerData) { if(timelineBody) timelineBody.innerHTML = `<tr><td colspan="2">タイムラインの開始月を選択してください。</td></tr>`; return; }
-            if(timelineHeaderRow) timelineHeaderRow.innerHTML = '<th>メンバー</th>'; 
-            if(timelineHeaderRow && headerData.headerCells) headerData.headerCells.forEach(th => timelineHeaderRow.appendChild(th));
-            if (members.length === 0) { if(timelineBody) timelineBody.innerHTML = `<tr><td colspan="${headerData.monthDates.length + 1}">メンバー登録なし。</td></tr>`; return; }
-            if(!timelineBody) return; timelineBody.innerHTML = '';
-            members.forEach(member => {
-                const tr = document.createElement('tr'); tr.dataset.memberId = member.id;
-                const tdMember = document.createElement('td'); 
-                tdMember.innerHTML = `<span class="drag-handle">&#9776;</span><span>${member.name}</span>`;
-                tr.appendChild(tdMember);
-                headerData.monthDates.forEach(monthPeriod => {
-                    const td = document.createElement('td'); td.classList.add('load-cell');
-                    let totalActualManDaysInMonthForMember = 0;
-                    const assignmentsInMonthDetails = [];
-                    const targetYearMonthStr = getInputMonthValue(monthPeriod.start);
-                    assignments.forEach(assign => {
-                        if (assign.memberId === member.id) {
-                            const task = tasks.find(p => p.id === assign.taskId);
-                            if (task) {
-                                const actualManDays = calculateActualManDaysInMonth(task, assign, targetYearMonthStr);
-                                if (actualManDays > 0) {
-                                    totalActualManDaysInMonthForMember += actualManDays;
-                                    assignmentsInMonthDetails.push({ name: task.name, manDays: actualManDays, ratio: assign.workRatioPercent });
-                                }
-                            } 
-                        } 
-                    });
-                    
-                    assignmentsInMonthDetails.forEach(item => {
-                        const div = document.createElement('div'); div.classList.add('assignment-item');
-                        div.title = `${item.name} (${item.manDays.toFixed(1)}人日, ${item.ratio}%)`; 
-                        div.innerHTML = `${item.name} <span class="mandays">[${item.manDays.toFixed(1)}人日 (${item.ratio}%)]</span>`; td.appendChild(div); 
-                    });
-                    const totalManDaysDiv = document.createElement('div'); totalManDaysDiv.classList.add('total-mandays-member');
-                    totalManDaysDiv.textContent = `合計: ${totalActualManDaysInMonthForMember.toFixed(1)} / ${appSettings.monthlyWorkDays}人日`; td.appendChild(totalManDaysDiv);
-                    if (totalActualManDaysInMonthForMember > appSettings.monthlyWorkDays) td.classList.add('mandays-over-limit'); 
-                    tr.appendChild(td); 
-                });
-                timelineBody.appendChild(tr); 
-            });
-            sortableTimeline = new Sortable(timelineBody, {
-                handle: '.drag-handle', animation: 150, ghostClass: 'sortable-ghost',
-                onEnd: (evt) => {
-                    const movedItem = members.splice(evt.oldIndex, 1)[0];
-                    members.splice(evt.newIndex, 0, movedItem);
-                    renderMemberManagementList();
-                }
-            });
-        }
-        function renderTimelineByTask() {
-            const headerData = getMonthDateHeaders(); 
-            if (!headerData) { if (timelineBody) timelineBody.innerHTML = `<tr><td colspan="2">タイムラインの開始月を選択してください。</td></tr>`; return; }
-            if (timelineHeaderRow) timelineHeaderRow.innerHTML = '<th>業務</th>'; 
-            if (timelineHeaderRow && headerData.headerCells) headerData.headerCells.forEach(th => timelineHeaderRow.appendChild(th));
-            
-            let filteredTasks = tasks;
-            if (appSettings.filteredMemberIds.length > 0) {
-                const filteredTaskIds = new Set();
-                assignments.forEach(a => {
-                    if (appSettings.filteredMemberIds.includes(a.memberId)) {
-                        filteredTaskIds.add(a.taskId);
-                    }
-                });
-                filteredTasks = tasks.filter(t => filteredTaskIds.has(t.id));
-            }
-
-            if (timelineBody) timelineBody.innerHTML = ''; else return;
-
-            if (filteredTasks.length === 0) {
-                let message = '業務登録なし。';
-                if (tasks.length > 0 && appSettings.filteredMemberIds.length > 0) {
-                    message = '指定されたメンバーがアサインされている業務はありません。';
-                }
-                if (timelineBody) timelineBody.innerHTML = `<tr><td colspan="${(headerData.monthDates ? headerData.monthDates.length : 0) + 1}">${message}</td></tr>`; 
-                return;
-            }
-            
-            filteredTasks.forEach(task => {
-                const tr = document.createElement('tr'); tr.dataset.taskId = task.id;
-                const tdTask = document.createElement('td');
-                const handle = document.createElement('span'); handle.className = 'drag-handle'; handle.innerHTML = '&#9776;';
-                const contentDiv = document.createElement('div'); contentDiv.style.flexGrow = '1';
-                
-                const { finalDetails } = getAdjustedAssignmentDetails(task);
-
-                const taskLink = document.createElement('a'); taskLink.href = '#'; taskLink.textContent = task.name;
-                taskLink.addEventListener('click', (e) => { e.preventDefault(); openTaskDetailModal(task.id); });
-                contentDiv.appendChild(taskLink);
-
-                if (task.description) {
-                    const descP = document.createElement('p');
-                    descP.className = 'task-description';
-                    descP.textContent = task.description;
-                    contentDiv.appendChild(descP);
-                }
-
-                const periodSmall = document.createElement('small'); periodSmall.style.cssText = 'font-weight:normal; color:#555; display:block;';
-                periodSmall.textContent = `期間: ${formatDate(task.startDate)} - ${formatDate(task.endDate)}`; contentDiv.appendChild(periodSmall);
-                if(task.effort !== null) {
-                    const effortSmall = document.createElement('small'); effortSmall.style.display = 'block';
-                    effortSmall.innerHTML = `総工数: ${task.effort.toFixed(1)}人日`; contentDiv.appendChild(effortSmall);
-                }
-                
-                const taskAssignments = assignments.filter(a => a.taskId === task.id);
-                const totalWorkRatio = taskAssignments.reduce((sum, assign) => sum + (assign.workRatioPercent || 0), 0);
-                if (Math.abs(totalWorkRatio - 100) > 0.01) {
-                    const ratioMatchSmall = document.createElement('small');
-                    ratioMatchSmall.style.cssText = 'font-weight:bold; display:block; color: #e74c3c;';
-                    ratioMatchSmall.innerHTML = `アサイン率: ${totalWorkRatio.toFixed(1)}% (100%ではありません)`;
-                    contentDiv.appendChild(ratioMatchSmall);
-                }
-                
-                tdTask.appendChild(handle); tdTask.appendChild(contentDiv); tr.appendChild(tdTask); 
-                
-                if (headerData.monthDates) {
-                    headerData.monthDates.forEach(monthPeriod => {
-                        const td = document.createElement('td'); td.classList.add('load-cell');
-                        let totalManDaysInMonthForTask = 0;
-                        
-                        taskAssignments.forEach(assign => {
-                            const member = members.find(m => m.id === assign.memberId);
-                            if (member) {
-                                const targetYearMonthStr = getInputMonthValue(monthPeriod.start);
-                                const actualManDays = (finalDetails[assign.memberId] && finalDetails[assign.memberId][targetYearMonthStr]) || 0;
-                                
-                                if (actualManDays > 0) {
-                                    totalManDaysInMonthForTask += actualManDays;
-                                    const div = document.createElement('div');
-                                    div.classList.add('assignment-item');
-                                    div.title = `${member.name} (${actualManDays.toFixed(1)}人日, ${assign.workRatioPercent}%)`;
-                                    div.innerHTML = `${member.name} <span class="mandays">[${actualManDays.toFixed(1)}人日 (${assign.workRatioPercent}%)]</span>`;
-                                    td.appendChild(div);
-                                }
-                            } 
-                        });
-                        
-                        const totalManDaysDiv = document.createElement('div');
-                        totalManDaysDiv.classList.add('total-mandays-task');
-                        totalManDaysDiv.textContent = `業務計: ${totalManDaysInMonthForTask.toFixed(1)}人日`;
-                        td.appendChild(totalManDaysDiv);
-                        tr.appendChild(td); 
-                    });
-                }
-                timelineBody.appendChild(tr);
-            });
-            
-            const isSortDisabled = appSettings.filteredMemberIds.length > 0;
-            if(timelineBody) {
-                timelineBody.classList.toggle('sort-disabled', isSortDisabled);
-            }
-
-            sortableTimeline = new Sortable(timelineBody, {
-                handle: '.drag-handle',
-                animation: 150,
-                ghostClass: 'sortable-ghost',
-                disabled: isSortDisabled,
-                onEnd: (evt) => {
-                    const movedItem = tasks.splice(evt.oldIndex, 1)[0];
-                    tasks.splice(evt.newIndex, 0, movedItem);
-                }
-            });
-        }
-        
-        function openMemberFilterModal() {
-            renderMemberFilterModalCheckboxes();
-            openModal('memberFilterModal');
-        }
-
-        function renderMemberFilterModalCheckboxes() {
-            if (!filterModalCheckboxesContainer) return;
-            filterModalCheckboxesContainer.innerHTML = '';
-            if (members.length === 0) {
-                filterModalCheckboxesContainer.innerHTML = '<span style="color: var(--text-muted-color); font-size: 0.9em;">メンバーがいません。</span>';
-                return;
-            }
-
-            members.forEach(member => {
-                const id = `modal-filter-member-${member.id}`;
-                const item = document.createElement('div');
-                item.className = 'checkbox-item';
-                item.innerHTML = `
-                    <input type="checkbox" id="${id}" value="${member.id}" ${appSettings.filteredMemberIds.includes(member.id) ? 'checked' : ''}>
-                    <label for="${id}">${member.name}</label>
-                `;
-                filterModalCheckboxesContainer.appendChild(item);
-            });
-        }
-
-        function applyAndCloseMemberFilter() {
-            if (!filterModalCheckboxesContainer) return;
-            appSettings.filteredMemberIds = Array.from(filterModalCheckboxesContainer.querySelectorAll('input:checked')).map(cb => cb.value);
-            renderCurrentTimeline();
-            closeModal('memberFilterModal');
-        }
-
-        function handleSimulation() { 
-            const simStartStr = simStartDateInput ? simStartDateInput.value : null;
-            const simEndStr = simEndDateInput ? simEndDateInput.value : null;
-            const simEffortStr = simEffortInput ? simEffortInput.value : ''; 
-            const simNumParticipants = simParticipantsInput ? parseInt(simParticipantsInput.value) : 1;
-            const requiredLabels = Array.from(simLabelsCheckboxes.querySelectorAll('input:checked')).map(cb => cb.value);
-            
-            appSettings.monthlyWorkDays = monthlyWorkDaysInput ? (parseInt(monthlyWorkDaysInput.value) || DEFAULT_MONTHLY_WORK_DAYS) : DEFAULT_MONTHLY_WORK_DAYS;
-            if (!simStartDateInput || !simEndDateInput || !simEffortInput || !simParticipantsInput || !simulationResultDiv) return;
-            if (!simStartStr || !simEndStr) { simulationResultDiv.innerHTML = '<p style="color: #e74c3c;">シミュレーションの開始日と終了日を入力してください。</p>'; return; }
-            const simEffort = parseFloat(simEffortStr);
-            if (isNaN(simEffort) || simEffort <=0) { simulationResultDiv.innerHTML = '<p style="color: #e74c3c;">有効な想定工数を入力してください。</p>'; return; }
-            if (isNaN(simNumParticipants) || simNumParticipants <= 0) { simulationResultDiv.innerHTML = '<p style="color: #e74c3c;">有効な参加人数を入力してください。</p>'; return; }
-            const simTaskStart = new Date(simStartStr + 'T00:00:00Z'); 
-            const simTaskEnd = new Date(simEndStr + 'T23:59:59Z');   
-            if (isNaN(simTaskStart.getTime()) || isNaN(simTaskEnd.getTime())) { simulationResultDiv.innerHTML = '<p style="color: #e74c3c;">日付の形式が正しくありません。</p>'; return; }
-            if (simTaskStart.getTime() > simTaskEnd.getTime()) { simulationResultDiv.innerHTML = '<p style="color: #e74c3c;">終了日は開始日より後に設定してください。</p>'; return; }
-            
-            let targetMembers = members;
-            let simTitle = `指定期間内の空き状況 (新規業務 総工数:${simEffort.toFixed(1)}人日, ${simNumParticipants}名で分担想定):`;
-            if (requiredLabels.length > 0) {
-                targetMembers = members.filter(member => 
-                    requiredLabels.every(reqLabel => (member.labels || []).includes(reqLabel))
-                );
-                simTitle = `[${requiredLabels.join(', ')}] のスキルを持つメンバーの空き状況 (新規業務 総工数:${simEffort.toFixed(1)}人日, ${simNumParticipants}名で分担想定):`;
-            }
-
-            const workRatioPerSimParticipant = (simNumParticipants > 0) ? parseFloat((100 / simNumParticipants).toFixed(1)) : 0;
-            const simTaskData = { name: "[Simulation Task]", startDate: simStartStr, endDate: simEndStr, effort: simEffort };
-            const simAssignmentData = { workRatioPercent: workRatioPerSimParticipant };
-            let resultsHtml = `<h4>${simTitle}</h4><ul>`;
-
-            if (targetMembers.length === 0) {
-                 resultsHtml += `<li><span class="no-match">条件に一致するメンバーがいません。</span></li>`;
-            } else {
-                targetMembers.forEach(member => {
-                    let canAssignMember = true; let criticalMonthInfo = "";
-                    let currentMonthIter = new Date(Date.UTC(simTaskStart.getUTCFullYear(), simTaskStart.getUTCMonth(), 1));
-                    const simPeriodEndMonthDate = new Date(Date.UTC(simTaskEnd.getUTCFullYear(), simTaskEnd.getUTCMonth(), 1));
-                    while(currentMonthIter.getTime() <= simPeriodEndMonthDate.getTime() && canAssignMember) {
-                        const targetYearMonthStr = getInputMonthValue(currentMonthIter);
-                        let existingActualManDaysThisMonth = 0;
-                        assignments.forEach(assign => {
-                            if (assign.memberId === member.id) {
-                                const task = tasks.find(p => p.id === assign.taskId);
-                                if (task) existingActualManDaysThisMonth += calculateActualManDaysInMonth(task, assign, targetYearMonthStr);
-                            } 
-                        });
-                        
-                        let newTaskActualManDaysThisMonth = calculateActualManDaysInMonth(simTaskData, simAssignmentData, targetYearMonthStr);
-                        const totalLoadThisMonth = existingActualManDaysThisMonth + newTaskActualManDaysThisMonth;
-
-                        if (totalLoadThisMonth > appSettings.monthlyWorkDays) {
-                            canAssignMember = false;
-                            const shortage = totalLoadThisMonth - appSettings.monthlyWorkDays;
-                            criticalMonthInfo = `${targetYearMonthStr.replace('-', '年')}月 に ${shortage.toFixed(1)}人日 超過 (上限${appSettings.monthlyWorkDays}人日に対し、既存${existingActualManDaysThisMonth.toFixed(1)} + 新規${newTaskActualManDaysThisMonth.toFixed(1)} = 計${totalLoadThisMonth.toFixed(1)}人日)`;
-                        }
-                        currentMonthIter = addMonths(currentMonthIter, 1);
-                    }
-                    let statusText = canAssignMember ? `<span class="sufficient">アサイン可能</span>` : `<span class="shortage">アサイン不可</span> (${criticalMonthInfo})`;
-                    resultsHtml += `<li><strong>${member.name}:</strong> ${statusText}</li>`;
-                });
-            }
-            resultsHtml += '</ul>'; simulationResultDiv.innerHTML = resultsHtml;
-        }
-        function handleExportJson() { 
-            if (members.length === 0 && tasks.length === 0 && assignments.length === 0 && allLabels.length === 0) { alert("エクスポートするデータがありません。"); return; }
-            const dataToExport = { members, tasks, assignments, allLabels, settings: { ...appSettings } };
-            const jsonString = JSON.stringify(dataToExport, null, 2);
-            const blob = new Blob([jsonString], { type: 'application/json' });
-            const url = URL.createObjectURL(blob); 
-            const a = document.createElement('a');
-            a.href = url; 
-
-            const now = new Date();
-            const year = now.getFullYear();
-            const month = String(now.getMonth() + 1).padStart(2, '0');
-            const day = String(now.getDate()).padStart(2, '0');
-            const hours = String(now.getHours()).padStart(2, '0');
-            const minutes = String(now.getMinutes()).padStart(2, '0');
-            const seconds = String(now.getSeconds()).padStart(2, '0');
-            const timestamp = `${year}${month}${day}${hours}${minutes}${seconds}`;
-            a.download = `ASM${timestamp}.json`;
-            
-            document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
-        }
-        function handleImportJson(event) {
-            const file = event.target.files[0]; if (!file) return;
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                try {
-                    const importedData = JSON.parse(e.target.result);
-                    if (importedData && (importedData.members || importedData.members === []) && (importedData.tasks || importedData.projects || importedData.tasks === []) && (importedData.assignments || importedData.assignments === [])) {
-                        members = (importedData.members || []).map(m => ({ ...m, labels: m.labels || [] })); 
-                        
-                        if (importedData.tasks || importedData.projects) {
-                           tasks = (importedData.tasks || importedData.projects).map(taskData => {
-                                const { orderAmount, ...rest } = taskData;
-                                return { ...rest, description: rest.description || '' };
-                           });
-                        } else {
-                           tasks = [];
-                        }
-
-                        assignments = (importedData.assignments || []).map(a => {
-                            let workRatio = 0;
-                            const taskId = a.taskId || a.projectId;
-                            if (a.workRatioPercent !== undefined) {
-                                workRatio = parseFloat(a.workRatioPercent);
-                                if(isNaN(workRatio) || workRatio < 0 || workRatio > 100) workRatio = 0;
-                            }
-                            return { id: a.id || generateId(), taskId: taskId, memberId: a.memberId, workRatioPercent: parseFloat(workRatio.toFixed(1)) }; 
-                        }).filter(a => a.taskId && a.memberId);
-                        
-                        allLabels = importedData.allLabels || [];
-                        if (allLabels.length === 0) { updateAllLabels(); }
-
-                        if (importedData.settings) {
-                            const defaultAppSettings = { timelineViewMode: 'member', timelineStartMonth: getInputMonthValue(new Date()), timelineMonths: 6, monthlyWorkDays: DEFAULT_MONTHLY_WORK_DAYS, filteredMemberIds: [] };
-                            appSettings = { ...defaultAppSettings, ...importedData.settings };
-                            if(timelineViewModeSelect) timelineViewModeSelect.value = appSettings.timelineViewMode; 
-                            if(timelineStartMonthInput) timelineStartMonthInput.value = appSettings.timelineStartMonth;
-                            if(timelineMonthsInput) timelineMonthsInput.value = appSettings.timelineMonths; 
-                            if(monthlyWorkDaysInput) monthlyWorkDaysInput.value = appSettings.monthlyWorkDays;
-                        }
-                        
-                        document.body.className = appSettings.timelineViewMode === 'member' ? 'theme-member' : 'theme-task';
-                        renderMemberManagementList(); 
-                        updateSettingsAndRenderTimeline();
-                        populateMemberSelectOptions(document.querySelectorAll('.assignment-member-select')); 
-                        renderLabelCheckboxes(simLabelsCheckboxes, allLabels);
-                        alert('データインポート完了。');
-                    } else { alert('JSONファイルの形式が正しくありません。'); }
-                } catch (error) { alert('JSON読み込み失敗: ' + error.message); }
-                finally { if(importJsonInput) importJsonInput.value = ''; } 
-            };
-            reader.readAsText(file);
-        }
-        function init() {
-            // DOM要素の取得
-            openMemberModalBtn = document.getElementById('openMemberModalBtn'); 
-            openLabelModalBtn = document.getElementById('openLabelModalBtn');
-            openNewTaskModalBtn = document.getElementById('openNewTaskModalBtn');
-            exportJsonBtn = document.getElementById('exportJsonBtn'); importJsonInput = document.getElementById('importJsonInput'); importJsonBtn = document.getElementById('importJsonBtn');
-            memberModal = document.getElementById('memberModal'); memberIdInput = document.getElementById('memberIdInput'); memberNameInput = document.getElementById('memberNameInput');
-            memberLabelsCheckboxes = document.getElementById('memberLabelsCheckboxes');
-            saveMemberBtn = document.getElementById('saveMemberBtn'); clearMemberFormBtn = document.getElementById('clearMemberFormBtn'); memberManagementListDiv = document.getElementById('memberManagementList');
-            labelModal = document.getElementById('labelModal');
-            labelManagementList = document.getElementById('labelManagementList');
-            newLabelInput = document.getElementById('newLabelInput');
-            addNewLabelBtn = document.getElementById('addNewLabelBtn');
-            closeLabelModalBtn = document.getElementById('closeLabelModalBtn');
-            newTaskModal = document.getElementById('newTaskModal'); newTaskModalTitle = document.getElementById('newTaskModalTitle'); newTaskIdInput = document.getElementById('newTaskIdInput');
-            newTaskNameInput = document.getElementById('newTaskNameInput'); newTaskDescriptionInput = document.getElementById('newTaskDescriptionInput');
-            newTaskStartDateInput = document.getElementById('newTaskStartDateInput'); newTaskEndDateInput = document.getElementById('newTaskEndDateInput');
-            newTaskEffortInput = document.getElementById('newTaskEffortInput'); 
-            newTaskAssignmentsContainer = document.getElementById('newTaskAssignmentsContainer'); addNewTaskAssignmentRowBtn = document.getElementById('addNewTaskAssignmentRowBtn');
-            saveNewTaskBtn = document.getElementById('saveNewTaskBtn');
-            taskDetailModal = document.getElementById('taskDetailModal'); taskDetailTitle = document.getElementById('taskDetailTitle'); taskDetailViewMode = document.getElementById('taskDetailViewMode');
-            detailTaskName = document.getElementById('detailTaskName'); detailTaskDescription = document.getElementById('detailTaskDescription');
-            detailTaskPeriod = document.getElementById('detailTaskPeriod'); detailTaskEffort = document.getElementById('detailTaskEffort');
-            detailTaskAssignmentsList = document.getElementById('detailTaskAssignmentsList');
-            editTaskDetailBtn = document.getElementById('editTaskDetailBtn'); deleteTaskFromDetailBtn = document.getElementById('deleteTaskFromDetailBtn'); closeTaskDetailNormalBtn = document.getElementById('closeTaskDetailNormalBtn');
-            taskDetailEditMode = document.getElementById('taskDetailEditMode'); editingDetailTaskNameInput = document.getElementById('editingDetailTaskNameInput');
-            editingDetailTaskDescriptionInput = document.getElementById('editingDetailTaskDescriptionInput');
-            editingDetailTaskStartDateInput = document.getElementById('editingDetailTaskStartDateInput'); editingDetailTaskEndDateInput = document.getElementById('editingDetailTaskEndDateInput');
-            editingDetailTaskEffortInput = document.getElementById('editingDetailTaskEffortInput'); 
-            taskDetailAssignmentsContainerEditor = document.getElementById('taskDetailAssignmentsContainerEditor'); addDetailTaskAssignmentRowBtnEditor = document.getElementById('addDetailTaskAssignmentRowBtnEditor');
-            saveTaskDetailBtn = document.getElementById('saveTaskDetailBtn'); cancelTaskDetailEditBtn = document.getElementById('cancelTaskDetailEditBtn');
-            timelineViewModeSelect = document.getElementById('timelineViewMode'); timelineStartMonthInput = document.getElementById('timelineStartMonth'); 
-            timelineMonthsInput = document.getElementById('timelineMonths'); monthlyWorkDaysInput = document.getElementById('monthlyWorkDays');
-            timelineTitleH2 = document.getElementById('timelineTitle'); timelineHeaderRow = document.getElementById('timelineHeaderRow'); timelineBody = document.getElementById('timelineBody');
-            simStartDateInput = document.getElementById('simStartDate'); simEndDateInput = document.getElementById('simEndDate'); simEffortInput = document.getElementById('simEffort'); 
-            simParticipantsInput = document.getElementById('simParticipants'); simLabelsCheckboxes = document.getElementById('simLabelsCheckboxes');
-            simulateBtn = document.getElementById('simulateBtn'); simulationResultDiv = document.getElementById('simulationResult');
-            closeButtons = document.querySelectorAll('.close-button, .close-modal-btn');
-            
-            memberFilterBtnContainer = document.getElementById('memberFilterBtnContainer');
-            openMemberFilterModalBtn = document.getElementById('openMemberFilterModalBtn');
-            memberFilterModal = document.getElementById('memberFilterModal');
-            filterModalCheckboxesContainer = document.getElementById('filterModalCheckboxesContainer');
-            applyMemberFilterBtn = document.getElementById('applyMemberFilterBtn');
-            
-            // イベントリスナーの設定
-            if(openMemberModalBtn) openMemberModalBtn.onclick = () => openModal('memberModal'); 
-            if(openLabelModalBtn) openLabelModalBtn.onclick = () => openModal('labelModal');
-            if(openNewTaskModalBtn) openNewTaskModalBtn.onclick = () => openModal('newTaskModal');
-            if(openMemberFilterModalBtn) openMemberFilterModalBtn.onclick = openMemberFilterModal;
-            if(applyMemberFilterBtn) applyMemberFilterBtn.onclick = applyAndCloseMemberFilter;
-            
-            closeButtons.forEach(btn => { const modalId = btn.dataset.modalId; if (modalId) btn.onclick = () => closeModal(modalId); });
-            if(closeLabelModalBtn) closeLabelModalBtn.onclick = () => closeModal('labelModal');
-            if(closeTaskDetailNormalBtn) closeTaskDetailNormalBtn.onclick = () => closeModal('taskDetailModal');
-            if(deleteTaskFromDetailBtn) deleteTaskFromDetailBtn.onclick = handleDeleteTask;
-            window.onclick = (event) => { if (event.target.classList.contains('modal')) { if (event.target.id === 'taskDetailModal' && taskDetailEditMode && taskDetailEditMode.style.display === 'block') { cancelTaskDetailEdit(); } else { closeModal(event.target.id); } } }
-            window.addEventListener('keydown', (event) => {
-                if (event.key === 'Escape' || event.keyCode === 27) {
-                    let activeModalId = null;
-                    if (memberModal && memberModal.style.display === 'flex') activeModalId = 'memberModal';
-                    else if (labelModal && labelModal.style.display === 'flex') activeModalId = 'labelModal';
-                    else if (newTaskModal && newTaskModal.style.display === 'flex') activeModalId = 'newTaskModal';
-                    else if (memberFilterModal && memberFilterModal.style.display === 'flex') activeModalId = 'memberFilterModal';
-                    else if (taskDetailModal && taskDetailModal.style.display === 'flex') { if (taskDetailEditMode && taskDetailEditMode.style.display === 'block') { cancelTaskDetailEdit(); return; } activeModalId = 'taskDetailModal'; }
-                    if (activeModalId) closeModal(activeModalId);
-                }
-            });
-            if(saveMemberBtn) saveMemberBtn.onclick = handleSaveMember; 
-            if(clearMemberFormBtn) clearMemberFormBtn.onclick = clearMemberForm;
-            if(addNewLabelBtn) addNewLabelBtn.onclick = handleAddNewLabel;
-            if(saveNewTaskBtn) saveNewTaskBtn.onclick = () => { if (handleSaveTaskData()) closeModal('newTaskModal'); };
-            if(addNewTaskAssignmentRowBtn) addNewTaskAssignmentRowBtn.onclick = () => addAssignmentRow(newTaskAssignmentsContainer, 'new');
-            if(editTaskDetailBtn) editTaskDetailBtn.onclick = switchToTaskDetailEditMode;
-            if(saveTaskDetailBtn) saveTaskDetailBtn.onclick = () => { if (handleSaveTaskData()) closeModal('taskDetailModal'); };
-            if(cancelTaskDetailEditBtn) cancelTaskDetailEditBtn.onclick = cancelTaskDetailEdit;
-            if(addDetailTaskAssignmentRowBtnEditor) addDetailTaskAssignmentRowBtnEditor.onclick = () => addAssignmentRow(taskDetailAssignmentsContainerEditor, 'detail');
-            if(timelineViewModeSelect) timelineViewModeSelect.onchange = updateSettingsAndRenderTimeline; 
-            if(timelineStartMonthInput) timelineStartMonthInput.onchange = updateSettingsAndRenderTimeline; 
-            if(timelineMonthsInput) timelineMonthsInput.onchange = updateSettingsAndRenderTimeline; 
-            if(monthlyWorkDaysInput) monthlyWorkDaysInput.onchange = updateSettingsAndRenderTimeline;
-            if(simulateBtn) simulateBtn.onclick = handleSimulation;
-            if(exportJsonBtn) exportJsonBtn.onclick = handleExportJson; if(importJsonBtn) importJsonBtn.onclick = () => importJsonInput.click();
-            if(importJsonInput) importJsonInput.onchange = handleImportJson;
-            
-            // アプリケーションの初期化
-            const today = new Date();
-            appSettings.timelineStartMonth = getInputMonthValue(today);
-            
-            // UIに初期値を設定
-            if (timelineViewModeSelect) timelineViewModeSelect.value = appSettings.timelineViewMode; 
-            if (timelineStartMonthInput) timelineStartMonthInput.value = appSettings.timelineStartMonth;
-            if (timelineMonthsInput) timelineMonthsInput.value = appSettings.timelineMonths;
-            if (monthlyWorkDaysInput) monthlyWorkDaysInput.value = appSettings.monthlyWorkDays;
-            if (simStartDateInput) simStartDateInput.value = getInputDateValue(today);
-            const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-            if (simEndDateInput) simEndDateInput.value = getInputDateValue(endOfMonth);
-
-            // 初期描画
-            renderMemberManagementList();
-            updateSettingsAndRenderTimeline();
-            updateAllLabels();
-            renderLabelCheckboxes(simLabelsCheckboxes, allLabels);
-            clearNewTaskForm();
-        }
-        document.addEventListener('DOMContentLoaded', init);
-    </script>
+    <!-- Bootstrap JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
