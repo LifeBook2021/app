@@ -14,7 +14,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AIと創るJavaScriptツールキット | 高度なWebアプリをコード不要で</title>
     <meta name="description" content="JavaScriptと生成AI(Google AI Studio等)を活用し、プログラミング経験がなくてもアイデアを形に。マインドマップ、ガントチャート、カンバンボードなど7つの多機能Webアプリを紹介します。">
-    <!-- 変更点: 「バイブスコーディング」を「バイブコーディング」に修正 -->
     <meta name="keywords" content="JavaScript, シングルページアプリケーション, SPA, 生成AI, Google AI Studio, プログラミング不要, バイブコーディング, Vibe Coding, アイデア具現化, マインドマップ, スケジュール管理, 付箋, ガントチャート, カンバンボード, ToDoリスト, アサイン管理, Webアプリ, 無料ツール">
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -70,7 +69,6 @@
         <section class="hero-section">
             <div class="container">
                 <h1>そのアイデア、AIと共に形にしませんか？</h1>
-                <!-- 変更点: リード文の用語を修正 -->
                 <p class="lead">JavaScriptの力と生成AIのサポートがあれば、コーディング経験がなくても高度なWebアプリケーションを創り出せます。昨今「<strong class="text-info">バイブコーディング (Vibe Coding)</strong>」とも呼ばれるこの手法で、あなたのアイデアを形にしませんか？このサイトでは、その実例となる7つのツールと、AIを活用した開発プロセスを紹介します。</p>
                 <a href="#apps" class="btn btn-primary btn-lg">アプリを試す</a>
                 <a href="ai-creation.html" class="btn btn-outline-light btn-lg ms-2">AI活用ストーリーを読む</a>
@@ -152,7 +150,7 @@
                         </div>
                     </div>
                 </div>
-                <!-- アサイン管理 (前回の修正を維持) -->
+                <!-- アサイン管理 -->
                 <div class="col-lg-4 col-md-6">
                     <div class="card app-card">
                         <img src="assets/images/assign-management-screenshot.png" class="card-img-top" alt="アサイン管理 スクリーンショット">
@@ -174,7 +172,6 @@
         <section class="container mt-5 py-5 bg-light rounded">
             <div class="row align-items-center">
                 <div class="col-md-6">
-                    <!-- 変更点: コンセプトセクションの用語を修正 -->
                     <h2>コードよりも「雰囲気」で創る、バイブコーディング</h2>
                     <p>「こんなツールがあったら便利なのに…」そう思ったことはありませんか？</p>
                     <p>これらのアプリは、プログラミングの専門知識がなくても、Google AI Studioのような生成AIとの対話を通じて開発されました。これは「<strong class="text-info">バイブコーディング (Vibe Coding)</strong>」とも呼ばれ、完璧なコードを書くことよりも、実現したいアイデアや「雰囲気（Vibe）」をAIに伝えることを重視する新しい開発スタイルです。</p>
@@ -182,7 +179,6 @@
                     <a href="ai-creation.html" class="btn btn-info">AIとの開発ストーリーをもっと知る</a>
                 </div>
                 <div class="col-md-6 text-center">
-                    <!-- ここにAIやアイデア具現化をイメージさせる画像を挿入 -->
                     <img src="assets/images/ai-concept-image.png" alt="AIとアイデアの具現化イメージ" class="img-fluid rounded shadow-sm">
                 </div>
             </div>
@@ -209,16 +205,72 @@
 
     <footer class="footer mt-auto">
         <div class="container text-center">
-            <span class="text-muted">&copy; 2025 AIと創るJavaScriptツールキット. All Rights Reserved.</span>
+            <!-- 変更点: コピーライトの年をJavaScriptで動的に表示するように変更 -->
+            <span class="text-muted">&copy; <span id="copyright-year"></span> AIと創るJavaScriptツールキット. All Rights Reserved.</span>
+            <script>document.getElementById('copyright-year').textContent = new Date().getFullYear();</script>
 
+            <!-- 変更点: 利用規約へのリンクを追加 -->
             <div class="mt-2">
                 <i class="bi bi-envelope me-1"></i>
                 <a href="mailto:lifebook20210120@gmail.com">lifebook20210120@gmail.com</a>
+                <span class="mx-2 text-muted">|</span>
+                <a href="#" data-bs-toggle="modal" data-bs-target="#termsModal">利用規約</a>
             </div>
-            <!-- 必要であればGitHubリポジトリへのリンクなどを追加 -->
-            <!-- <p class="mt-2"><a href="[GitHubリポジトリURL]" target="_blank" rel="noopener noreferrer">GitHub Repository</a></p> -->
         </div>
     </footer>
+
+    <!-- 変更点: ここから利用規約のモーダルを追加 -->
+    <div class="modal fade" id="termsModal" tabindex="-1" aria-labelledby="termsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-scrollable modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="termsModalLabel">利用規約</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-start">
+                    <p>本ウェブサイトで提供するアプリケーション（以下「本アプリ」）をご利用いただくにあたり、以下の利用規約（以下「本規約」）を設けております。本アプリの利用を開始した時点で、本規約に同意したものとみなします。</p>
+                    <hr>
+                    <h6 class="fw-bold">第1条（本アプリの特性とデータの取り扱い）</h6>
+                    <ol>
+                        <li>本アプリは、すべての処理がご利用のブラウザ内で完結するローカルアプリケーションです。入力された情報や作成されたデータが、当サイトのサーバーや第三者に送信されることは一切ありません。</li>
+                        <li>データの保存は、ご利用者様自身の操作によるJSONファイルのダウンロードによって行われます。データの管理（バックアップ、保管、パスワード設定など）は、すべてご利用者様の責任において行ってください。</li>
+                    </ol>
+
+                    <h6 class="fw-bold mt-3">第2条（セキュリティと自己責任）</h6>
+                    <ol>
+                        <li>本アプリで作成・保存したJSONファイルの紛失、破損、情報漏洩などによって生じたいかなる損害についても、当サイトは一切の責任を負いません。</li>
+                        <li>機密情報、重要な個人情報、その他取り扱いに注意を要するデータの入力は、ご利用者様ご自身の判断と責任において行ってください。</li>
+                    </ol>
+
+                    <h6 class="fw-bold mt-3">第3条（免責事項）</h6>
+                    <ol>
+                        <li>当サイトは、本アプリの正確性、完全性、有用性、特定目的への適合性について、一切の保証をいたしません。</li>
+                        <li>本アプリの利用に起因して生じた、いかなる直接的または間接的な損害（データの損失、業務の中断、逸失利益などを含む）について、当サイトは一切の責任を負わないものとします。</li>
+                        <li>当サイトは、予告なく本アプリの仕様変更、提供の中断または終了を行うことができるものとします。</li>
+                    </ol>
+
+                    <h6 class="fw-bold mt-3">第4条（著作権）</h6>
+                    <p>本アプリおよび本ウェブサイトに含まれるコンテンツの著作権は、当サイトの制作者に帰属します。</p>
+
+                    <h6 class="fw-bold mt-3">第5条（禁止事項）</h6>
+                    <p>ご利用者様は、本アプリの利用にあたり、以下の行為を行ってはならないものとします。</p>
+                    <ul>
+                        <li>法令または公序良俗に違反する行為</li>
+                        <li>本アプリのソースコードの無断での再配布、販売（学習や個人的な改変を除く）</li>
+                        <li>当サイトの運営を妨害するおそれのある行為</li>
+                    </ul>
+
+                    <h6 class="fw-bold mt-3">第6条（規約の変更）</h6>
+                    <p>当サイトは、必要と判断した場合には、ご利用者様に通知することなくいつでも本規約を変更することができるものとします。</p>
+                    <p class="text-end mt-4">制定日: 2024年5月22日</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">閉じる</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- 変更点: 利用規約モーダルの追加ここまで -->
 
     <!-- Bootstrap JS Bundle -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
