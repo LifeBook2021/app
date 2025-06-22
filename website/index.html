@@ -13,8 +13,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AIと創るJavaScriptツールキット | 高度なWebアプリをコード不要で</title>
-    <meta name="description" content="JavaScriptと生成AI(Google AI Studio等)を活用し、プログラミング経験がなくてもアイデアを形に。マインドマップ、ガントチャート、カンバンボードなど7つの多機能Webアプリを紹介します。">
-    <meta name="keywords" content="JavaScript, シングルページアプリケーション, SPA, 生成AI, Google AI Studio, プログラミング不要, バイブコーディング, Vibe Coding, アイデア具現化, マインドマップ, スケジュール管理, 付箋, ガントチャート, カンバンボード, ToDoリスト, アサイン管理, Webアプリ, 無料ツール">
+    <meta name="description" content="JavaScriptと生成AI(Google AI Studio等)を活用し、プログラミング経験がなくてもアイデアを形に。マインドマップ、ガントチャート、カンバンボードなど8つの多機能Webアプリを紹介します。">
+    <meta name="keywords" content="JavaScript, シングルページアプリケーション, SPA, 生成AI, Google AI Studio, プログラミング不要, バイブコーディング, Vibe Coding, アイデア具現化, マインドマップ, スケジュール管理, 付箋, ガントチャート, カンバンボード, ToDoリスト, アサイン管理, 時間管理, タイムトラッカー, Webアプリ, 無料ツール">
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Custom CSS -->
@@ -55,6 +55,9 @@
                                 <li><a class="dropdown-item" href="apps/mindmap/index.html">マインドマップ</a></li>
                                 <li><a class="dropdown-item" href="apps/todolist/index.html">週間ToDoカレンダー</a></li>
                                 <li><a class="dropdown-item" href="apps/assign-management/index.html">アサイン管理</a></li>
+                                <!-- ▼ ここから追加 ▼ -->
+                                <li><a class="dropdown-item" href="apps/work-time-tracker/index.html">月次作業時間トラッカー</a></li>
+                                <!-- ▲ ここまで追加 ▲ -->
                             </ul>
                         </li>
                         <li class="nav-item"><a class="nav-link" href="ai-creation.html">AIと創るアイデア</a></li>
@@ -69,7 +72,8 @@
         <section class="hero-section">
             <div class="container">
                 <h1>そのアイデア、AIと共に形にしませんか？</h1>
-                <p class="lead">JavaScriptの力と生成AIのサポートがあれば、コーディング経験がなくても高度なWebアプリケーションを創り出せます。昨今「<strong class="text-info">バイブコーディング (Vibe Coding)</strong>」とも呼ばれるこの手法で、あなたのアイデアを形にしませんか？このサイトでは、その実例となる7つのツールと、AIを活用した開発プロセスを紹介します。</p>
+                <!-- 変更点：ツールの数を8つに更新 -->
+                <p class="lead">JavaScriptの力と生成AIのサポートがあれば、コーディング経験がなくても高度なWebアプリケーションを創り出せます。昨今「<strong class="text-info">バイブコーディング (Vibe Coding)</strong>」とも呼ばれるこの手法で、あなたのアイデアを形にしませんか？このサイトでは、その実例となる8つのツールと、AIを活用した開発プロセスを紹介します。</p>
                 <a href="#apps" class="btn btn-primary btn-lg">アプリを試す</a>
                 <a href="ai-creation.html" class="btn btn-outline-light btn-lg ms-2">AI活用ストーリーを読む</a>
             </div>
@@ -165,6 +169,18 @@
                         </div>
                     </div>
                 </div>
+                <!-- ▼ ここから追加 ▼ -->
+                <div class="col-lg-4 col-md-6">
+                    <div class="card app-card">
+                        <img src="assets/images/work-time-tracker-screenshot.png" class="card-img-top" alt="月次作業時間トラッカー スクリーンショット">
+                        <div class="card-body">
+                            <h5 class="card-title">⏰ 月次作業時間トラッカー <span class="badge bg-danger text-white">NEW!</span></h5>
+                            <p class="card-text">日々の作業時間をタイムラインやカレンダーで詳細に記録・可視化。ドラッグ＆ドロップ操作、タイマー計測、強力な集計とCSV出力、祝日表示など、工数管理に必要な機能が満載です。</p>
+                            <a href="apps/work-time-tracker/index.html" class="btn btn-outline-primary mt-auto">詳細と使い方</a>
+                        </div>
+                    </div>
+                </div>
+                <!-- ▲ ここまで追加 ▲ -->
             </div>
         </section>
 
