@@ -1,1 +1,596 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>月次作業時間トラッカー</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⏰</text></svg>">
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+    <style>
+        :root {
+            --border-color: #ddd; --header-bg: #f8f9fa; --cell-bg: #fff;
+            --modal-bg: rgba(0,0,0,0.5);
+            --saturday-bg: #eaf6ff; --sunday-bg: #fff4e6;
+            --holiday-bg: #ffebee;
+            --total-row-bg: #fdfde7;
+            --time-bar-bg: #007bff; --time-bar-bg-light: #aadeff;
+            --grid-line-color: #f0f0f0;
+        }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; margin: 0; padding: 20px; background-color: #f4f4f4; }
+        .container { max-width: 95%; margin: auto; background: #fff; padding: 20px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        .main-controls { display: flex; align-items: center; gap: 15px; margin-bottom: 20px; flex-wrap: wrap; padding-bottom: 15px; border-bottom: 1px solid var(--border-color); }
+        .main-controls .right-buttons { margin-left: auto; display: flex; gap: 10px; }
+        .view-options { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+        .view-options label { font-weight: bold; }
+        .view-options input { padding: 5px; }
+        #current-day-of-week { font-weight: bold; margin-left: -5px; margin-right: 5px; }
+        .table-wrapper { overflow-x: auto; margin-top: 10px; }
+        table { border-collapse: collapse; width: 100%; font-size: 14px; white-space: nowrap; }
+        th, td { border: 1px solid var(--border-color); padding: 8px; text-align: center; }
+        thead th { background-color: var(--header-bg); position: sticky; top: 0; z-index: 3; }
+        .sticky-col { position: sticky; text-align: left; background-color: var(--header-bg); }
+        .sticky-col-1 { width: 120px; min-width: 120px; left: 0; z-index: 2; }
+        .sticky-col-2 { width: 150px; min-width: 150px; left: 120px; z-index: 2; }
+        thead .sticky-col { z-index: 4; }
+        .category-name-cell { font-weight: bold; background-color: #f2f2f2 !important; }
+        tr:not(.is-first-in-category) > .category-name-cell { color: transparent; border-top-color: transparent; }
+        .saturday { background-color: var(--saturday-bg) !important; }
+        .sunday { background-color: var(--sunday-bg) !important; }
+        .holiday { background-color: var(--holiday-bg) !important; }
+        .date-col { min-width: 55px; }
+        td.monthly-cell { padding: 2px; }
+        .monthly-input { width: 100%; border: 1px solid transparent; background: transparent; text-align: right; padding: 4px; box-sizing: border-box; border-radius: 3px; }
+        .monthly-input:focus { border-color: #007bff; outline: none; background: #fff; }
+        .category-handle, .task-handle { cursor: grab; display: inline-block; vertical-align: middle; margin-right: 8px; color: #aaa; user-select: none; }
+        .category-handle:active, .task-handle:active { cursor: grabbing; }
+        .sortable-ghost { opacity: 0.4; background: #cce5ff; }
+        .sortable-drag { opacity: 1 !important; }
+        .timeline-header { min-width: 120px; }
+        .timeline-cell { position: relative; padding: 0 !important; background-image: linear-gradient(to right, var(--grid-line-color) 1px, transparent 1px); background-repeat: repeat-x; }
+        .time-bar { position: absolute; top: 2px; bottom: 2px; background-color: var(--time-bar-bg); border-radius: 4px; display: flex; align-items: center; justify-content: space-between; color: white; font-size: 12px; padding: 0 5px; box-shadow: 0 1px 3px rgba(0,0,0,0.2); cursor: move; user-select: none; overflow: hidden; white-space: nowrap; transition: background-color 0.2s, box-shadow 0.2s; box-sizing: border-box; }
+        .time-bar:hover { background-color: #0056b3; }
+        .time-bar.selected { box-shadow: 0 0 0 2px #ffc107; background-color: #0056b3; }
+        .time-bar.dragging { background-color: var(--time-bar-bg-light); z-index: 10; opacity: 0.8; }
+        .time-bar .resize-handle { position: absolute; top: 0; bottom: 0; width: 8px; cursor: ew-resize; }
+        .time-bar .resize-handle.left { left: 0; }
+        .time-bar .resize-handle.right { right: 0; }
+        .time-bar .time-text { pointer-events: none; }
+        .total-row th, .total-row td { font-weight: bold; background-color: var(--total-row-bg) !important; position: sticky; top: 41px; z-index: 3; }
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--modal-bg); display: none; justify-content: center; align-items: center; z-index: 1000; }
+        .modal-content { background: white; padding: 25px; border-radius: 8px; width: 90%; max-width: 700px; max-height: 80vh; overflow-y: auto; display: flex; flex-direction: column; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-bottom: 20px; flex-shrink: 0; }
+        .modal-body { flex-grow: 1; overflow-y: auto; }
+        .modal-actions { display: flex; justify-content: flex-end; align-items: center; margin-top: 20px; border-top: 1px solid #eee; padding-top: 15px; flex-shrink: 0; }
+        .modal-actions .btn { margin-left: 8px; }
+        .category-edit-table { width: 100%; }
+        .category-edit-table th, .category-edit-table td { padding: 8px; text-align: left; vertical-align: middle; }
+        .category-edit-table .cat-row { background-color: #f8f9fa; font-weight: bold; }
+        .category-edit-table .cat-row input { font-weight: bold; }
+        .category-edit-table input { width: 95%; padding: 5px; }
+        .category-edit-table .actions { text-align: right; width: 120px; }
+        .summary-modal-table table { width: 100%; }
+        .summary-modal-table th, .summary-modal-table td { padding: 10px; }
+        .summary-modal-table th { background-color: var(--header-bg); text-align: center; }
+        .summary-modal-table .category-col { width: 35%; }
+        .summary-modal-table .task-col { width: 45%; }
+        .summary-modal-table .time-col { width: 20%; text-align: right; }
+        .summary-modal-table .summary-category-cell,
+        .summary-modal-table .summary-task-cell,
+        .summary-modal-table .summary-total-row td:first-child { text-align: left; }
+        .summary-modal-table .summary-total-row td { font-weight: bold; border-top: 2px solid #333; }
+        .btn { padding: 8px 12px; cursor: pointer; border-radius: 4px; border: 1px solid #ccc; background-color: #f8f8f8; font-size: 14px; color: #212529; text-align: center; vertical-align: middle; user-select: none; transition: color .15s ease-in-out,background-color .15s ease-in-out,border-color .15s ease-in-out,box-shadow .15s ease-in-out; text-decoration: none; line-height: 1.5; display: inline-block; }
+        .btn:hover { background-color: #e9ecef; }
+        .btn.active, .btn-primary { color: #fff; background-color: #007bff; border-color: #007bff; }
+        .btn.active:hover, .btn-primary:hover { color: #fff; background-color: #0069d9; border-color: #0062cc; }
+        .btn-sm { padding: 3px 8px; font-size: 12px; border-radius: .2rem; }
+        .timer-icon { cursor: pointer; margin-left: 8px; font-size: 16px; vertical-align: middle; display: inline-block; user-select: none; transition: transform 0.2s; }
+        .timer-icon:hover { transform: scale(1.2); }
+        .btn.needs-save { background-color: #ffc107; border-color: #ffc107; color: #212529; }
+        .btn.needs-save:hover { background-color: #e0a800; border-color: #d39e00; }
+    </style>
+</head>
+<body>
 
+<div class="container"> <div class="main-controls"> <div> <label>表示モード:</label> <button id="daily-mode-btn" class="btn">日次</button> <button id="monthly-mode-btn" class="btn">月次</button> </div><div class="view-options" id="date-selector-daily"> <label>日付:</label> <button id="prev-day-btn" class="btn">＜ 前日</button> <button id="today-btn" class="btn">今日</button> <button id="next-day-btn" class="btn">翌日 ＞</button> <input type="date" id="current-date"> <span id="current-day-of-week"></span> <label>時間:</label> <input type="time" id="daily-start-time" step="1800"> <span>～</span> <input type="time" id="daily-end-time" step="1800"> </div><div class="view-options" id="date-selector-monthly" style="display: none;"> <label for="current-month">月:</label> <input type="month" id="current-month"> <label for="monthly-start-day">開始日:</label> <input type="number" id="monthly-start-day" min="1" max="31" style="width: 50px;"> </div><div class="right-buttons"> <button id="summary-btn" class="btn">集計</button> <button id="load-btn" class="btn">JSON読込</button> <button id="save-btn" class="btn">JSON保存</button> <button id="edit-categories-btn" class="btn">カテゴリ編集</button> </div></div><div class="table-wrapper"> <table id="time-table"></table> </div></div>
+<input type="file" id="file-input" accept=".json" style="display: none;">
+<div id="category-modal" class="modal-overlay"> <div class="modal-content"> <div class="modal-header"> <h2>カテゴリ・作業 編集</h2> <button class="btn btn-sm" onclick="closeCategoryModal()">&times;</button> </div><div id="category-modal-body" class="modal-body"></div><div class="modal-actions"> <button class="btn" onclick="addTempCategory()">＋ カテゴリ追加</button> <button class="btn" onclick="closeCategoryModal()">キャンセル</button> <button class="btn btn-primary" onclick="saveCategoryChanges()">保存して閉じる</button> </div></div></div>
+<div id="summary-modal" class="modal-overlay"> <div class="modal-content"> <div class="modal-header"> <h2 id="summary-modal-title">集計</h2> <button class="btn btn-sm" onclick="closeSummaryModal()">&times;</button> </div><div id="summary-modal-body" class="modal-body summary-modal-table"></div><div class="modal-actions"> <button id="csv-download-btn" class="btn btn-primary">CSVダウンロード</button> <button class="btn" onclick="closeSummaryModal()">閉じる</button> </div></div></div>
+<div id="timer-modal" class="modal-overlay"> <div class="modal-content"> <div class="modal-header"> <h2>タイマー計測</h2> <button class="btn btn-sm" onclick="cancelTimer()">&times;</button> </div><div class="modal-body" style="text-align: center;"> <p id="timer-task-name" style="font-size: 1.2em; font-weight: bold; margin-bottom: 10px;"></p><p id="timer-display" style="font-size: 3.5em; font-family: 'SF Mono', 'Courier New', Courier, monospace; margin: 20px 0; color: #333;"></p></div><div class="modal-actions"> <button class="btn" onclick="cancelTimer()">キャンセル</button> <button id="stop-timer-btn" class="btn btn-primary">記録して停止</button> </div></div></div>
+
+<script>
+// === 1. アプリケーションの状態管理 (State) ===
+let appState = { viewMode: 'daily', currentDate: new Date(), dailyViewStartTime: '08:00', dailyViewEndTime: '18:00', monthlyStartDay: 1, categories: [ { id: 'cat-1', name: 'プロジェクトA', tasks: [ { id: 'task-1-1', name: '設計' }, { id: 'task-1-2', name: '実装' } ] }, { id: 'cat-2', name: '共通業務', tasks: [ { id: 'task-2-1', name: '会議' } ] } ], timeRecords: {}, holidays: {} };
+let tempCategories = [];
+let dragState = { active: false, selectedBar: { taskId: null, recordId: null } };
+let timerState = { active: false, taskId: null, startTime: null, intervalId: null };
+let isDataDirty = false;
+
+// === 2. DOM要素の取得 ===
+const dailyModeBtn = document.getElementById('daily-mode-btn'), monthlyModeBtn = document.getElementById('monthly-mode-btn'), dateSelectorDaily = document.getElementById('date-selector-daily'), dateSelectorMonthly = document.getElementById('date-selector-monthly'), currentDateInput = document.getElementById('current-date'), currentMonthInput = document.getElementById('current-month'), currentDayOfWeekSpan = document.getElementById('current-day-of-week'), dailyStartTimeInput = document.getElementById('daily-start-time'), dailyEndTimeInput = document.getElementById('daily-end-time'), monthlyStartDayInput = document.getElementById('monthly-start-day'), timeTable = document.getElementById('time-table'), fileInput = document.getElementById('file-input'), summaryBtn = document.getElementById('summary-btn'), saveBtn = document.getElementById('save-btn'), loadBtn = document.getElementById('load-btn'), editCategoriesBtn = document.getElementById('edit-categories-btn'), categoryModal = document.getElementById('category-modal'), summaryModal = document.getElementById('summary-modal'), summaryModalBody = document.getElementById('summary-modal-body'), summaryModalTitle = document.getElementById('summary-modal-title'), prevDayBtn = document.getElementById('prev-day-btn'), todayBtn = document.getElementById('today-btn'), nextDayBtn = document.getElementById('next-day-btn'), csvDownloadBtn = document.getElementById('csv-download-btn');
+const timerModal = document.getElementById('timer-modal'), timerTaskName = document.getElementById('timer-task-name'), timerDisplay = document.getElementById('timer-display'), stopTimerBtn = document.getElementById('stop-timer-btn');
+
+// === 3. ヘルパー関数 ===
+const getYYYYMMDD = (date) => { if (!(date instanceof Date) || isNaN(date)) { date = new Date(); } const y = date.getFullYear(); const m = (date.getMonth() + 1).toString().padStart(2, '0'); const d = date.getDate().toString().padStart(2, '0'); return `${y}-${m}-${d}`; };
+const getYYYYMM = (date) => getYYYYMMDD(date).substring(0, 7);
+const timeToMinutes = (timeStr) => { const [h, m] = timeStr.split(':').map(Number); return h * 60 + m; };
+const minutesToTime = (minutes) => `${Math.floor(minutes/60).toString().padStart(2,'0')}:${(minutes%60).toString().padStart(2,'0')}`;
+const snapTo5Minutes = (minutes) => Math.round(minutes / 5) * 5;
+async function fetchHolidays() { try { const response = await fetch('https://holidays-jp.github.io/api/v1/date.json'); if (!response.ok) throw new Error('Network response was not ok.'); appState.holidays = await response.json(); } catch (error) { console.error("祝日データの取得に失敗しました:", error); alert("祝日データの取得に失敗しました。インターネット接続を確認してください。"); } }
+const isHoliday = (date) => appState.holidays.hasOwnProperty(getYYYYMMDD(date));
+function downloadCSV(summaryData, filename) {
+    let csv = '\uFEFF'; // BOM for Excel
+    csv += 'カテゴリ,作業,時間(h)\n';
+    appState.categories.forEach(cat => {
+        (cat.tasks || []).forEach(task => {
+            const hours = summaryData.byTask[task.id] || 0;
+            csv += `"${cat.name}","${task.name}",${hours.toFixed(2)}\n`;
+        });
+    });
+    csv += '総合計,,"' + summaryData.total.toFixed(2) + '"\n';
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute("download", filename);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+function setDataDirty(dirty = true) { isDataDirty = dirty; saveBtn.classList.toggle('needs-save', isDataDirty); }
+
+// === 4. UI描画関数 ===
+function render() {
+    dailyModeBtn.classList.toggle('active', appState.viewMode === 'daily');
+    monthlyModeBtn.classList.toggle('active', appState.viewMode === 'monthly');
+    dateSelectorDaily.style.display = appState.viewMode === 'daily' ? 'flex' : 'none';
+    dateSelectorMonthly.style.display = appState.viewMode === 'monthly' ? 'flex' : 'none';
+    currentDateInput.value = getYYYYMMDD(appState.currentDate);
+    currentMonthInput.value = getYYYYMM(appState.currentDate);
+    dailyStartTimeInput.value = appState.dailyViewStartTime;
+    dailyEndTimeInput.value = appState.dailyViewEndTime;
+    monthlyStartDayInput.value = appState.monthlyStartDay;
+    const dayOfWeek = appState.currentDate.getDay();
+    currentDayOfWeekSpan.textContent = `(${{0:'日',1:'月',2:'火',3:'水',4:'木',5:'金',6:'土'}[dayOfWeek]})`;
+    let color = 'inherit';
+    if (dayOfWeek === 0) color = 'red';
+    else if (isHoliday(appState.currentDate)) color = '#d32f2f';
+    else if (dayOfWeek === 6) color = 'blue';
+    currentDayOfWeekSpan.style.color = color;
+    if (appState.viewMode === 'daily') {
+        timeTable.style.tableLayout = 'fixed';
+        renderDailyView();
+    } else {
+        timeTable.style.tableLayout = 'auto';
+        renderMonthlyView();
+    }
+    initializeTableSortable();
+}
+function renderDailyView() {
+    let dayClass = '';
+    const dayOfWeek = appState.currentDate.getDay();
+    if (dayOfWeek === 0) dayClass = 'sunday';
+    else if (isHoliday(appState.currentDate)) dayClass = 'holiday';
+    else if (dayOfWeek === 6) dayClass = 'saturday';
+    const startMinutes = timeToMinutes(appState.dailyViewStartTime);
+    const endMinutes = timeToMinutes(appState.dailyViewEndTime);
+    const totalViewMinutes = endMinutes - startMinutes;
+    if (totalViewMinutes <= 0) { timeTable.innerHTML = ''; return; }
+    let headerHtml = `<thead><tr><th class="sticky-col sticky-col-1">カテゴリ</th><th class="sticky-col sticky-col-2">作業</th>`;
+    let hourCount = 0;
+    for (let min = startMinutes; min < endMinutes; min += 60) {
+        headerHtml += `<th class="timeline-header ${dayClass}">${Math.floor(min/60).toString().padStart(2,'0')}</th>`;
+        hourCount++;
+    }
+    headerHtml += '</tr></thead>';
+    const dateStr = getYYYYMMDD(appState.currentDate);
+    const dailyRecords = appState.timeRecords[dateStr] || {};
+    let bodyHtml = '';
+    const backgroundSizePercent = (30 / totalViewMinutes) * 100;
+    appState.categories.forEach(cat => {
+        bodyHtml += `<tbody class="main-category-group" data-cat-id="${cat.id}">`;
+        (cat.tasks || []).forEach((task, index) => {
+            const isFirst = (index === 0);
+            bodyHtml += `<tr class="${isFirst ? 'is-first-in-category' : ''}" data-task-id="${task.id}">`;
+            const categoryCellContent = isFirst ? `<span class="category-handle">::</span>${cat.name}` : cat.name;
+            bodyHtml += `<td class="sticky-col sticky-col-1 category-name-cell">${categoryCellContent}</td>`;
+            bodyHtml += `<td class="sticky-col sticky-col-2"><span class="task-handle">::</span>${task.name} <span class="timer-icon" data-task-id="${task.id}" title="タイマーを開始">⏱️</span></td>`;
+            bodyHtml += `<td class="timeline-cell ${dayClass}" colspan="${hourCount}" style="background-size: ${backgroundSizePercent}% 100%;">`;
+            const taskRecords = dailyRecords[task.id] || [];
+            taskRecords.forEach(rec => {
+                const recStart = timeToMinutes(rec.start);
+                const recEnd = timeToMinutes(rec.end);
+                const leftPercent = ((recStart - startMinutes) / totalViewMinutes) * 100;
+                const widthPercent = ((recEnd - recStart) / totalViewMinutes) * 100;
+                const isSelected = dragState.selectedBar.taskId === task.id && dragState.selectedBar.recordId === rec.id;
+                if (widthPercent > 0) {
+                   bodyHtml += `<div class="time-bar ${isSelected ? 'selected' : ''}" data-task-id="${task.id}" data-record-id="${rec.id}" style="left: ${leftPercent}%; width: ${widthPercent}%;">
+                              <div class="resize-handle left"></div>
+                              <span class="time-text">${rec.start} - ${rec.end}</span>
+                              <div class="resize-handle right"></div>
+                           </div>`;
+                }
+            });
+            bodyHtml += `</td></tr>`;
+        });
+        bodyHtml += `</tbody>`;
+    });
+    timeTable.innerHTML = headerHtml + bodyHtml;
+}
+function renderMonthlyView() {
+    const year=appState.currentDate.getFullYear(), month=appState.currentDate.getMonth(), startDay=appState.monthlyStartDay;
+    let html = `<thead><tr><th class="sticky-col sticky-col-1">カテゴリ</th><th class="sticky-col sticky-col-2">作業</th>`;
+    const datesOfMonth = [];
+    let currentDate = new Date(year, month, startDay);
+    const endDate = new Date(year, month + 1, startDay);
+    while (currentDate < endDate) {
+        datesOfMonth.push(new Date(currentDate));
+        currentDate.setDate(currentDate.getDate() + 1);
+    }
+    datesOfMonth.forEach(date => {
+        let dayClass = '';
+        if (date.getDay() === 0) dayClass = 'sunday';
+        else if (isHoliday(date)) dayClass = 'holiday';
+        else if (date.getDay() === 6) dayClass = 'saturday';
+        html += `<th class="date-col ${dayClass}">${date.getDate()}<br>${['日','月','火','水','木','金','土'][date.getDay()]}</th>`;
+    });
+    html += '</tr>';
+    const dailyTotals = datesOfMonth.map(date => {
+        const dateStr = getYYYYMMDD(date);
+        let totalMinutes = 0;
+        for(const cat of appState.categories) {
+            for(const task of (cat.tasks || [])) {
+                const records = appState.timeRecords[dateStr]?.[task.id] || [];
+                totalMinutes += records.reduce((sum, rec) => sum + (timeToMinutes(rec.end) - timeToMinutes(rec.start)), 0);
+            }
+        }
+        return totalMinutes / 60;
+    });
+    html += `<tr class="total-row"><th class="sticky-col sticky-col-1">合計</th><th class="sticky-col sticky-col-2"></th>`;
+    dailyTotals.forEach((total, index) => {
+        let dayClass = '';
+        const date = datesOfMonth[index];
+        if (date.getDay() === 0) dayClass = 'sunday';
+        else if (isHoliday(date)) dayClass = 'holiday';
+        else if (date.getDay() === 6) dayClass = 'saturday';
+        html += `<td class="date-col ${dayClass}">${total > 0 ? total.toFixed(2) : ''}</td>`;
+    });
+    html += '</tr></thead>';
+    appState.categories.forEach(cat => {
+        html += `<tbody class="main-category-group" data-cat-id="${cat.id}">`;
+        (cat.tasks || []).forEach((task, index) => {
+            const isFirst = (index === 0);
+            html += `<tr class="${isFirst ? 'is-first-in-category' : ''}" data-task-id="${task.id}">`;
+            const categoryCellContent = isFirst ? `<span class="category-handle">::</span>${cat.name}` : cat.name;
+            html += `<td class="sticky-col sticky-col-1 category-name-cell">${categoryCellContent}</td>`;
+            html += `<td class="sticky-col sticky-col-2"><span class="task-handle">::</span>${task.name}</td>`;
+            datesOfMonth.forEach(date => {
+                const dateStr = getYYYYMMDD(date);
+                const dailyRecords = appState.timeRecords[dateStr] || {};
+                const taskRecords = dailyRecords[task.id] || [];
+                const totalMinutes = taskRecords.reduce((sum, rec) => sum + (timeToMinutes(rec.end) - timeToMinutes(rec.start)), 0);
+                const hours = totalMinutes / 60;
+                let dayClass = '';
+                if (date.getDay() === 0) dayClass = 'sunday';
+                else if (isHoliday(date)) dayClass = 'holiday';
+                else if (date.getDay() === 6) dayClass = 'saturday';
+                html += `<td class="monthly-cell date-col ${dayClass}"><input type="number" class="monthly-input" value="${hours > 0 ? hours.toFixed(2) : ''}" step="0.25" min="0" data-task-id="${task.id}" data-date="${dateStr}"></td>`;
+            });
+            html += `</tr>`;
+        });
+        html += `</tbody>`;
+    });
+    timeTable.innerHTML = html;
+}
+function getSummaryData() {
+    const summary = { total: 0, byTask: {} };
+    appState.categories.forEach(cat => (cat.tasks || []).forEach(task => summary.byTask[task.id] = 0));
+    const calculateHours = (records) => {
+        for (const taskId in records) {
+            if (summary.byTask.hasOwnProperty(taskId)) {
+                const taskRecords = records[taskId] || [];
+                const taskMinutes = taskRecords.reduce((sum, rec) => sum + (timeToMinutes(rec.end) - timeToMinutes(rec.start)), 0);
+                summary.byTask[taskId] += taskMinutes / 60;
+            }
+        }
+    };
+    if (appState.viewMode === 'daily') {
+        const dateStr = getYYYYMMDD(appState.currentDate);
+        calculateHours(appState.timeRecords[dateStr] || {});
+    } else {
+        const year = appState.currentDate.getFullYear(), month = appState.currentDate.getMonth(), startDay = appState.monthlyStartDay;
+        const startDate = new Date(year, month, startDay);
+        const endDate = new Date(year, month + 1, startDay);
+        for (const dateStr in appState.timeRecords) {
+            const [y,m,d] = dateStr.split('-');
+            const recordDate = new Date(y, m-1, d);
+            if (recordDate >= startDate && recordDate < endDate) {
+                calculateHours(appState.timeRecords[dateStr]);
+            }
+        }
+    }
+    summary.total = Object.values(summary.byTask).reduce((sum, hours) => sum + hours, 0);
+    return summary;
+}
+function renderSummary() {
+    const summary = getSummaryData();
+    let html = `<table><thead><tr><th class="category-col">カテゴリ</th><th class="task-col">作業</th><th class="time-col">時間(h)</th></tr></thead><tbody>`;
+    appState.categories.forEach(cat => {
+        (cat.tasks || []).forEach((task) => {
+            const hours = summary.byTask[task.id] || 0;
+            html += `<tr><td class="summary-category-cell">${cat.name}</td><td class="summary-task-cell">${task.name}</td><td class="time-col">${hours.toFixed(2)}</td></tr>`;
+        });
+    });
+    html += `<tr class="summary-total-row"><td colspan="2">総合計</td><td class="time-col">${summary.total.toFixed(2)}</td></tr></tbody></table>`;
+    summaryModalBody.innerHTML = html;
+}
+
+// === 5. イベントハンドラ ===
+function handleMonthlyInputChange(e) {
+    const input = e.target, { taskId, date } = input.dataset;
+    const newHoursRaw = Math.max(0, parseFloat(input.value) || 0);
+    const newTotalMinutes = snapTo5Minutes(newHoursRaw * 60);
+    const newHours = newTotalMinutes / 60;
+    input.value = newHours > 0 ? newHours.toFixed(2) : '';
+    if (!appState.timeRecords[date]) appState.timeRecords[date] = {};
+    const taskRecords = appState.timeRecords[date][taskId] || [];
+    if (newHours <= 0) {
+        appState.timeRecords[date][taskId] = [];
+        setDataDirty();
+        return;
+    }
+    if (taskRecords.length === 0) {
+        const start = appState.dailyViewStartTime;
+        const end = minutesToTime(timeToMinutes(start) + newTotalMinutes);
+        appState.timeRecords[date][taskId] = [{ id: `rec-${Date.now()}`, start, end }];
+        setDataDirty();
+        return;
+    }
+    const currentTotalMinutes = taskRecords.reduce((sum, rec) => sum + (timeToMinutes(rec.end) - timeToMinutes(rec.start)), 0);
+    const diffMinutes = newTotalMinutes - currentTotalMinutes;
+    if (diffMinutes === 0) return;
+    const sortedRecords = [...taskRecords].sort((a, b) => timeToMinutes(b.end) - timeToMinutes(a.end));
+    if (diffMinutes > 0) {
+        const lastRecord = sortedRecords[0];
+        lastRecord.end = minutesToTime(timeToMinutes(lastRecord.end) + diffMinutes);
+    } else {
+        let minutesToReduce = -diffMinutes;
+        for (const record of sortedRecords) {
+            if (minutesToReduce <= 0) break;
+            const duration = timeToMinutes(record.end) - timeToMinutes(record.start);
+            if (duration > minutesToReduce) {
+                record.end = minutesToTime(timeToMinutes(record.end) - minutesToReduce);
+                minutesToReduce = 0;
+            } else {
+                minutesToReduce -= duration;
+                record.toBeDeleted = true;
+            }
+        }
+    }
+    appState.timeRecords[date][taskId] = sortedRecords.filter(r => !r.toBeDeleted);
+    setDataDirty();
+}
+function handleTimelineMouseDown(e) {
+    if (e.button !== 0 || appState.viewMode !== 'daily') return;
+    const timelineCell = e.target.closest('.timeline-cell');
+    if (!timelineCell) {
+        if (dragState.selectedBar.recordId) {
+            dragState.selectedBar = { taskId: null, recordId: null };
+            renderDailyView();
+        }
+        return;
+    };
+    e.stopPropagation();
+    const target = e.target;
+    const taskId = timelineCell.closest('tr').dataset.taskId;
+    const currentSelectedDOM = document.querySelector('.time-bar.selected');
+    if(currentSelectedDOM) {
+        currentSelectedDOM.classList.remove('selected');
+    }
+    if (target.classList.contains('time-bar') && !target.classList.contains('resize-handle')) {
+        const recordId = target.dataset.recordId;
+        target.classList.add('selected');
+        dragState.selectedBar = { taskId, recordId };
+    } else {
+        dragState.selectedBar = { taskId: null, recordId: null };
+    }
+    const timelineRect = timelineCell.getBoundingClientRect();
+    const viewStartMinutes = timeToMinutes(appState.dailyViewStartTime);
+    const totalViewMinutes = timeToMinutes(appState.dailyViewEndTime) - viewStartMinutes;
+    if (target.classList.contains('resize-handle') || target.classList.contains('time-bar')) {
+        const bar = target.closest('.time-bar');
+        const recordId = bar.dataset.recordId;
+        const dateStr = getYYYYMMDD(appState.currentDate);
+        const record = appState.timeRecords[dateStr]?.[taskId]?.find(r => r.id === recordId);
+        if (!record) return;
+        dragState = {
+            ...dragState,
+            active: true,
+            isDragging: false,
+            mode: target.classList.contains('resize-handle') ? (target.classList.contains('left') ? 'resize-left' : 'resize-right') : 'move',
+            element: bar,
+            taskId: taskId,
+            recordId: recordId,
+            initialMouseX: e.clientX,
+            cellWidth: timelineCell.offsetWidth,
+            totalViewMinutes: totalViewMinutes,
+            initialStartMin: timeToMinutes(record.start),
+            initialEndMin: timeToMinutes(record.end),
+        };
+        bar.classList.add('dragging');
+    } else if (target === timelineCell) {
+        e.preventDefault();
+        const mouseX = e.clientX - timelineRect.left;
+        const clickPercent = mouseX / timelineCell.offsetWidth;
+        const clickedMinutes = snapTo5Minutes(viewStartMinutes + (clickPercent * totalViewMinutes));
+        const dateStr = getYYYYMMDD(appState.currentDate);
+        if (!appState.timeRecords[dateStr]) appState.timeRecords[dateStr] = {};
+        if (!appState.timeRecords[dateStr][taskId]) appState.timeRecords[dateStr][taskId] = [];
+        const newRecord = { id: `rec-${Date.now()}`, start: minutesToTime(clickedMinutes), end: minutesToTime(clickedMinutes + 60) };
+        appState.timeRecords[dateStr][taskId].push(newRecord);
+        setDataDirty();
+        render();
+    }
+}
+function handleDocumentMouseMove(e) {
+    if (!dragState.active) return;
+    e.preventDefault();
+    dragState.isDragging = true;
+    const dx = e.clientX - dragState.initialMouseX;
+    const dxPercent = dx / dragState.cellWidth;
+    const dMinutes = snapTo5Minutes(dxPercent * dragState.totalViewMinutes);
+    const dateStr = getYYYYMMDD(appState.currentDate);
+    const record = appState.timeRecords[dateStr]?.[dragState.taskId]?.find(r => r.id === dragState.recordId);
+    if (!record) return;
+    const viewStartMinutes = timeToMinutes(appState.dailyViewStartTime);
+    const { initialStartMin, initialEndMin, totalViewMinutes } = dragState;
+    if (dragState.mode === 'move') {
+        const newStartMin = Math.max(viewStartMinutes, initialStartMin + dMinutes);
+        const duration = initialEndMin - initialStartMin;
+        record.start = minutesToTime(newStartMin);
+        record.end = minutesToTime(newStartMin + duration);
+    } else if (dragState.mode === 'resize-right') {
+        const newEndMin = Math.max(initialStartMin + 5, initialEndMin + dMinutes);
+        record.end = minutesToTime(newEndMin);
+    } else if (dragState.mode === 'resize-left') {
+        const newStartMin = Math.min(initialEndMin - 5, initialStartMin + dMinutes);
+        record.start = minutesToTime(newStartMin);
+    }
+    const newLeftPercent = ((timeToMinutes(record.start) - viewStartMinutes) / totalViewMinutes) * 100;
+    const newWidthPercent = ((timeToMinutes(record.end) - timeToMinutes(record.start)) / totalViewMinutes) * 100;
+    dragState.element.style.left = `${newLeftPercent}%`;
+    dragState.element.style.width = `${newWidthPercent}%`;
+    dragState.element.querySelector('.time-text').textContent = `${record.start} - ${record.end}`;
+}
+function handleDocumentMouseUp() {
+    if (dragState.active) {
+        if (dragState.element) {
+            dragState.element.classList.remove('dragging');
+        }
+        if (dragState.isDragging) {
+            setDataDirty();
+            renderDailyView();
+        }
+        dragState.active = false;
+        dragState.isDragging = false;
+    }
+}
+
+// === 6. タイマー＆モーダル制御関数 ===
+function findTaskById(taskId) { for (const cat of appState.categories) { const task = (cat.tasks || []).find(t => t.id === taskId); if (task) return { task, category: cat }; } return null; }
+function startTimer(taskId) { if (timerState.active) { const currentTaskInfo = findTaskById(timerState.taskId); const currentTaskName = currentTaskInfo ? `${currentTaskInfo.category.name} - ${currentTaskInfo.task.name}` : '不明なタスク'; if (!confirm(`タイマー「${currentTaskName}」が作動中です。\nこれを停止して新しいタイマーを開始しますか？`)) { return; } clearInterval(timerState.intervalId); } const taskInfo = findTaskById(taskId); if (!taskInfo) { alert('タスクが見つかりません。'); return; } timerState = { active: true, taskId: taskId, startTime: new Date(), intervalId: setInterval(updateTimerDisplay, 1000) }; if (getYYYYMMDD(appState.currentDate) !== getYYYYMMDD(new Date())) { appState.currentDate = new Date(); } timerTaskName.textContent = `${taskInfo.category.name} - ${taskInfo.task.name}`; updateTimerDisplay(); timerModal.style.display = 'flex'; }
+function updateTimerDisplay() { if (!timerState.active) return; const now = new Date(); const elapsed = Math.floor((now - timerState.startTime) / 1000); const hours = Math.floor(elapsed / 3600).toString().padStart(2, '0'); const minutes = Math.floor((elapsed % 3600) / 60).toString().padStart(2, '0'); const seconds = (elapsed % 60).toString().padStart(2, '0'); timerDisplay.textContent = `${hours}:${minutes}:${seconds}`; }
+function stopTimer(saveRecord = true) { if (!timerState.active) return; clearInterval(timerState.intervalId); const endTime = new Date(); if (saveRecord) { const recordDate = timerState.startTime; const dateStr = getYYYYMMDD(recordDate); if (!appState.timeRecords[dateStr]) appState.timeRecords[dateStr] = {}; if (!appState.timeRecords[dateStr][timerState.taskId]) { appState.timeRecords[dateStr][timerState.taskId] = []; } const startMinutes = recordDate.getHours() * 60 + recordDate.getMinutes(); const endMinutes = endTime.getHours() * 60 + endTime.getMinutes(); const snappedStart = minutesToTime(snapTo5Minutes(startMinutes)); let snappedEnd = minutesToTime(snapTo5Minutes(endMinutes)); if (timeToMinutes(snappedEnd) <= timeToMinutes(snappedStart)) { snappedEnd = minutesToTime(timeToMinutes(snappedStart) + 5); } const newRecord = { id: `rec-${Date.now()}`, start: snappedStart, end: snappedEnd }; appState.timeRecords[dateStr][timerState.taskId].push(newRecord); setDataDirty(); appState.currentDate = recordDate; render(); } timerState = { active: false, taskId: null, startTime: null, intervalId: null }; timerModal.style.display = 'none'; }
+function cancelTimer() { stopTimer(false); }
+function openCategoryModal(){ tempCategories = JSON.parse(JSON.stringify(appState.categories)); renderCategoryModal(); categoryModal.style.display = 'flex'; }
+function closeCategoryModal(){ categoryModal.style.display = 'none'; }
+function renderCategoryModal(){ const modalBody = document.getElementById('category-modal-body'); let html = `<table class="category-edit-table" id="category-edit-table"><thead><tr><th>カテゴリ / 作業名</th><th class="actions">操作</th></tr></thead>`; (tempCategories || []).forEach((cat, catIndex) => { html += `<tbody class="category-group" data-cat-id="${cat.id}"><tr class="cat-row"><td><span class="category-handle">::</span><input type="text" value="${cat.name}" onchange="updateTempCategoryName(${catIndex}, this.value)"></td><td class="actions"><button class="btn btn-sm" onclick="addTempTask(${catIndex})">＋作業</button><button class="btn btn-sm" onclick="deleteTempCategory(${catIndex})">✕</button></td></tr>`; (cat.tasks || []).forEach((task, taskIndex) => { html += `<tr class="task-row" data-task-id="${task.id}"><td style="padding-left: 40px;"><span class="task-handle">::</span><input type="text" value="${task.name}" onchange="updateTempTaskName(${catIndex}, ${taskIndex}, this.value)"></td><td class="actions"><button class="btn btn-sm" onclick="deleteTempTask(${catIndex}, ${taskIndex})">✕</button></td></tr>`; }); html += `</tbody>`; }); html += `</table>`; modalBody.innerHTML = html; initializeModalSortable(); }
+function addTempCategory(){tempCategories.push({id:`cat-${Date.now()}`,name:'新規カテゴリ',tasks:[]});renderCategoryModal();}
+function deleteTempCategory(catIndex){if(confirm(`'${tempCategories[catIndex].name}'を削除しますか？関連する作業記録もすべて削除されます。`)){tempCategories.splice(catIndex,1);renderCategoryModal();}}
+function updateTempCategoryName(catIndex,newName){tempCategories[catIndex].name=newName;};
+function addTempTask(catIndex){tempCategories[catIndex].tasks.push({id:`task-${Date.now()}`,name:'新規作業'});renderCategoryModal();};
+function deleteTempTask(catIndex,taskIndex){tempCategories[catIndex].tasks.splice(taskIndex,1);renderCategoryModal();};
+function updateTempTaskName(catIndex,taskIndex,newName){tempCategories[catIndex].tasks[taskIndex].name=newName;};
+function saveCategoryChanges() { const oldTaskIds = new Set(appState.categories.flatMap(c => (c.tasks || []).map(t => t.id))); const newTaskIds = new Set(tempCategories.flatMap(c => (c.tasks || []).map(t => t.id))); const deletedTaskIds = new Set([...oldTaskIds].filter(id => !newTaskIds.has(id))); if(deletedTaskIds.size > 0){ for(const date in appState.timeRecords){ for(const taskId of deletedTaskIds){if(appState.timeRecords[date]?.[taskId]) delete appState.timeRecords[date][taskId];}}} appState.categories = tempCategories; setDataDirty(); closeCategoryModal(); render(); }
+function openSummaryModal() { summaryModalTitle.textContent = appState.viewMode === 'daily' ? `日次集計 (${getYYYYMMDD(appState.currentDate)})` : `月次集計 (${appState.currentDate.getFullYear()}年${appState.currentDate.getMonth() + 1}月)`; renderSummary(); summaryModal.style.display = 'flex'; }
+function closeSummaryModal() { summaryModal.style.display = 'none'; }
+
+// === 7. ドラッグ＆ドロップ (SortableJS) ===
+let modalSortableInstances = []; function initializeModalSortable(){ modalSortableInstances.forEach(instance=>instance.destroy()); modalSortableInstances=[]; const table=document.getElementById('category-edit-table'); if(!table)return; const rebuildModalDataFromDOM=()=>{const newTempCategories=[]; const categoryGroups=table.querySelectorAll('.category-group'); categoryGroups.forEach(group=>{const catId=group.dataset.catId; const catInput=group.querySelector('.cat-row input'); if(!catInput)return; const newCategory={id:catId,name:catInput.value,tasks:[]}; const taskRows=group.querySelectorAll('.task-row'); taskRows.forEach(row=>{const taskId=row.dataset.taskId; const taskInput=row.querySelector('input'); if(!taskInput)return; newCategory.tasks.push({id:taskId,name:taskInput.value});}); newTempCategories.push(newCategory);}); tempCategories=newTempCategories; setTimeout(()=>renderCategoryModal(),0);}; const categorySortable=new Sortable(table,{items:'.category-group',handle:'.category-handle',animation:150,onEnd:rebuildModalDataFromDOM}); modalSortableInstances.push(categorySortable); const taskContainers=table.querySelectorAll('.category-group'); taskContainers.forEach(container=>{const taskSortable=new Sortable(container,{draggable:'.task-row',handle:'.task-handle',filter:'.cat-row',animation:150,onEnd:rebuildModalDataFromDOM}); modalSortableInstances.push(taskSortable);}); }
+let mainTableSortableInstances = []; function initializeTableSortable(){ mainTableSortableInstances.forEach(i=>i.destroy()); mainTableSortableInstances=[]; const table=document.getElementById('time-table'); if(!table)return; const rebuildDataFromMainDOM=()=>{const allTasksMap=new Map(appState.categories.flatMap(cat=>cat.tasks.map(task=>[task.id,task]))); const allCategoriesMap=new Map(appState.categories.map(cat=>[cat.id,cat])); const newCategories=[]; const categoryGroups=table.querySelectorAll('.main-category-group'); categoryGroups.forEach(group=>{const catId=group.dataset.catId; if(allCategoriesMap.has(catId)){const originalCategory=allCategoriesMap.get(catId); const newCategory={...originalCategory,tasks:[]}; const taskRows=group.querySelectorAll('tr[data-task-id]'); taskRows.forEach(row=>{const taskId=row.dataset.taskId; if(allTasksMap.has(taskId)){newCategory.tasks.push(allTasksMap.get(taskId));}}); newCategories.push(newCategory);}}); appState.categories=newCategories; setDataDirty(); setTimeout(()=>render(),0);}; const categorySortable=new Sortable(table,{items:'.main-category-group',handle:'.category-handle',animation:150,onEnd:rebuildDataFromMainDOM}); mainTableSortableInstances.push(categorySortable); const taskContainers=table.querySelectorAll('.main-category-group'); taskContainers.forEach(container=>{const taskSortable=new Sortable(container,{draggable:'tr[data-task-id]',handle:'.task-handle',filter:'.category-name-cell .category-handle',animation:150,onEnd:rebuildDataFromMainDOM}); mainTableSortableInstances.push(taskSortable);}); }
+
+// === 8. データ永続化 ===
+function saveData() {
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = (now.getMonth() + 1).toString().padStart(2, '0');
+    const d = now.getDate().toString().padStart(2, '0');
+    const h = now.getHours().toString().padStart(2, '0');
+    const min = now.getMinutes().toString().padStart(2, '0');
+    const s = now.getSeconds().toString().padStart(2, '0');
+    const timestamp = `${y}${m}${d}${h}${min}${s}`;
+    const filename = `TTR${timestamp}.json`;
+    const dataStr=JSON.stringify(appState,null,2), blob=new Blob([dataStr],{type:'application/json'}), url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+    setDataDirty(false);
+    alert(`データを ${filename} として保存しました。`);
+}
+function loadData(event) {
+    const file=event.target.files[0];
+    if(!file)return;
+    const reader=new FileReader();
+    reader.onload=(e)=>{try{const loadedState=JSON.parse(e.target.result); appState.viewMode=loadedState.viewMode||'daily'; let loadedDate = new Date(loadedState.currentDate); appState.currentDate = (!loadedState.currentDate || isNaN(loadedDate)) ? new Date() : loadedDate; appState.dailyViewStartTime=loadedState.dailyViewStartTime||'08:00'; appState.dailyViewEndTime=loadedState.dailyViewEndTime||'18:00'; appState.monthlyStartDay=loadedState.monthlyStartDay||1; appState.categories=loadedState.categories||[]; appState.timeRecords=loadedState.timeRecords||{}; render(); setDataDirty(false); alert('データを読み込みました。');}catch(error){alert('ファイルの読み込みに失敗しました。'); console.error(error);}};
+    reader.readAsText(file);
+    event.target.value=null;
+}
+
+// === 9. アプリケーション初期化 ===
+async function initializeApp() {
+    await fetchHolidays();
+    currentDateInput.addEventListener('change', (e) => { const [year, month, day] = e.target.value.split('-').map(Number); appState.currentDate = new Date(year, month - 1, day); setDataDirty(); render(); });
+    dailyModeBtn.addEventListener('click', ()=>{appState.viewMode='daily'; render();});
+    monthlyModeBtn.addEventListener('click', ()=>{appState.viewMode='monthly'; render();});
+    currentMonthInput.addEventListener('change', (e)=>{ const [y,m]=e.target.value.split('-'); appState.currentDate=new Date(y,m-1,appState.monthlyStartDay); setDataDirty(); render(); });
+    dailyStartTimeInput.addEventListener('change', (e)=>{appState.dailyViewStartTime=e.target.value; setDataDirty(); render();});
+    dailyEndTimeInput.addEventListener('change', (e)=>{appState.dailyViewEndTime=e.target.value; setDataDirty(); render();});
+    monthlyStartDayInput.addEventListener('change', (e)=>{appState.monthlyStartDay=parseInt(e.target.value,10); setDataDirty(); render();});
+    summaryBtn.addEventListener('click', openSummaryModal);
+    editCategoriesBtn.addEventListener('click', openCategoryModal);
+    saveBtn.addEventListener('click', saveData);
+    loadBtn.addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', loadData);
+    prevDayBtn.addEventListener('click', () => { appState.currentDate.setDate(appState.currentDate.getDate() - 1); setDataDirty(); render(); });
+    todayBtn.addEventListener('click', () => { appState.currentDate = new Date(); setDataDirty(); render(); });
+    nextDayBtn.addEventListener('click', () => { appState.currentDate.setDate(appState.currentDate.getDate() + 1); setDataDirty(); render(); });
+    timeTable.addEventListener('change', (e)=>{ if(e.target.classList.contains('monthly-input')) handleMonthlyInputChange(e); });
+    timeTable.addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target.classList.contains('monthly-input')) { e.preventDefault(); const currentCell = e.target.closest('td'); const currentRow = currentCell.closest('tr'); const cellIndex = Array.from(currentRow.children).indexOf(currentCell); let nextRow = currentRow.nextElementSibling; if (!nextRow) { const currentCategoryGroup = currentRow.closest('.main-category-group'); if (currentCategoryGroup) { let nextCategoryGroup = currentCategoryGroup.nextElementSibling; while (nextCategoryGroup && nextCategoryGroup.tagName !== 'TBODY') { nextCategoryGroup = nextCategoryGroup.nextElementSibling; } if (nextCategoryGroup) { nextRow = nextCategoryGroup.querySelector('tr[data-task-id]'); } } } if (nextRow) { const nextCell = nextRow.children[cellIndex]; if (nextCell) { const nextInput = nextCell.querySelector('.monthly-input'); if (nextInput) { nextInput.focus(); nextInput.select(); } } } } });
+    timeTable.addEventListener('mousedown', handleTimelineMouseDown);
+    timeTable.addEventListener('click', (e) => { if (appState.viewMode === 'daily' && e.target.classList.contains('timer-icon')) { const taskId = e.target.dataset.taskId; startTimer(taskId); } });
+    document.addEventListener('mousemove', handleDocumentMouseMove);
+    document.addEventListener('mouseup', handleDocumentMouseUp);
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' || e.key === 'Esc') {
+            e.preventDefault();
+            if (categoryModal.style.display === 'flex') { closeCategoryModal(); return; }
+            if (summaryModal.style.display === 'flex') { closeSummaryModal(); return; }
+            if (timerModal.style.display === 'flex') { cancelTimer(); return; }
+        }
+        if (e.key === 'Delete' || e.key === 'Backspace') {
+            if (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA') { return; }
+            const { taskId, recordId } = dragState.selectedBar;
+            if (taskId && recordId) {
+                e.preventDefault();
+                const dateStr = getYYYYMMDD(appState.currentDate);
+                const records = appState.timeRecords[dateStr]?.[taskId];
+                if (records) {
+                    const recordIndex = records.findIndex(r => r.id === recordId);
+                    if (recordIndex > -1) {
+                        records.splice(recordIndex, 1);
+                        dragState.selectedBar = { taskId: null, recordId: null };
+                        setDataDirty();
+                        render();
+                    }
+                }
+            }
+        }
+    });
+    stopTimerBtn.addEventListener('click', () => stopTimer(true));
+    csvDownloadBtn.addEventListener('click', () => {
+        const summaryData = getSummaryData();
+        const filename = appState.viewMode === 'daily'
+            ? `summary_${getYYYYMMDD(appState.currentDate)}.csv`
+            : `summary_${getYYYYMM(appState.currentDate)}.csv`;
+        downloadCSV(summaryData, filename);
+    });
+
+    render();
+}
+
+initializeApp();
+</script>
+</body>
+</html>
