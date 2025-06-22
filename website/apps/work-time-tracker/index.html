@@ -1,1 +1,264 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-XE2CWFLT80"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
 
+  gtag('config', 'G-XE2CWFLT80');
+</script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>月次作業時間トラッカー - AIと創るJavaScriptツールキット</title>
+    <meta name="description" content="日々の作業時間をタイムラインやカレンダーで直感的に記録・可視化するツール。タイマー計測や強力な集計、CSV出力機能で、正確な工数管理と業務改善をサポートします。">
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="../../assets/css/style.css"> <!-- 相対パス注意 -->
+    <!-- Favicon -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⏰</text></svg>">
+    <style>
+      body {
+        padding-top: 59px;
+      }
+      .screenshot { /* スクリーンショット画像用のスタイル */
+        max-width: 100%;
+        height: auto;
+        border: 1px solid #dee2e6;
+        border-radius: .25rem;
+        margin-bottom: 1rem;
+        box-shadow: 0 .125rem .25rem rgba(0,0,0,.075);
+      }
+    </style>
+</head>
+<body>
+
+    <header>
+        <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+            <div class="container">
+                 <a class="navbar-brand" href="../.././">
+                    <img src="../../assets/images/logo.png" alt="サイトロゴ">
+                    <span class="fw-bold">AIと創るJavaScriptツールキット</span>
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarNav">
+                     <ul class="navbar-nav ms-auto">
+                        <li class="nav-item"><a class="nav-link" href="../.././">ホーム</a></li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle active" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                アプリ紹介
+                            </a>
+                             <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                                <li><a class="dropdown-item" href="../sticky-notes/index.html">付箋アプリ</a></li>
+                                <li><a class="dropdown-item" href="../gantt-chart/index.html">ガントチャート</a></li>
+                                <li><a class="dropdown-item" href="../kanban-board/index.html">カンバンボード</a></li>
+                                <li><a class="dropdown-item" href="../schedule/index.html">スケジュールチェック</a></li>
+                                <li><a class="dropdown-item" href="../mindmap/index.html">マインドマップ</a></li>
+                                <li><a class="dropdown-item" href="../todolist/index.html">週間ToDoカレンダー</a></li>
+                                <li><a class="dropdown-item" href="../assign-management/index.html">アサイン管理</a></li>
+                                <li><a class="dropdown-item active" aria-current="page" href="index.html">月次作業時間トラッカー</a></li>
+                            </ul>
+                        </li>
+                        <li class="nav-item"><a class="nav-link" href="../../ai-creation.html">AIと創るアイデア</a></li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container mt-4">
+        <div class="row">
+            <div class="col-lg-8">
+                 <article class="manual-section">
+                    <h1 class="mb-4">⏰ 月次作業時間トラッカー <span class="badge bg-danger text-white ms-2">NEW!</span></h1>
+                    <p class="lead">日々の作業時間を「何に」「どれくらい」使ったかを直感的に記録・可視化できる工数管理ツールです。<strong class="text-primary">タイムライン形式での詳細な記録と、カレンダー形式での月次集計</strong>をシームレスに切り替え可能。正確な工数把握と業務の振り返りをサポートします。</p>
+
+                    <div class="text-center my-4">
+                        <img src="../../assets/images/work-time-tracker-screenshot.png" alt="月次作業時間トラッカーの画面" class="img-fluid rounded border shadow-sm mb-3 screenshot">
+                        <!-- 修正点: パスを更新 -->
+                        <a href="https://lifebook2021.github.io/app/work-time-tracker/index.html" target="_blank" rel="noopener noreferrer" class="btn btn-success btn-lg">
+                            <i class="bi bi-play-circle me-2"></i>月次作業時間トラッカーを使ってみる (無料)
+                        </a>
+                    </div>
+
+                    <h2>主な特徴</h2>
+                     <ul class="list-unstyled">
+                        <li><i class="bi bi-check-circle-fill text-success me-2"></i><strong>2つの表示モード:</strong> 「日次」タイムラインで詳細な時間配分を、「月次」カレンダーで全体の作業量を俯瞰できます。</li>
+                        <li><i class="bi bi-check-circle-fill text-success me-2"></i><strong>直感的なタイムライン操作:</strong> ドラッグ＆ドロップで作業ブロックの作成、移動、リサイズが可能です。</li>
+                        <li><i class="bi bi-check-circle-fill text-success me-2"></i><strong>タイマー機能:</strong> 作業開始時にタイマーを起動し、終了時にボタン一つで実績を記録できます。</li>
+                        <li><i class="bi bi-check-circle-fill text-success me-2"></i><strong>柔軟なカテゴリ管理:</strong> プロジェクトや業務内容に合わせてカテゴリとタスクを自由に設定・並べ替えできます。</li>
+                        <li><i class="bi bi-check-circle-fill text-success me-2"></i><strong>強力な集計機能:</strong> 指定した期間のタスク別・カテゴリ別の合計作業時間を算出し、CSV形式でダウンロードできます。</li>
+                        <li><i class="bi bi-check-circle-fill text-success me-2"></i><strong>祝日表示:</strong> 日本の祝日を自動でカレンダーに反映し、稼働日の把握を容易にします。</li>
+                        <li><i class="bi bi-check-circle-fill text-success me-2"></i><strong>データ保存/読込:</strong> 全ての作業記録をJSONファイルとして保存・読み込みでき、バックアップも万全です。</li>
+                    </ul>
+
+                    <h2>使い方マニュアル</h2>
+                    
+                    <h3>画面構成</h3>
+                    <p>画面は大きく「コントロールエリア」と「テーブルエリア」の2つに分かれています。</p>
+                    <img src="../../assets/images/work-time-tracker-layout.png" alt="月次作業時間トラッカー 画面構成" class="screenshot">
+                    <ol>
+                        <li><strong>コントロールエリア (上部):</strong>
+                            <ul>
+                                <li><strong>表示モード:</strong> <kbd>日次</kbd>と<kbd>月次</kbd>の表示を切り替えます。</li>
+                                <li><strong>日付/期間設定:</strong> 日付や表示月、表示範囲（時間/開始日）を設定します。</li>
+                                <li><strong>機能ボタン:</strong> <kbd>集計</kbd>、<kbd>JSON読込/保存</kbd>、<kbd>カテゴリ編集</kbd>の各機能を呼び出します。</li>
+                            </ul>
+                        </li>
+                        <li><strong>テーブルエリア (中央):</strong>
+                            <ul>
+                                <li><strong>日次モード:</strong> タスクを縦軸、時間を横軸としたタイムラインが表示されます。作業ブロックをドラッグで操作します。</li>
+                                <li><strong>月次モード:</strong> タスクを縦軸、日付を横軸としたカレンダーが表示されます。各セルにその日の合計作業時間を数値で入力・確認できます。</li>
+                            </ul>
+                        </li>
+                    </ol>
+                    
+                    <h3>基本的な使い方</h3>
+                     <ul class="list-group list-group-flush mb-4">
+                        <li class="list-group-item"><strong>1. カテゴリの準備:</strong> <kbd>カテゴリ編集</kbd>ボタンから、記録したいプロジェクト名や業務内容を「カテゴリ」「作業」として登録します。</li>
+                        <li class="list-group-item"><strong>2. 時間の記録（日次モード）:</strong>
+                            <ul>
+                                <li>タイムラインの空いている場所をクリック＆ドラッグして作業ブロックを作成します。</li>
+                                <li>または、作業名の横にある <span class="text-primary">⏱️</span> アイコンでタイマーを起動し、作業後に記録します。</li>
+                            </ul>
+                        </li>
+                        <li class="list-group-item"><strong>3. 時間の調整（月次モード）:</strong> <kbd>月次</kbd>モードに切り替え、日ごとの合計作業時間を確認・修正します。祝日や週末が色分けされているため、週や月単位での作業量の調整に便利です。</li>
+                        <li class="list-group-item"><strong>4. 作業時間の集計:</strong> <kbd>集計</kbd>ボタンを押すと、表示されている期間のタスク別合計時間が一覧表示されます。データはCSVでダウンロード可能です。</li>
+                        <li class="list-group-item"><strong>5. データの保存:</strong> <kbd>JSON保存</kbd>で作業内容をファイルに保存し、次回<kbd>JSON読込</kbd>から再開できます。</li>
+                    </ul>
+
+                    <h3>主な機能の詳細</h3>
+                    
+                    <h4>日次タイムラインビュー: 直感的な時間記録</h4>
+                    <p>一日の作業を分単位で細かく管理するためのビューです。会議、開発、休憩など、各タスクに費やした時間を視覚的なブロックとして配置します。実績をドラッグで移動させたり、長さを変えて時間を調整したりと、まるでパズルを組むように直感的に操作できます。</p>
+                    <img src="../../assets/images/work-time-tracker-daily.png" alt="日次タイムラインビューの操作例" class="screenshot">
+                    
+                    <h4>月次カレンダービュー: 作業量の俯瞰と調整</h4>
+                    <p>月全体の作業量をカレンダー形式で俯瞰するためのビューです。日々の合計作業時間が数値で表示され、特定の日付の工数を直接編集することも可能です。「今週は少し働きすぎたから来週は調整しよう」といった、中長期的な視点でのタスク管理に役立ちます。</p>
+                    <img src="../../assets/images/work-time-tracker-monthly.png" alt="月次カレンダービューでの入力例" class="screenshot">
+
+                    <h4>集計とCSVエクスポート</h4>
+                    <p>ボタン一つで、指定期間内の全作業を集計し、タスクごとの合計時間を算出します。この集計結果は、モーダルで素早く確認できるだけでなく、CSVファイルとしてダウンロードも可能です。プロジェクトの報告書作成や、自身の業務分析に活用できます。</p>
+                    <img src="../../assets/images/work-time-tracker-summary.png" alt="集計モーダルとCSVダウンロード機能" class="screenshot">
+                    
+                 </article>
+            </div>
+             <div class="col-lg-4">
+                 <aside>
+                     <div class="card mt-4 mt-lg-0">
+                        <div class="card-body">
+                            <h5 class="card-title">アプリ情報</h5>
+                            <ul class="list-unstyled">
+                                <li><strong>バージョン:</strong> 1.0</li>
+                                <!-- 修正点: 最終更新日を更新 -->
+                                <li><strong>最終更新:</strong> 2025/06/22</li>
+                                <li><strong>技術:</strong> HTML, CSS, JavaScript, SortableJS</li>
+                                <li><strong>開発協力:</strong> Google AI Studio</li>
+                            </ul>
+                            <!-- 修正点: パスを更新 -->
+                            <a href="https://lifebook2021.github.io/app/work-time-tracker/index.html" target="_blank" rel="noopener noreferrer" class="btn btn-success w-100 mb-2">
+                                <i class="bi bi-play-circle me-2"></i>アプリを起動
+                            </a>
+                             <div>
+                                <small class="text-muted">
+                                    このアプリのソースコード (HTML, CSS, JavaScript) は、以下の手順で確認・保存できます。
+                                    <ul class="list-unstyled mt-2 mb-0" style="padding-left: 1em; text-indent: -1em;">
+                                        <li class="mb-1">1. 上記「アプリを起動」ボタンでアプリページを開きます。</li>
+                                        <li class="mb-1">2. ページ上で右クリックし、「ページのソースを表示」(または類似の名称) を選択します。</li>
+                                        <li class="mb-1">3. 表示されたコードを全選択 (<kbd>Ctrl</kbd>+<kbd>A</kbd> / <kbd>Cmd</kbd>+<kbd>A</kbd>) し、コピー (<kbd>Ctrl</kbd>+<kbd>C</kbd> / <kbd>Cmd</kbd>+<kbd>C</kbd>) します。</li>
+                                        <li class="mb-1">4. テキストエディタ (メモ帳, VS Code等) に貼り付け (<kbd>Ctrl</kbd>+<kbd>V</kbd> / <kbd>Cmd</kbd>+<kbd>V</kbd>) ます。</li>
+                                        <li>5. ファイル名を付けて保存します。HTMLファイル (<code>.html</code>) として保存し、文字コードは「UTF-8」を推奨します。</li>
+                                    </ul>
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                     <div class="card mt-4">
+                         <div class="card-body">
+                             <h5 class="card-title">開発ストーリー</h5>
+                             <p class="small">「スプレッドシートでの工数管理は入力が面倒で、後から見返しにくい…」という悩みを解決するため、より直感的で視覚的なツールを発案。AIに「タイムラインで作業時間を記録したい」と相談し、コアとなるドラッグ＆ドロップ機能を実装。その後、月次ビュー、タイマー、集計機能などをAIとの対話を重ねて段階的に追加し、現在の形になりました。</p>
+                             <a href="../../ai-creation.html" class="btn btn-outline-info btn-sm">AIとの開発をもっと詳しく</a>
+                         </div>
+                     </div>
+                 </aside>
+            </div>
+        </div>
+    </main>
+
+    <!-- 修正点: フッターをトップページと統一 -->
+    <footer class="footer mt-auto">
+        <div class="container text-center">
+            <span class="text-muted">&copy; <span id="copyright-year"></span> AIと創るJavaScriptツールキット. All Rights Reserved.</span>
+            <script>document.getElementById('copyright-year').textContent = new Date().getFullYear();</script>
+            <div class="mt-2">
+                <i class="bi bi-envelope me-1"></i>
+                <a href="mailto:lifebook20210120@gmail.com">lifebook20210120@gmail.com</a>
+                <span class="mx-2 text-muted">|</span>
+                <a href="#" data-bs-toggle="modal" data-bs-target="#termsModal">利用規約</a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- 修正点: 利用規約のモーダルを追加 -->
+    <div class="modal fade" id="termsModal" tabindex="-1" aria-labelledby="termsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-scrollable modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="termsModalLabel">利用規約</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-start">
+                    <p>本ウェブサイトで提供するアプリケーション（以下「本アプリ」）をご利用いただくにあたり、以下の利用規約（以下「本規約」）を設けております。本アプリの利用を開始した時点で、本規約に同意したものとみなします。</p>
+                    <hr>
+                    <h6 class="fw-bold">第1条（本アプリの特性とデータの取り扱い）</h6>
+                    <ol>
+                        <li>本アプリは、すべての処理がご利用のブラウザ内で完結するローカルアプリケーションです。入力された情報や作成されたデータが、当サイトのサーバーや第三者に送信されることは一切ありません。</li>
+                        <li>データの保存は、ご利用者様自身の操作によるJSONファイルのダウンロードによって行われます。データの管理（バックアップ、保管、パスワード設定など）は、すべてご利用者様の責任において行ってください。</li>
+                    </ol>
+
+                    <h6 class="fw-bold mt-3">第2条（セキュリティと自己責任）</h6>
+                    <ol>
+                        <li>本アプリで作成・保存したJSONファイルの紛失、破損、情報漏洩などによって生じたいかなる損害についても、当サイトは一切の責任を負いません。</li>
+                        <li>機密情報、重要な個人情報、その他取り扱いに注意を要するデータの入力は、ご利用者様ご自身の判断と責任において行ってください。</li>
+                    </ol>
+
+                    <h6 class="fw-bold mt-3">第3条（免責事項）</h6>
+                    <ol>
+                        <li>当サイトは、本アプリの正確性、完全性、有用性、特定目的への適合性について、一切の保証をいたしません。</li>
+                        <li>本アプリの利用に起因して生じた、いかなる直接的または間接的な損害（データの損失、業務の中断、逸失利益などを含む）について、当サイトは一切の責任を負わないものとします。</li>
+                        <li>当サイトは、予告なく本アプリの仕様変更、提供の中断または終了を行うことができるものとします。</li>
+                    </ol>
+
+                    <h6 class="fw-bold mt-3">第4条（著作権）</h6>
+                    <p>本アプリおよび本ウェブサイトに含まれるコンテンツの著作権は、当サイトの制作者に帰属します。</p>
+
+                    <h6 class="fw-bold mt-3">第5条（禁止事項）</h6>
+                    <p>ご利用者様は、本アプリの利用にあたり、以下の行為を行ってはならないものとします。</p>
+                    <ul>
+                        <li>法令または公序良俗に違反する行為</li>
+                        <li>本アプリのソースコードの無断での再配布、販売（学習や個人的な改変を除く）</li>
+                        <li>当サイトの運営を妨害するおそれのある行為</li>
+                    </ul>
+
+                    <h6 class="fw-bold mt-3">第6条（規約の変更）</h6>
+                    <p>当サイトは、必要と判断した場合には、ご利用者様に通知することなくいつでも本規約を変更することができるものとします。</p>
+                    <p class="text-end mt-4">制定日: 2024年5月22日</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">閉じる</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
