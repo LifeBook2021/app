@@ -14,10 +14,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>カンバンボード - AIと創るJavaScriptツールキット</title>
     <meta name="description" content="タスクをカードで管理し、リスト間をドラッグ＆ドロップで移動できるカンバンボード。表形式表示や更新日時ソート機能も追加！詳細編集、ラベル、チェックリスト、コメント機能付き。Vue.jsとAIで開発。">
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Bootstrap Icons -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
+    <!-- Bootstrap CSS (5.3.0に更新) -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons (1.11.1に更新) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <!-- Custom CSS -->
     <link rel="stylesheet" href="../../assets/css/style.css"> <!-- 相対パス注意 -->
     <!-- Favicon -->
@@ -26,7 +26,7 @@
       body {
         padding-top: 59px;
       }
-      .screenshot { /* スクリーンショット画像用のスタイルを少し調整 */
+      .screenshot {
         max-width: 100%;
         height: auto;
         border: 1px solid #dee2e6;
@@ -34,8 +34,8 @@
         margin-bottom: 1rem;
         box-shadow: 0 .125rem .25rem rgba(0,0,0,.075);
       }
-      .list-group-item-info { /* 新機能のハイライト用 */
-          background-color: #e7f3fe; /* Bootstrap 5.0 beta1 の info 背景色に近いもの */
+      .list-group-item-info {
+          background-color: #cff4fc; /* Bootstrap 5.3 の info-subtle */
       }
     </style>
 </head>
@@ -69,7 +69,15 @@
                                 <li><a class="dropdown-item" href="../work-time-tracker/index.html">月次作業時間トラッカー</a></li>
                             </ul>
                         </li>
-                        <li class="nav-item"><a class="nav-link" href="../../ai-creation.html">AIと創るアイデア</a></li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="navbarStoryDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                AIと創るアイデア
+                            </a>
+                            <ul class="dropdown-menu" aria-labelledby="navbarStoryDropdown">
+                                <li><a class="dropdown-item" href="../../ai-creation.html">開発コンセプト</a></li>
+                                <li><a class="dropdown-item" href="../../ai-dev-story-tracker.html">開発日誌：作業時間トラッカー</a></li>
+                            </ul>
+                        </li>
                     </ul>
                 </div>
             </div>
@@ -80,15 +88,12 @@
         <div class="row">
             <div class="col-lg-8">
                  <article class="manual-section">
-                    <h1 class="mb-4">📋 カンバンボード (Kanban Board) <span class="badge bg-info text-dark ms-2">機能UP!</span></h1>
+                    <h1 class="mb-4">📋 カンバンボード <span class="badge bg-info text-dark ms-2">機能UP!</span></h1>
                     <p class="lead">タスクをカードとして視覚化し、「To Do」「進行中」「完了」などのリスト間をドラッグ＆ドロップで移動させて進捗を管理するツールです。<strong class="text-primary">新たに表形式表示と更新日時ソート機能が加わり、より柔軟なタスク管理が可能になりました！</strong></p>
 
                     <div class="text-center my-4">
-                        <!-- ▼▼▼ メインスクリーンショット更新推奨 ▼▼▼ -->
-                        <!-- 例: 新機能が少し見える画像、またはカンバンと表形式を組み合わせた画像など -->
                         <img src="../../assets/images/kanban-board-screenshot-new.png" alt="カンバンボードの画面（新機能対応）" class="img-fluid rounded border shadow-sm mb-3 screenshot">
-                        <!-- ▲▲▲ メインスクリーンショット更新推奨 ▲▲▲ -->
-                        <a href="https://LifeBook2021.github.io/app/Kanban/" target="_blank" rel="noopener noreferrer" class="btn btn-success btn-lg">
+                        <a href="app.html" target="_blank" rel="noopener noreferrer" class="btn btn-success btn-lg">
                             <i class="bi bi-play-circle me-2"></i>カンバンボードを使ってみる (無料)
                         </a>
                     </div>
@@ -103,12 +108,11 @@
                         <li><i class="bi bi-check-circle-fill text-success me-2"></i><strong>カードの色分け:</strong> カードごとに背景色を設定できます。</li>
                         <li><i class="bi bi-check-circle-fill text-success me-2"></i><strong>ボードタイトル編集:</strong> ボード全体のタイトルを編集できます。</li>
                         <li><i class="bi bi-check-circle-fill text-success me-2"></i><strong>データ保存/読込:</strong> ボード全体の状態をJSONファイルとして保存・読み込みできます。</li>
-                        <!-- ▼▼▼ 新機能追加 ▼▼▼ -->
                         <li><i class="bi bi-table text-primary me-2"></i><strong><span class="badge bg-info text-dark me-1">NEW!</span>表形式表示:</strong> タスクを一覧性の高い表形式で表示・確認できます。</li>
                         <li><i class="bi bi-sort-down text-primary me-2"></i><strong><span class="badge bg-info text-dark me-1">NEW!</span>更新日時表示とソート:</strong> 表形式で各カードの最終更新日時を表示。タスク名、期限日、更新日時などでタスクをソートできます。</li>
-                        <!-- ▲▲▲ 新機能追加 ▲▲▲ -->
                     </ul>
 
+                    <!-- ▼▼ ここから復元 ▼▼ -->
                     <h2>使い方マニュアル</h2>
 
                     <h3>画面構成</h3>
@@ -134,8 +138,7 @@
                         </li>
                         <li><strong>カード:</strong> 個々のタスクです。クリックで詳細モーダルが開きます。移動ハンドル<i class="bi bi-grip-vertical"></i>、削除ボタン<i class="bi bi-x-lg"></i>があります。</li>
                     </ol>
-
-                    <!-- ▼▼▼ 表形式表示の画面構成を追加 ▼▼▼ -->
+                    
                     <h4>表形式表示</h4>
                     <img src="../../assets/images/kanban-board-table-view.png" alt="カンバンボード 画面構成（表形式表示）" class="screenshot">
                     <ol>
@@ -148,22 +151,17 @@
                             </ul>
                         </li>
                     </ol>
-                    <!-- ▲▲▲ 表形式表示の画面構成を追加 ▲▲▲ -->
-
 
                     <h3>基本的な使い方</h3>
                      <ul class="list-group list-group-flush">
-                        <!-- ▼▼▼ 新機能の説明を先頭に移動・追記 ▼▼▼ -->
                         <li class="list-group-item list-group-item-info">
-                            <strong><span class="badge bg-primary me-1">NEW</span>表示形式の切り替え:</strong>
+                            <strong><span class="badge text-bg-primary me-1">NEW</span>表示形式の切り替え:</strong>
                             ヘッダーにある<kbd><i class="bi bi-table"></i> 表形式</kbd>ボタンをクリックすることで、表形式の表示に切り替えることができます。
                         </li>
                         <li class="list-group-item list-group-item-info">
-                            <strong><span class="badge bg-primary me-1">NEW</span>表形式でのタスクソート:</strong>
+                            <strong><span class="badge text-bg-primary me-1">NEW</span>表形式でのタスクソート:</strong>
                             表形式表示の際、テーブルの各列ヘッダー（「タスク名」「担当者」「期限日」「<strong class="fw-bold">更新日時</strong>」など）をクリックすると、その列のデータに基づいてタスクが昇順にソートされます。もう一度クリックすると降順にソートされます。これにより、例えば<strong class="fw-bold">「更新日時」でソートすれば、直近で作業したタスクや変更があったタスクを簡単に見つけることができます。</strong>
                         </li>
-                        <!-- ▲▲▲ 新機能の説明を先頭に移動・追記 ▲▲▲ -->
-
                         <li class="list-group-item"><strong>リストの追加 (カンバン表示時):</strong> ヘッダーの<kbd>リスト追加</kbd>ボタンをクリックします。</li>
                         <li class="list-group-item"><strong>リスト名の編集 (カンバン表示時):</strong> リストヘッダーのリスト名部分をクリックして編集します。</li>
                         <li class="list-group-item"><strong>リストの移動 (カンバン表示時):</strong> リストヘッダーの移動ハンドル<i class="bi bi-grip-vertical"></i>をドラッグ＆ドロップします。</li>
@@ -220,7 +218,7 @@
                         <li class="list-group-item"><strong>保存:</strong> ヘッダー右側の<kbd><i class="bi bi-download"></i> JSON保存</kbd>ボタンをクリックします。変更がある場合、ボタンは黄色<span class="badge bg-warning text-dark">!</span>で強調表示されます。<code>KBD[日付時刻].json</code>というファイル名でダウンロードされます。</li>
                         <li class="list-group-item"><strong>読込:</strong> ヘッダー右側の<kbd><i class="bi bi-upload"></i> JSON読込</kbd>ボタンをクリックし、保存したJSONファイルを選択します。現在のボード内容は上書きされます。読み込んだ日時はボタンの隣に表示されます。</li>
                     </ul>
-
+                    <!-- ▲▲ ここまで復元 ▲▲ -->
                  </article>
             </div>
              <div class="col-lg-4">
@@ -229,26 +227,17 @@
                         <div class="card-body">
                             <h5 class="card-title">アプリ情報</h5>
                             <ul class="list-unstyled">
-                                <!-- ▼▼▼ バージョンと最終更新日を更新 ▼▼▼ -->
                                 <li><strong>バージョン:</strong> 1.1 </li>
-                                <li><strong>最終更新:</strong> 2025/06/01</li>
-                                <!-- ▲▲▲ バージョンと最終更新日を更新 ▲▲▲ -->
-                                <li><strong>技術:</strong> HTML, CSS, Vue.js 2, Bootstrap 5, Vue.Draggable (SortableJS)</li>
+                                <li><strong>最終更新:</strong> 2024/06/01</li>
+                                <li><strong>技術:</strong> HTML, CSS, Vue.js, Bootstrap 5, Vue.Draggable</li>
                                 <li><strong>開発協力:</strong> Google AI Studio</li>
                             </ul>
-                            <a href="https://LifeBook2021.github.io/app/Kanban/" target="_blank" rel="noopener noreferrer" class="btn btn-success w-100 mb-2">
+                            <a href="app.html" target="_blank" rel="noopener noreferrer" class="btn btn-success w-100 mb-2">
                                 <i class="bi bi-play-circle me-2"></i>アプリを起動
                             </a>
                              <div>
                                 <small class="text-muted">
-                                    このアプリのソースコード (HTML, CSS, JavaScript) は、以下の手順で確認・保存できます。
-                                    <ul class="list-unstyled mt-2 mb-0" style="padding-left: 1em; text-indent: -1em;">
-                                        <li class="mb-1">1. 上記「アプリを起動」ボタンでアプリページを開きます。</li>
-                                        <li class="mb-1">2. ページ上で右クリックし、「ページのソースを表示」(または類似の名称) を選択します。</li>
-                                        <li class="mb-1">3. 表示されたコードを全選択 (<kbd>Ctrl</kbd>+<kbd>A</kbd> / <kbd>Cmd</kbd>+<kbd>A</kbd>) し、コピー (<kbd>Ctrl</kbd>+<kbd>C</kbd> / <kbd>Cmd</kbd>+<kbd>C</kbd>) します。</li>
-                                        <li class="mb-1">4. テキストエディタ (メモ帳, VS Code等) に貼り付け (<kbd>Ctrl</kbd>+<kbd>V</kbd> / <kbd>Cmd</kbd>+<kbd>V</kbd>) ます。</li>
-                                        <li>5. ファイル名を付けて保存します。HTMLファイル (<code>.html</code>) として保存し、文字コードは「UTF-8」を推奨します。(必要に応じ CSS/JS を分離)</li>
-                                    </ul>
+                                    このアプリは単一のHTMLファイルで動作します。ソースコードは、上記「アプリを起動」で開いたページ上で右クリックし、「ページのソースを表示」から確認・保存できます。
                                 </small>
                             </div>
                         </div>
@@ -256,8 +245,9 @@
                      <div class="card mt-4">
                          <div class="card-body">
                              <h5 class="card-title">開発ストーリー</h5>
-                             <p class="small">「Trelloのようなカンバンボードを作りたい」という動機から、AIにVue.jsを使った実装を依頼。基本的なドラッグ＆ドロップ機能から始め、モーダルでの詳細編集、ラベル、チェックリスト、コメント機能などをAIとの対話を通じて段階的に追加。さらにユーザービリティ向上のため、<strong class="text-info">表形式表示と更新日時によるソート機能</strong>をAIに相談しながら実装しました。Vue.jsのリアクティビティとコンポーネント化の理解が鍵となりました。</p>
-                             <a href="../../ai-creation.html" class="btn btn-outline-info btn-sm">AIとの開発をもっと詳しく</a>
+                             <p class="small">AIにVue.jsを使った実装を依頼し、ドラッグ＆ドロップから詳細編集、ラベル機能などを段階的に追加。さらにユーザービリティ向上のため、表形式表示と更新日時ソート機能をAIに相談しながら実装しました。</p>
+                             <a href="../../ai-creation.html" class="btn btn-outline-info w-100"><i class="bi bi-lightbulb me-1"></i>AI活用のコンセプトを見る</a>
+                             <a href="../../ai-dev-story-tracker.html" class="btn btn-outline-secondary w-100 mt-2"><i class="bi bi-book-half me-1"></i>別アプリの開発日誌も読む</a>
                          </div>
                      </div>
                  </aside>
@@ -267,17 +257,64 @@
 
     <footer class="footer mt-auto">
         <div class="container text-center">
-            <span class="text-muted">&copy; 2025 AIと創るJavaScriptツールキット. All Rights Reserved.</span>
-
+            <span class="text-muted">&copy; <span id="copyright-year"></span> AIと創るJavaScriptツールキット. All Rights Reserved.</span>
+            <script>document.getElementById('copyright-year').textContent = new Date().getFullYear();</script>
             <div class="mt-2">
                 <i class="bi bi-envelope me-1"></i>
                 <a href="mailto:lifebook20210120@gmail.com">lifebook20210120@gmail.com</a>
+                <span class="mx-2 text-muted">|</span>
+                <a href="#" data-bs-toggle="modal" data-bs-target="#termsModal">利用規約</a>
             </div>
         </div>
     </footer>
 
-    <!-- Bootstrap JS Bundle (Vue App needs to load its own scripts) -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- Note: Vue.js and Vue.Draggable are loaded within the Kanban app's HTML itself -->
+    <div class="modal fade" id="termsModal" tabindex="-1" aria-labelledby="termsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-scrollable modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="termsModalLabel">利用規約</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-start">
+                    <p>本ウェブサイトで提供するアプリケーション（以下「本アプリ」）をご利用いただくにあたり、以下の利用規約（以下「本規約」）を設けております。本アプリの利用を開始した時点で、本規約に同意したものとみなします。</p>
+                    <hr>
+                    <h6 class="fw-bold">第1条（本アプリの特性とデータの取り扱い）</h6>
+                    <ol>
+                        <li>本アプリは、すべての処理がご利用のブラウザ内で完結するローカルアプリケーションです。入力された情報や作成されたデータが、当サイトのサーバーや第三者に送信されることは一切ありません。</li>
+                        <li>データの保存は、ご利用者様自身の操作によるJSONファイルのダウンロードによって行われます。データの管理（バックアップ、保管、パスワード設定など）は、すべてご利用者様の責任において行ってください。</li>
+                    </ol>
+                    <h6 class="fw-bold mt-3">第2条（セキュリティと自己責任）</h6>
+                    <ol>
+                        <li>本アプリで作成・保存したJSONファイルの紛失、破損、情報漏洩などによって生じたいかなる損害についても、当サイトは一切の責任を負いません。</li>
+                        <li>機密情報、重要な個人情報、その他取り扱いに注意を要するデータの入力は、ご利用者様ご自身の判断と責任において行ってください。</li>
+                    </ol>
+                    <h6 class="fw-bold mt-3">第3条（免責事項）</h6>
+                    <ol>
+                        <li>当サイトは、本アプリの正確性、完全性、有用性、特定目的への適合性について、一切の保証をいたしません。</li>
+                        <li>本アプリの利用に起因して生じた、いかなる直接的または間接的な損害（データの損失、業務の中断、逸失利益などを含む）について、当サイトは一切の責任を負わないものとします。</li>
+                        <li>当サイトは、予告なく本アプリの仕様変更、提供の中断または終了を行うことができるものとします。</li>
+                    </ol>
+                    <h6 class="fw-bold mt-3">第4条（著作権）</h6>
+                    <p>本アプリおよび本ウェブサイトに含まれるコンテンツの著作権は、当サイトの制作者に帰属します。</p>
+                    <h6 class="fw-bold mt-3">第5条（禁止事項）</h6>
+                    <p>ご利用者様は、本アプリの利用にあたり、以下の行為を行ってはならないものとします。</p>
+                    <ul>
+                        <li>法令または公序良俗に違反する行為</li>
+                        <li>本アプリのソースコードの無断での再配布、販売（学習や個人的な改変を除く）</li>
+                        <li>当サイトの運営を妨害するおそれのある行為</li>
+                    </ul>
+                    <h6 class="fw-bold mt-3">第6条（規約の変更）</h6>
+                    <p>当サイトは、必要と判断した場合には、ご利用者様に通知することなくいつでも本規約を変更することができるものとします。</p>
+                    <p class="text-end mt-4">制定日: 2024年5月22日</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">閉じる</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS Bundle (5.3.0に更新) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
