@@ -2,23 +2,25 @@
 <html lang="ja">
 <head>
     <!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-XE2CWFLT80"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-XE2CWFLT80"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
 
-  gtag('config', 'G-XE2CWFLT80');
-</script>
+      gtag('config', 'G-XE2CWFLT80');
+    </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AIと創るアイデア - JavaScriptツールキット開発ストーリー</title>
     <meta name="description" content="プログラミング不要！生成AI(Google AI Studio等)を活用して、アイデアをJavaScriptのWebアプリとして形にするプロセスを紹介。開発のヒントやAIとの対話のコツも。">
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons (追加) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <!-- Custom CSS -->
     <link rel="stylesheet" href="assets/css/style.css">
-    <!-- Favicon (仮) -->
+    <!-- Favicon -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
     <style>
       body {
@@ -52,7 +54,9 @@
                                 <li><a class="dropdown-item" href="apps/schedule/index.html">スケジュールチェック</a></li>
                                 <li><a class="dropdown-item" href="apps/mindmap/index.html">マインドマップ</a></li>
                                 <li><a class="dropdown-item" href="apps/todolist/index.html">週間ToDoカレンダー</a></li>
-                                <li><a class="dropdown-item" href="../assign-management/index.html">アサイン管理</a></li>
+                                <!-- ▼ 修正点: パスを修正 ▼ -->
+                                <li><a class="dropdown-item" href="apps/assign-management/index.html">アサイン管理</a></li>
+                                <!-- ▲ 修正点: パスを修正 ▲ -->
                                 <li><a class="dropdown-item" href="apps/work-time-tracker/index.html">月次作業時間トラッカー</a></li>
                             </ul>
                         </li>
@@ -67,7 +71,9 @@
         <div class="row ai-creation-section">
             <div class="col-lg-8 offset-lg-2">
                 <h1 class="mb-4">AIと創るアイデアJavaScriptツールキット開発ストーリー</h1>
-                <p class="lead">このサイトで紹介している6つのWebアプリケーションは、特別なプログラミングスキルがなくても、生成AI（Google AI Studioなど）との対話を通じて開発されました。ここでは、そのプロセスやAI活用のポイントについてご紹介します。</p>
+                <!-- ▼ 修正点: アプリの数を「6つ」から「8つ」に更新 ▼ -->
+                <p class="lead">このサイトで紹介している8つのWebアプリケーションは、特別なプログラミングスキルがなくても、生成AI（Google AI Studioなど）との対話を通じて開発されました。ここでは、そのプロセスやAI活用のポイントについてご紹介します。</p>
+                <!-- ▲ 修正点: アプリの数を「6つ」から「8つ」に更新 ▲ -->
 
                 <hr class="my-4">
 
@@ -86,7 +92,6 @@
                 <p>しかし、これらのアイデアを実現するには、通常、HTML, CSS, JavaScriptといったWeb技術の知識、そして開発時間が必要です。そこで注目したのが、近年目覚ましい進化を遂げている<strong>生成AI</strong>でした。</p>
 
                 <div class="text-center my-4">
-                    <!-- ここにAIとの対話をイメージさせる画像を挿入 -->
                     <img src="assets/images/ai-dialog-image.png" alt="AIとの対話イメージ" class="img-fluid rounded shadow-sm">
                 </div>
 
@@ -95,38 +100,53 @@
                 <ol>
                     <li><strong>初期プロトタイプの依頼:</strong>
                        <p>「HTMLとJavaScriptで、ドラッグ＆ドロップできる付箋アプリの基本的なコードを作って」のように、まずは核となる機能を持つシンプルなコードをAIに生成してもらいます。</p>
-                       <p><strong>例 (付箋アプリ):</strong> 最初は、単に四角い要素を画面に表示し、ドラッグで移動できるだけの簡単なHTMLとJavaScriptコードからスタートしました。</p>
                     </li>
                     <li><strong>段階的な機能追加:</strong>
-                       <p>生成されたコードを実際に動かし、期待通りに動作するか確認します。そして、「付箋の色を変えられるようにしたい」「付箋の大きさを変えたい」「書いた内容をファイルに保存したい」といった具体的な機能追加の要望をAIに伝えます。</p>
-                       <p>AIは、既存のコードを考慮しながら、機能追加に必要なコード（HTMLの変更、CSSの追加、JavaScript関数の追加・修正など）を提案してくれます。</p>
+                       <p>「付箋の色を変えたい」「内容をファイルに保存したい」といった具体的な機能追加の要望をAIに伝えます。</p>
                     </li>
                     <li><strong>試行錯誤とデバッグ:</strong>
-                       <p>AIが生成したコードが常に完璧とは限りません。エラーが発生したり、意図した通りに動作しなかったりすることもあります。その場合は、「〇〇を実行するとエラーが出る」「××の動きがおかしい」のように、具体的な問題点をAIに伝え、修正案を求めます。</p>
-                       <p>実際にアプリを動かし、ブラウザの開発者ツールでエラーを確認したり、<strong>各アプリのデモページの「ページのソースを表示」機能で生成されたコードを直接確認</strong>しながら、AIへの指示を調整していく作業が欠かせません。</p>
-                       <p>時には、AIの提案を元に自分でコードを微調整したり、別の角度から指示を出し直したりする必要もありました。この試行錯誤のプロセスが、アプリの完成度を高める上で重要でした。</p>
-                        <!-- ここに試行錯誤やデバッグの様子を示すイメージ画像を挿入 -->
-                        <img src="assets/images/ai-debugging-image.png" alt="AIと試行錯誤するイメージ" class="img-fluid rounded shadow-sm my-3">
+                       <p>エラーが発生した場合、「〇〇を実行するとエラーが出る」のように具体的な問題点をAIに伝え、修正案を求めます。この試行錯誤がアプリの完成度を高めます。</p>
                     </li>
-                     <li><strong>ライブラリやフレームワークの活用 (カンバンボードの場合):</strong>
-                       <p>カンバンボードのように、ドラッグ＆ドロップ機能が複雑な場合は、AIに「Vue.jsとVue.Draggableを使ってカンバンボードを作りたい」と、特定のライブラリを指定して依頼することも有効でした。AIはライブラリの基本的な使い方に基づいたコードを生成してくれます。</p>
+                     <li><strong>ライブラリやフレームワークの活用:</strong>
+                       <p>複雑な機能は「Vue.jsを使ってカンバンボードを作りたい」のように、特定のライブラリを指定して効率的に開発を進めることも可能です。</p>
                     </li>
                 </ol>
+
+                <!-- ▼ ここから追加 ▼ -->
+                <hr class="my-5">
+                <h3 class="mb-4">具体的な開発事例：『月次作業時間トラッカー』の場合</h3>
+                <div class="card mb-4 shadow-sm">
+                    <div class="row g-0">
+                        <div class="col-md-4 text-center p-3 d-flex align-items-center justify-content-center">
+                            <img src="assets/images/work-time-tracker-screenshot.png" class="img-fluid rounded" alt="月次作業時間トラッカー スクリーンショット">
+                        </div>
+                        <div class="col-md-8">
+                            <div class="card-body">
+                                <h5 class="card-title">AI開発日誌：53回の対話でアプリは完成するのか？</h5>
+                                <p class="card-text">このサイトで最も複雑なアプリの一つである『月次作業時間トラッカー』は、どのようにして生まれたのでしょうか？</p>
+                                <p class="card-text">53回にわたるAIとのリアルな対話、エラーとの格闘、そして問題を突破した『Chatリセット』のテクニックまで、開発の全記録を公開しています。AIとの協働開発のリアルな現場をご覧ください。</p>
+                                <a href="ai-dev-story-tracker.html" class="btn btn-primary">
+                                    <i class="bi bi-book-half me-1"></i> 開発日誌の全記録を読む
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- ▲ ここまで追加 ▲ -->
+
 
                 <div class="highlight my-4">
                     <h4>AI活用のポイント</h4>
                     <ul>
-                        <li><strong>具体的に指示する:</strong> 「いい感じにして」ではなく、「ヘッダーに保存ボタンを追加して、クリックしたらJSON形式でデータをダウンロードできるようにして」のように、目的と手段を明確に伝えます。</li>
-                        <li><strong>小さく始める:</strong> 最初から完璧を目指さず、基本的な機能から始めて段階的に機能を追加していきます。</li>
-                        <li><strong>エラーを恐れない:</strong> エラーメッセージや問題点をAIにフィードバックすることで、より良いコードにたどり着けます。</li>
-                        <li><strong>既存コードを提示する:</strong> 機能追加や修正を依頼する際は、現在のコードをAIに提示すると、文脈を理解した適切な提案が得られやすくなります。</li>
-                        <li><strong>複数の選択肢を求める:</strong> 実装方法が複数考えられる場合、「他の方法はありますか？」と尋ねてみるのも有効です。</li>
+                        <li><strong>具体的に指示する:</strong> 「いい感じにして」ではなく、「ヘッダーに保存ボタンを追加して」のように、目的と手段を明確に伝えます。</li>
+                        <li><strong>小さく始める:</strong> 基本的な機能から始め、段階的に機能を追加していきます。</li>
+                        <li><strong>エラーを恐れない:</strong> エラーメッセージや問題点をAIにフィードバックすることが、より良いコードへの近道です。</li>
+                        <li><strong>既存コードを提示する:</strong> 機能追加や修正の際は、現在のコードをAIに提示すると、文脈を理解した提案が得られやすくなります。</li>
                     </ul>
                 </div>
 
                 <h2>コードが書けなくても、アイデアは形にできる</h2>
                 <p>このプロジェクトは、プログラミングの専門家でなくても、生成AIという強力なツールを使いこなせば、複雑なWebアプリケーションでさえも作り上げられることを示しています。</p>
-                <p>もちろん、基本的なHTMLやCSS、JavaScriptの構造を理解している方がAIとの対話はスムーズに進みますが、必ずしもゼロからコードを書ける必要はありません。紹介している各アプリのページから、実際の動作を確認し、ブラウザの機能でソースコードを見ることもできます。</p>
                 <p><strong>大切なのは、明確なアイデアと、AIと粘り強く対話し、試行錯誤を繰り返す意欲です。</strong></p>
                 <p>あなたも、頭の中にある「あったらいいな」を、AIと共に形にしてみませんか？このサイトのアプリが、その第一歩を踏み出すきっかけとなれば幸いです。</p>
 
@@ -137,16 +157,67 @@
         </div>
     </main>
 
+    <!-- ▼ 修正点: フッターをトップページと統一 ▼ -->
     <footer class="footer mt-auto">
         <div class="container text-center">
-            <span class="text-muted">&copy; 2025 AIと創るJavaScriptツールキット. All Rights Reserved.</span>
+            <span class="text-muted">&copy; <span id="copyright-year"></span> AIと創るJavaScriptツールキット. All Rights Reserved.</span>
+            <script>document.getElementById('copyright-year').textContent = new Date().getFullYear();</script>
 
             <div class="mt-2">
                 <i class="bi bi-envelope me-1"></i>
                 <a href="mailto:lifebook20210120@gmail.com">lifebook20210120@gmail.com</a>
+                <span class="mx-2 text-muted">|</span>
+                <a href="#" data-bs-toggle="modal" data-bs-target="#termsModal">利用規約</a>
             </div>
         </div>
     </footer>
+
+    <div class="modal fade" id="termsModal" tabindex="-1" aria-labelledby="termsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-scrollable modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="termsModalLabel">利用規約</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-start">
+                    <p>本ウェブサイトで提供するアプリケーション（以下「本アプリ」）をご利用いただくにあたり、以下の利用規約（以下「本規約」）を設けております。本アプリの利用を開始した時点で、本規約に同意したものとみなします。</p>
+                    <hr>
+                    <h6 class="fw-bold">第1条（本アプリの特性とデータの取り扱い）</h6>
+                    <ol>
+                        <li>本アプリは、すべての処理がご利用のブラウザ内で完結するローカルアプリケーションです。入力された情報や作成されたデータが、当サイトのサーバーや第三者に送信されることは一切ありません。</li>
+                        <li>データの保存は、ご利用者様自身の操作によるJSONファイルのダウンロードによって行われます。データの管理（バックアップ、保管、パスワード設定など）は、すべてご利用者様の責任において行ってください。</li>
+                    </ol>
+                    <h6 class="fw-bold mt-3">第2条（セキュリティと自己責任）</h6>
+                    <ol>
+                        <li>本アプリで作成・保存したJSONファイルの紛失、破損、情報漏洩などによって生じたいかなる損害についても、当サイトは一切の責任を負いません。</li>
+                        <li>機密情報、重要な個人情報、その他取り扱いに注意を要するデータの入力は、ご利用者様ご自身の判断と責任において行ってください。</li>
+                    </ol>
+                    <h6 class="fw-bold mt-3">第3条（免責事項）</h6>
+                    <ol>
+                        <li>当サイトは、本アプリの正確性、完全性、有用性、特定目的への適合性について、一切の保証をいたしません。</li>
+                        <li>本アプリの利用に起因して生じた、いかなる直接的または間接的な損害（データの損失、業務の中断、逸失利益などを含む）について、当サイトは一切の責任を負わないものとします。</li>
+                        <li>当サイトは、予告なく本アプリの仕様変更、提供の中断または終了を行うことができるものとします。</li>
+                    </ol>
+                    <h6 class="fw-bold mt-3">第4条（著作権）</h6>
+                    <p>本アプリおよび本ウェブサイトに含まれるコンテンツの著作権は、当サイトの制作者に帰属します。</p>
+                    <h6 class="fw-bold mt-3">第5条（禁止事項）</h6>
+                    <p>ご利用者様は、本アプリの利用にあたり、以下の行為を行ってはならないものとします。</p>
+                    <ul>
+                        <li>法令または公序良俗に違反する行為</li>
+                        <li>本アプリのソースコードの無断での再配布、販売（学習や個人的な改変を除く）</li>
+                        <li>当サイトの運営を妨害するおそれのある行為</li>
+                    </ul>
+                    <h6 class="fw-bold mt-3">第6条（規約の変更）</h6>
+                    <p>当サイトは、必要と判断した場合には、ご利用者様に通知することなくいつでも本規約を変更することができるものとします。</p>
+                    <p class="text-end mt-4">制定日: 2024年5月22日</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">閉じる</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- ▲ 修正点: フッターをトップページと統一 ▲ -->
 
     <!-- Bootstrap JS Bundle -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
