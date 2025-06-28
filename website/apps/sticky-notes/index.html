@@ -16,6 +16,8 @@
     <meta name="description" content="自由な発想を書き留めるデジタル付箋アプリ。ドラッグ＆ドロップ、リサイズ、色分け、整列、JSON保存/読込に対応。AIを活用して開発。">
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons (追加) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <!-- Custom CSS -->
     <link rel="stylesheet" href="../../assets/css/style.css"> <!-- 相対パス注意 -->
     <!-- Favicon -->
@@ -23,6 +25,14 @@
     <style>
       body {
         padding-top: 59px;
+      }
+      .screenshot {
+        max-width: 100%;
+        height: auto;
+        border: 1px solid #dee2e6;
+        border-radius: .25rem;
+        margin-bottom: 1rem;
+        box-shadow: 0 .125rem .25rem rgba(0,0,0,.075);
       }
     </style>
 </head>
@@ -56,7 +66,17 @@
                                 <li><a class="dropdown-item" href="../work-time-tracker/index.html">月次作業時間トラッカー</a></li>
                             </ul>
                         </li>
-                        <li class="nav-item"><a class="nav-link" href="../../ai-creation.html">AIと創るアイデア</a></li>
+                        <!-- ▼ ここから修正 ▼ -->
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="navbarStoryDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                AIと創るアイデア
+                            </a>
+                            <ul class="dropdown-menu" aria-labelledby="navbarStoryDropdown">
+                                <li><a class="dropdown-item" href="../../ai-creation.html">開発コンセプト</a></li>
+                                <li><a class="dropdown-item" href="../../ai-dev-story-tracker.html">開発日誌：作業時間トラッカー</a></li>
+                            </ul>
+                        </li>
+                        <!-- ▲ ここまで修正 ▲ -->
                     </ul>
                 </div>
             </div>
@@ -67,13 +87,12 @@
         <div class="row">
             <div class="col-lg-8">
                 <article class="manual-section">
-                    <h1 class="mb-4">📝 付箋アプリ (Sticky Notes)</h1>
+                    <h1 class="mb-4">📝 付箋アプリ</h1>
                     <p class="lead">アイデアやタスクをデジタルな付箋に書き留め、自由に配置・整理できるシンプルなツールです。</p>
 
                     <div class="text-center my-4">
-                        <!-- ここに付箋アプリのメインスクリーンショット画像を挿入 -->
                         <img src="../../assets/images/sticky-notes-screenshot.png" alt="付箋アプリの画面" class="img-fluid rounded border shadow-sm mb-3 screenshot">
-                        <a href="https://LifeBook2021.github.io/app/Fusen/" target="_blank" rel="noopener noreferrer" class="btn btn-success btn-lg">
+                        <a href="app.html" target="_blank" rel="noopener noreferrer" class="btn btn-success btn-lg">
                             <i class="bi bi-play-circle me-2"></i>付箋アプリを使ってみる (無料)
                         </a>
                     </div>
@@ -92,7 +111,6 @@
                     <h2>使い方マニュアル</h2>
 
                     <h3>画面構成</h3>
-                    <!-- ここに付箋アプリの画面構成を示す画像を挿入 (ヘッダー、ボード、付箋を指し示す) -->
                     <img src="../../assets/images/sticky-notes-layout.png" alt="付箋アプリ 画面構成" class="screenshot">
                     <ol>
                         <li><strong>ヘッダー:</strong> アプリタイトルと各種操作ボタンがあります。
@@ -107,37 +125,6 @@
                         <li><strong>ボード:</strong> 付箋を配置するメインエリアです。背景をドラッグすると表示範囲を移動（パン）できます。</li>
                         <li><strong>付箋:</strong> 個々のメモです。タイトルと本文を編集できます。</li>
                     </ol>
-
-                    <h3>基本的な使い方</h3>
-                    <ul class="list-group list-group-flush">
-                        <li class="list-group-item"><strong>付箋の追加:</strong> ヘッダーの<kbd>付箋を追加</kbd>ボタンをクリックします。新しい付箋がボードの左上に追加されます。</li>
-                        <li class="list-group-item"><strong>テキストの編集:</strong> 付箋内のタイトル（太字部分）または本文をクリックすると編集モードになります。編集が終わったら、付箋外をクリックするか<kbd>Enter</kbd>キー（タイトル編集中は不可、本文編集中はShift+Enterで改行）を押します。</li>
-                        <li class="list-group-item"><strong>付箋の移動:</strong> 付箋の上部（タイトル部分など、テキスト編集エリアやボタン以外）をドラッグ＆ドロップします。</li>
-                        <li class="list-group-item"><strong>付箋のリサイズ:</strong> 付箋右下の四角いハンドル<img src="../../assets/images/resize-handle-icon.png" alt="リサイズハンドル" style="width:24px; height:24px; vertical-align:middle; border:1px solid #ccc;">をドラッグします。</li>
-                        <li class="list-group-item"><strong>色の変更:</strong> 付箋右上の色アイコン<i class="bi bi-palette"></i>をクリックするとカラーパレットが表示されます。好きな色をクリックして選択します。</li>
-                         <!-- ここにカラーパレットの操作を示す画像を挿入 -->
-                         <img src="../../assets/images/sticky-notes-color-palette.png" alt="カラーパレット" class="screenshot mt-2" style="max-width: 200px;">
-                        <li class="list-group-item"><strong>付箋の削除:</strong> 付箋右上の<kbd>×</kbd>ボタンをクリックします。</li>
-                        <li class="list-group-item"><strong>ボードの操作:</strong>
-                            <ul>
-                                <li><strong>パン:</strong> ボードの背景（付箋がない部分）をドラッグします。</li>
-                                <li><strong>ズーム:</strong> ヘッダーの<kbd>+</kbd>/<kbd>-</kbd>ボタン、数値入力、または<kbd>Ctrl</kbd>キー（Macは<kbd>Cmd</kbd>）を押しながらマウスホイールを操作します。</li>
-                                <li><strong>全体表示:</strong> ヘッダーの<kbd>全体</kbd>ボタンをクリックすると、全ての付箋が画面内に収まるように調整されます。</li>
-                            </ul>
-                        </li>
-                    </ul>
-
-                    <h3>データの保存と読込</h3>
-                    <ul class="list-group list-group-flush">
-                        <li class="list-group-item"><strong>保存:</strong> ヘッダーの<kbd>JSON保存</kbd>ボタンをクリックすると、<code>FSN[日付時刻].json</code>というファイル名でダウンロードが開始されます。</li>
-                        <li class="list-group-item"><strong>読込:</strong> ヘッダーの<kbd>JSON読込</kbd>ボタンをクリックし、保存したJSONファイルを選択します。現在のボード内容は上書きされます。</li>
-                    </ul>
-
-                    <h3>整列機能</h3>
-                    <p>ヘッダーの<kbd>整列</kbd>ボタンをクリックすると、付箋が色ごとに列にまとめられ、作成日時順に並べ替えられます。</p>
-                    <!-- ここに整列前後の比較画像を挿入 -->
-                    <img src="../../assets/images/sticky-notes-align.gif" alt="付箋の整列機能デモ" class="screenshot">
-
                 </article>
             </div>
             <div class="col-lg-4">
@@ -147,50 +134,96 @@
                             <h5 class="card-title">アプリ情報</h5>
                             <ul class="list-unstyled">
                                 <li><strong>バージョン:</strong> 1.0</li>
-                                <li><strong>最終更新:</strong> 2025/04/30</li> <!-- 適宜更新 -->
-                                <li><strong>技術:</strong> HTML, CSS, Vanilla JavaScript</li>
+                                <li><strong>最終更新:</strong> 2024/04/30</li>
+                                <li><strong>技術:</strong> HTML, CSS, JavaScript</li>
                                 <li><strong>開発協力:</strong> Google AI Studio</li>
                             </ul>
-                            <a href="https://LifeBook2021.github.io/app/Fusen/" target="_blank" rel="noopener noreferrer" class="btn btn-success w-100 mb-2">
+                            <a href="app.html" target="_blank" rel="noopener noreferrer" class="btn btn-success w-100 mb-2">
                                 <i class="bi bi-play-circle me-2"></i>アプリを起動
                             </a>
                              <div>
                                 <small class="text-muted">
-                                    このアプリのソースコード (HTML, CSS, JavaScript) は、以下の手順で確認・保存できます。
-                                    <ul class="list-unstyled mt-2 mb-0" style="padding-left: 1em; text-indent: -1em;">
-                                        <li class="mb-1">1. 上記「アプリを起動」ボタンでアプリページを開きます。</li>
-                                        <li class="mb-1">2. ページ上で右クリックし、「ページのソースを表示」(または類似の名称) を選択します。</li>
-                                        <li class="mb-1">3. 表示されたコードを全選択 (<kbd>Ctrl</kbd>+<kbd>A</kbd> / <kbd>Cmd</kbd>+<kbd>A</kbd>) し、コピー (<kbd>Ctrl</kbd>+<kbd>C</kbd> / <kbd>Cmd</kbd>+<kbd>C</kbd>) します。</li>
-                                        <li class="mb-1">4. テキストエディタ (メモ帳, VS Code等) に貼り付け (<kbd>Ctrl</kbd>+<kbd>V</kbd> / <kbd>Cmd</kbd>+<kbd>V</kbd>) ます。</li>
-                                        <li>5. ファイル名を付けて保存します。HTMLファイル (<code>.html</code>) として保存し、文字コードは「UTF-8」を推奨します。(必要に応じ CSS/JS を分離)</li>
-                                    </ul>
+                                    このアプリは単一のHTMLファイルで動作します。ソースコードは、上記「アプリを起動」で開いたページ上で右クリックし、「ページのソースを表示」から確認・保存できます。
                                 </small>
                             </div>
                         </div>
                     </div>
 
+                    <!-- ▼ ここから修正 ▼ -->
                     <div class="card mt-4">
                          <div class="card-body">
                              <h5 class="card-title">開発ストーリー</h5>
-                             <p class="small">最初は単純なメモ機能から始まりました。AIに「付箋のようにドラッグで動かせるようにしたい」「色を変えたい」「大きさを変えたい」と段階的に指示を出すことで、JavaScriptのコードが生成され、機能が追加されていきました。データ保存機能の実装は特に試行錯誤が必要でした。</p>
-                             <a href="../../ai-creation.html" class="btn btn-outline-info btn-sm">AIとの開発をもっと詳しく</a>
+                             <p class="small">単純なメモ機能から始まり、AIに「ドラッグで動かしたい」「色や大きさを変えたい」と段階的に指示を出すことで機能を追加。データ保存機能の実装は特に試行錯誤を重ねました。</p>
+                             <a href="../../ai-creation.html" class="btn btn-outline-info w-100"><i class="bi bi-lightbulb me-1"></i>AI活用のコンセプトを見る</a>
+                             <a href="../../ai-dev-story-tracker.html" class="btn btn-outline-secondary w-100 mt-2"><i class="bi bi-book-half me-1"></i>別アプリの開発日誌も読む</a>
                          </div>
                      </div>
+                     <!-- ▲ ここまで修正 ▲ -->
                 </aside>
             </div>
         </div>
     </main>
 
+    <!-- ▼ ここから修正 ▼ -->
     <footer class="footer mt-auto">
         <div class="container text-center">
-            <span class="text-muted">&copy; 2025 AIと創るJavaScriptツールキット. All Rights Reserved.</span>
-
+            <span class="text-muted">&copy; <span id="copyright-year"></span> AIと創るJavaScriptツールキット. All Rights Reserved.</span>
+            <script>document.getElementById('copyright-year').textContent = new Date().getFullYear();</script>
             <div class="mt-2">
                 <i class="bi bi-envelope me-1"></i>
                 <a href="mailto:lifebook20210120@gmail.com">lifebook20210120@gmail.com</a>
+                <span class="mx-2 text-muted">|</span>
+                <a href="#" data-bs-toggle="modal" data-bs-target="#termsModal">利用規約</a>
             </div>
         </div>
     </footer>
+
+    <div class="modal fade" id="termsModal" tabindex="-1" aria-labelledby="termsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-scrollable modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="termsModalLabel">利用規約</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-start">
+                    <p>本ウェブサイトで提供するアプリケーション（以下「本アプリ」）をご利用いただくにあたり、以下の利用規約（以下「本規約」）を設けております。本アプリの利用を開始した時点で、本規約に同意したものとみなします。</p>
+                    <hr>
+                    <h6 class="fw-bold">第1条（本アプリの特性とデータの取り扱い）</h6>
+                    <ol>
+                        <li>本アプリは、すべての処理がご利用のブラウザ内で完結するローカルアプリケーションです。入力された情報や作成されたデータが、当サイトのサーバーや第三者に送信されることは一切ありません。</li>
+                        <li>データの保存は、ご利用者様自身の操作によるJSONファイルのダウンロードによって行われます。データの管理（バックアップ、保管、パスワード設定など）は、すべてご利用者様の責任において行ってください。</li>
+                    </ol>
+                    <h6 class="fw-bold mt-3">第2条（セキュリティと自己責任）</h6>
+                    <ol>
+                        <li>本アプリで作成・保存したJSONファイルの紛失、破損、情報漏洩などによって生じたいかなる損害についても、当サイトは一切の責任を負いません。</li>
+                        <li>機密情報、重要な個人情報、その他取り扱いに注意を要するデータの入力は、ご利用者様ご自身の判断と責任において行ってください。</li>
+                    </ol>
+                    <h6 class="fw-bold mt-3">第3条（免責事項）</h6>
+                    <ol>
+                        <li>当サイトは、本アプリの正確性、完全性、有用性、特定目的への適合性について、一切の保証をいたしません。</li>
+                        <li>本アプリの利用に起因して生じた、いかなる直接的または間接的な損害（データの損失、業務の中断、逸失利益などを含む）について、当サイトは一切の責任を負わないものとします。</li>
+                        <li>当サイトは、予告なく本アプリの仕様変更、提供の中断または終了を行うことができるものとします。</li>
+                    </ol>
+                    <h6 class="fw-bold mt-3">第4条（著作権）</h6>
+                    <p>本アプリおよび本ウェブサイトに含まれるコンテンツの著作権は、当サイトの制作者に帰属します。</p>
+                    <h6 class="fw-bold mt-3">第5条（禁止事項）</h6>
+                    <p>ご利用者様は、本アプリの利用にあたり、以下の行為を行ってはならないものとします。</p>
+                    <ul>
+                        <li>法令または公序良俗に違反する行為</li>
+                        <li>本アプリのソースコードの無断での再配布、販売（学習や個人的な改変を除く）</li>
+                        <li>当サイトの運営を妨害するおそれのある行為</li>
+                    </ul>
+                    <h6 class="fw-bold mt-3">第6条（規約の変更）</h6>
+                    <p>当サイトは、必要と判断した場合には、ご利用者様に通知することなくいつでも本規約を変更することができるものとします。</p>
+                    <p class="text-end mt-4">制定日: 2024年5月22日</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">閉じる</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- ▲ ここまで修正 ▲ -->
 
     <!-- Bootstrap JS Bundle -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
