@@ -15,9 +15,11 @@
     <title>月次作業時間トラッカー - AIと創るJavaScriptツールキット</title>
     <meta name="description" content="日々の作業時間をタイムラインやカレンダーで直感的に記録・可視化するツール。タイマー計測や強力な集計、CSV出力機能で、正確な工数管理と業務改善をサポートします。">
     <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- ▼ 修正点: Bootstrapのバージョンをサイト全体で統一 ▼ -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- ▲ 修正点: Bootstrapのバージョンをサイト全体で統一 ▲ -->
     <!-- Bootstrap Icons -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <!-- Custom CSS -->
     <link rel="stylesheet" href="../../assets/css/style.css"> <!-- 相対パス注意 -->
     <!-- Favicon -->
@@ -66,7 +68,17 @@
                                 <li><a class="dropdown-item active" aria-current="page" href="index.html">月次作業時間トラッカー</a></li>
                             </ul>
                         </li>
-                        <li class="nav-item"><a class="nav-link" href="../../ai-creation.html">AIと創るアイデア</a></li>
+                        <!-- ▼ ここから修正 ▼ -->
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="navbarStoryDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                AIと創るアイデア
+                            </a>
+                            <ul class="dropdown-menu" aria-labelledby="navbarStoryDropdown">
+                                <li><a class="dropdown-item" href="../../ai-creation.html">開発コンセプト</a></li>
+                                <li><a class="dropdown-item" href="../../ai-dev-story-tracker.html">開発日誌：作業時間トラッカー</a></li>
+                            </ul>
+                        </li>
+                        <!-- ▲ ここまで修正 ▲ -->
                     </ul>
                 </div>
             </div>
@@ -82,8 +94,7 @@
 
                     <div class="text-center my-4">
                         <img src="../../assets/images/work-time-tracker-screenshot.png" alt="月次作業時間トラッカーの画面" class="img-fluid rounded border shadow-sm mb-3 screenshot">
-                        <!-- 修正点: パスを更新 -->
-                        <a href="https://lifebook2021.github.io/app/work-time-tracker/index.html" target="_blank" rel="noopener noreferrer" class="btn btn-success btn-lg">
+                        <a href="app.html" target="_blank" rel="noopener noreferrer" class="btn btn-success btn-lg">
                             <i class="bi bi-play-circle me-2"></i>月次作業時間トラッカーを使ってみる (無料)
                         </a>
                     </div>
@@ -157,42 +168,35 @@
                             <h5 class="card-title">アプリ情報</h5>
                             <ul class="list-unstyled">
                                 <li><strong>バージョン:</strong> 1.0</li>
-                                <!-- 修正点: 最終更新日を更新 -->
-                                <li><strong>最終更新:</strong> 2025/06/22</li>
+                                <li><strong>最終更新:</strong> 2024/06/22</li>
                                 <li><strong>技術:</strong> HTML, CSS, JavaScript, SortableJS</li>
                                 <li><strong>開発協力:</strong> Google AI Studio</li>
                             </ul>
-                            <!-- 修正点: パスを更新 -->
-                            <a href="https://lifebook2021.github.io/app/work-time-tracker/index.html" target="_blank" rel="noopener noreferrer" class="btn btn-success w-100 mb-2">
+                            <a href="app.html" target="_blank" rel="noopener noreferrer" class="btn btn-success w-100 mb-2">
                                 <i class="bi bi-play-circle me-2"></i>アプリを起動
                             </a>
                              <div>
                                 <small class="text-muted">
-                                    このアプリのソースコード (HTML, CSS, JavaScript) は、以下の手順で確認・保存できます。
-                                    <ul class="list-unstyled mt-2 mb-0" style="padding-left: 1em; text-indent: -1em;">
-                                        <li class="mb-1">1. 上記「アプリを起動」ボタンでアプリページを開きます。</li>
-                                        <li class="mb-1">2. ページ上で右クリックし、「ページのソースを表示」(または類似の名称) を選択します。</li>
-                                        <li class="mb-1">3. 表示されたコードを全選択 (<kbd>Ctrl</kbd>+<kbd>A</kbd> / <kbd>Cmd</kbd>+<kbd>A</kbd>) し、コピー (<kbd>Ctrl</kbd>+<kbd>C</kbd> / <kbd>Cmd</kbd>+<kbd>C</kbd>) します。</li>
-                                        <li class="mb-1">4. テキストエディタ (メモ帳, VS Code等) に貼り付け (<kbd>Ctrl</kbd>+<kbd>V</kbd> / <kbd>Cmd</kbd>+<kbd>V</kbd>) ます。</li>
-                                        <li>5. ファイル名を付けて保存します。HTMLファイル (<code>.html</code>) として保存し、文字コードは「UTF-8」を推奨します。</li>
-                                    </ul>
+                                    このアプリは単一のHTMLファイルで動作します。ソースコードは、上記「アプリを起動」で開いたページ上で右クリックし、「ページのソースを表示」から確認・保存できます。
                                 </small>
                             </div>
                         </div>
                     </div>
+                     <!-- ▼ ここから修正 ▼ -->
                      <div class="card mt-4">
                          <div class="card-body">
                              <h5 class="card-title">開発ストーリー</h5>
-                             <p class="small">「スプレッドシートでの工数管理は入力が面倒で、後から見返しにくい…」という悩みを解決するため、より直感的で視覚的なツールを発案。AIに「タイムラインで作業時間を記録したい」と相談し、コアとなるドラッグ＆ドロップ機能を実装。その後、月次ビュー、タイマー、集計機能などをAIとの対話を重ねて段階的に追加し、現在の形になりました。</p>
-                             <a href="../../ai-creation.html" class="btn btn-outline-info btn-sm">AIとの開発をもっと詳しく</a>
+                             <p class="small">「スプレッドシートでの工数管理は面倒…」という悩みを解決するため、より直感的で視覚的なツールを発案。AIとの53回にわたる対話、エラーとの格闘、そして『Chatリセット』というテクニックを駆使してこのアプリは完成しました。</p>
+                             <a href="../../ai-dev-story-tracker.html" class="btn btn-info w-100 mb-2"><i class="bi bi-book-half me-1"></i>このアプリの開発日誌を読む</a>
+                             <a href="../../ai-creation.html" class="btn btn-outline-info w-100"><i class="bi bi-lightbulb me-1"></i>AI活用のコンセプトを見る</a>
                          </div>
                      </div>
+                     <!-- ▲ ここまで修正 ▲ -->
                  </aside>
             </div>
         </div>
     </main>
 
-    <!-- 修正点: フッターをトップページと統一 -->
     <footer class="footer mt-auto">
         <div class="container text-center">
             <span class="text-muted">&copy; <span id="copyright-year"></span> AIと創るJavaScriptツールキット. All Rights Reserved.</span>
@@ -206,7 +210,6 @@
         </div>
     </footer>
 
-    <!-- 修正点: 利用規約のモーダルを追加 -->
     <div class="modal fade" id="termsModal" tabindex="-1" aria-labelledby="termsModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-scrollable modal-lg">
             <div class="modal-content">
@@ -215,7 +218,8 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body text-start">
-                    <p>本ウェブサイトで提供するアプリケーション（以下「本アプリ」）をご利用いただくにあたり、以下の利用規約（以下「本規約」）を設けております。本アプリの利用を開始した時点で、本規約に同意したものとみなします。</p>
+                    <!-- 利用規約の本文（省略） -->
+                     <p>本ウェブサイトで提供するアプリケーション（以下「本アプリ」）をご利用いただくにあたり、以下の利用規約（以下「本規約」）を設けております。本アプリの利用を開始した時点で、本規約に同意したものとみなします。</p>
                     <hr>
                     <h6 class="fw-bold">第1条（本アプリの特性とデータの取り扱い）</h6>
                     <ol>
@@ -252,13 +256,14 @@
                     <p class="text-end mt-4">制定日: 2024年5月22日</p>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">閉じる</button>
+                    <button type="button" class="btn-secondary" data-bs-dismiss="modal">閉じる</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Bootstrap JS Bundle -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- ▼ 修正点: BootstrapのJSをサイト全体で統一 ▼ -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- ▲ 修正点: BootstrapのJSをサイト全体で統一 ▲ -->
 </body>
 </html>
