@@ -14,10 +14,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>アサイン管理 - AIと創るJavaScriptツールキット</title>
     <meta name="description" content="メンバーと業務のリソース状況をタイムラインで可視化するアサイン管理ツール。月別の負荷状況の把握や、新規業務のアサインシミュレーション機能で、人員配置計画を強力にサポートします。">
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Bootstrap Icons -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
+    <!-- Bootstrap CSS (5.3.0に更新) -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons (1.11.1に更新) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <!-- Custom CSS -->
     <link rel="stylesheet" href="../../assets/css/style.css"> <!-- 相対パス注意 -->
     <!-- Favicon -->
@@ -26,7 +26,7 @@
       body {
         padding-top: 59px;
       }
-      .screenshot { /* スクリーンショット画像用のスタイル */
+      .screenshot {
         max-width: 100%;
         height: auto;
         border: 1px solid #dee2e6;
@@ -66,7 +66,15 @@
                                 <li><a class="dropdown-item" href="../work-time-tracker/index.html">月次作業時間トラッカー</a></li>
                             </ul>
                         </li>
-                        <li class="nav-item"><a class="nav-link" href="../../ai-creation.html">AIと創るアイデア</a></li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="navbarStoryDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                AIと創るアイデア
+                            </a>
+                            <ul class="dropdown-menu" aria-labelledby="navbarStoryDropdown">
+                                <li><a class="dropdown-item" href="../../ai-creation.html">開発コンセプト</a></li>
+                                <li><a class="dropdown-item" href="../../ai-dev-story-tracker.html">開発日誌：作業時間トラッカー</a></li>
+                            </ul>
+                        </li>
                     </ul>
                 </div>
             </div>
@@ -77,12 +85,12 @@
         <div class="row">
             <div class="col-lg-8">
                  <article class="manual-section">
-                    <h1 class="mb-4">👥 アサイン管理 (Assign Management) <span class="badge bg-info text-dark ms-2">機能UP!</span></h1>
+                    <h1 class="mb-4">👥 アサイン管理 <span class="badge bg-info text-dark ms-2">機能UP!</span></h1>
                     <p class="lead">メンバーと業務（タスク）のリソース状況を月別のタイムライン形式で可視化するツールです。<strong class="text-primary">メンバーごとの負荷状況の確認や、新規業務のアサインシミュレーション</strong>ができ、プロジェクトの人員配置計画を強力にサポートします。</p>
 
                     <div class="text-center my-4">
                         <img src="../../assets/images/assign-management-screenshot.png" alt="アサイン管理の画面" class="img-fluid rounded border shadow-sm mb-3 screenshot">
-                        <a href="https://LifeBook2021.github.io/app/assign-management/" target="_blank" rel="noopener noreferrer" class="btn btn-success btn-lg">
+                        <a href="app.html" target="_blank" rel="noopener noreferrer" class="btn btn-success btn-lg">
                             <i class="bi bi-play-circle me-2"></i>アサイン管理を使ってみる (無料)
                         </a>
                     </div>
@@ -98,9 +106,9 @@
                         <li><i class="bi bi-check-circle-fill text-success me-2"></i><strong>データ保存/読込:</strong> 全ての状態をJSONファイルとして保存・読み込みでき、チームでの共有やバックアップが容易です。</li>
                     </ul>
 
+                    <!-- ▼▼ ここから復元 ▼▼ -->
                     <h2>使い方マニュアル</h2>
-
-                    <!-- 変更点: 「画面構成」セクションを復活させ、構成を整理 -->
+                    
                     <h3>画面構成</h3>
                     <p>画面は大きく「コントロールエリア」「タイムラインエリア」「シミュレーションエリア」の3つに分かれています。</p>
                     <img src="../../assets/images/assign-management-layout.png" alt="アサイン管理 画面構成" class="screenshot">
@@ -137,7 +145,6 @@
                         <li class="list-group-item"><strong>6. データの保存:</strong> <kbd>JSON保存</kbd>で作業内容を保存し、次回<kbd>JSON読込</kbd>から再開できます。</li>
                     </ul>
 
-                    <!-- 変更点: タイムラインとシミュレーションの詳細説明セクションを追加 -->
                     <h3>主な機能の詳細</h3>
                     
                     <h4>タイムラインを使いこなす (2つの表示モード)</h4>
@@ -164,6 +171,7 @@
                         <li class="list-group-item"><strong>保存:</strong> コントロールエリアの<kbd>JSON保存</kbd>ボタンをクリックします。<code>ASM[日付時刻].json</code>というファイル名でダウンロードされます。</li>
                         <li class="list-group-item"><strong>読込:</strong> <kbd>JSON読込</kbd>ボタンをクリックし、保存したJSONファイルを選択します。現在のデータは上書きされます。</li>
                     </ul>
+                    <!-- ▲▲ ここまで復元 ▲▲ -->
                  </article>
             </div>
              <div class="col-lg-4">
@@ -173,23 +181,16 @@
                             <h5 class="card-title">アプリ情報</h5>
                             <ul class="list-unstyled">
                                 <li><strong>バージョン:</strong> 1.3</li>
-                                <li><strong>最終更新:</strong> 2025/06/15</li>
+                                <li><strong>最終更新:</strong> 2024/06/15</li>
                                 <li><strong>技術:</strong> HTML, CSS, JavaScript, SortableJS, Bootstrap 5</li>
                                 <li><strong>開発協力:</strong> Google AI Studio</li>
                             </ul>
-                            <a href="https://LifeBook2021.github.io/app/assign-management/" target="_blank" rel="noopener noreferrer" class="btn btn-success w-100 mb-2">
+                            <a href="app.html" target="_blank" rel="noopener noreferrer" class="btn btn-success w-100 mb-2">
                                 <i class="bi bi-play-circle me-2"></i>アプリを起動
                             </a>
                              <div>
                                 <small class="text-muted">
-                                    このアプリのソースコード (HTML, CSS, JavaScript) は、以下の手順で確認・保存できます。
-                                    <ul class="list-unstyled mt-2 mb-0" style="padding-left: 1em; text-indent: -1em;">
-                                        <li class="mb-1">1. 上記「アプリを起動」ボタンでアプリページを開きます。</li>
-                                        <li class="mb-1">2. ページ上で右クリックし、「ページのソースを表示」(または類似の名称) を選択します。</li>
-                                        <li class="mb-1">3. 表示されたコードを全選択 (<kbd>Ctrl</kbd>+<kbd>A</kbd> / <kbd>Cmd</kbd>+<kbd>A</kbd>) し、コピー (<kbd>Ctrl</kbd>+<kbd>C</kbd> / <kbd>Cmd</kbd>+<kbd>C</kbd>) します。</li>
-                                        <li class="mb-1">4. テキストエディタ (メモ帳, VS Code等) に貼り付け (<kbd>Ctrl</kbd>+<kbd>V</kbd> / <kbd>Cmd</kbd>+<kbd>V</kbd>) ます。</li>
-                                        <li>5. ファイル名を付けて保存します。HTMLファイル (<code>.html</code>) として保存し、文字コードは「UTF-8」を推奨します。</li>
-                                    </ul>
+                                    このアプリは単一のHTMLファイルで動作します。ソースコードは、上記「アプリを起動」で開いたページ上で右クリックし、「ページのソースを表示」から確認・保存できます。
                                 </small>
                             </div>
                         </div>
@@ -197,8 +198,9 @@
                      <div class="card mt-4">
                          <div class="card-body">
                              <h5 class="card-title">開発ストーリー</h5>
-                             <p class="small">「Excelでのアサイン管理が煩雑…」という課題から、Webアプリ化を発案。AIに「メンバーとタスクの負荷をタイムラインで見たい」と相談し、コアとなる人日計算ロジックと描画機能を実装。その後、メンバー管理、ラベル機能、そして「この条件で誰かアサインできる？」という実務的な問いに答えるためのシミュレーション機能をAIとの対話を通じて追加開発しました。</p>
-                             <a href="../../ai-creation.html" class="btn btn-outline-info btn-sm">AIとの開発をもっと詳しく</a>
+                             <p class="small">「Excelでのアサイン管理が煩雑…」という課題からWebアプリ化を発案。AIにコアとなる人日計算ロジックと描画機能を依頼し、実務的な問いに答えるシミュレーション機能などを対話を通じて追加開発しました。</p>
+                             <a href="../../ai-creation.html" class="btn btn-outline-info w-100"><i class="bi bi-lightbulb me-1"></i>AI活用のコンセプトを見る</a>
+                             <a href="../../ai-dev-story-tracker.html" class="btn btn-outline-secondary w-100 mt-2"><i class="bi bi-book-half me-1"></i>別アプリの開発日誌も読む</a>
                          </div>
                      </div>
                  </aside>
@@ -208,16 +210,64 @@
 
     <footer class="footer mt-auto">
         <div class="container text-center">
-            <span class="text-muted">&copy; 2025 AIと創るJavaScriptツールキット. All Rights Reserved.</span>
-
+            <span class="text-muted">&copy; <span id="copyright-year"></span> AIと創るJavaScriptツールキット. All Rights Reserved.</span>
+            <script>document.getElementById('copyright-year').textContent = new Date().getFullYear();</script>
             <div class="mt-2">
                 <i class="bi bi-envelope me-1"></i>
                 <a href="mailto:lifebook20210120@gmail.com">lifebook20210120@gmail.com</a>
+                <span class="mx-2 text-muted">|</span>
+                <a href="#" data-bs-toggle="modal" data-bs-target="#termsModal">利用規約</a>
             </div>
         </div>
     </footer>
 
-    <!-- Bootstrap JS Bundle -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/js/bootstrap.bundle.min.js"></script>
+    <div class="modal fade" id="termsModal" tabindex="-1" aria-labelledby="termsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-scrollable modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="termsModalLabel">利用規約</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-start">
+                    <p>本ウェブサイトで提供するアプリケーション（以下「本アプリ」）をご利用いただくにあたり、以下の利用規約（以下「本規約」）を設けております。本アプリの利用を開始した時点で、本規約に同意したものとみなします。</p>
+                    <hr>
+                    <h6 class="fw-bold">第1条（本アプリの特性とデータの取り扱い）</h6>
+                    <ol>
+                        <li>本アプリは、すべての処理がご利用のブラウザ内で完結するローカルアプリケーションです。入力された情報や作成されたデータが、当サイトのサーバーや第三者に送信されることは一切ありません。</li>
+                        <li>データの保存は、ご利用者様自身の操作によるJSONファイルのダウンロードによって行われます。データの管理（バックアップ、保管、パスワード設定など）は、すべてご利用者様の責任において行ってください。</li>
+                    </ol>
+                    <h6 class="fw-bold mt-3">第2条（セキュリティと自己責任）</h6>
+                    <ol>
+                        <li>本アプリで作成・保存したJSONファイルの紛失、破損、情報漏洩などによって生じたいかなる損害についても、当サイトは一切の責任を負いません。</li>
+                        <li>機密情報、重要な個人情報、その他取り扱いに注意を要するデータの入力は、ご利用者様ご自身の判断と責任において行ってください。</li>
+                    </ol>
+                    <h6 class="fw-bold mt-3">第3条（免責事項）</h6>
+                    <ol>
+                        <li>当サイトは、本アプリの正確性、完全性、有用性、特定目的への適合性について、一切の保証をいたしません。</li>
+                        <li>本アプリの利用に起因して生じた、いかなる直接的または間接的な損害（データの損失、業務の中断、逸失利益などを含む）について、当サイトは一切の責任を負わないものとします。</li>
+                        <li>当サイトは、予告なく本アプリの仕様変更、提供の中断または終了を行うことができるものとします。</li>
+                    </ol>
+                    <h6 class="fw-bold mt-3">第4条（著作権）</h6>
+                    <p>本アプリおよび本ウェブサイトに含まれるコンテンツの著作権は、当サイトの制作者に帰属します。</p>
+                    <h6 class="fw-bold mt-3">第5条（禁止事項）</h6>
+                    <p>ご利用者様は、本アプリの利用にあたり、以下の行為を行ってはならないものとします。</p>
+                    <ul>
+                        <li>法令または公序良俗に違反する行為</li>
+                        <li>本アプリのソースコードの無断での再配布、販売（学習や個人的な改変を除く）</li>
+                        <li>当サイトの運営を妨害するおそれのある行為</li>
+                    </ul>
+                    <h6 class="fw-bold mt-3">第6条（規約の変更）</h6>
+                    <p>当サイトは、必要と判断した場合には、ご利用者様に通知することなくいつでも本規約を変更することができるものとします。</p>
+                    <p class="text-end mt-4">制定日: 2024年5月22日</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">閉じる</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS Bundle (5.3.0に更新) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
