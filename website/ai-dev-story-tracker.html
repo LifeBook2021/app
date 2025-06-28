@@ -69,18 +69,34 @@
                 <div class="collapse navbar-collapse" id="navbarNav">
                      <ul class="navbar-nav ms-auto">
                         <li class="nav-item"><a class="nav-link" href="./">ホーム</a></li>
+                        <!-- ▼ ここから修正(1) ▼ -->
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                                 アプリ紹介
                             </a>
                             <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
-                                <!-- 他のアプリへのリンクをここに追加 -->
+                                <li><a class="dropdown-item" href="apps/sticky-notes/index.html">付箋アプリ</a></li>
+                                <li><a class="dropdown-item" href="apps/gantt-chart/index.html">ガントチャート</a></li>
+                                <li><a class="dropdown-item" href="apps/kanban-board/index.html">カンバンボード</a></li>
+                                <li><a class="dropdown-item" href="apps/schedule/index.html">スケジュールチェック</a></li>
+                                <li><a class="dropdown-item" href="apps/mindmap/index.html">マインドマップ</a></li>
+                                <li><a class="dropdown-item" href="apps/todolist/index.html">週間ToDoカレンダー</a></li>
+                                <li><a class="dropdown-item" href="apps/assign-management/index.html">アサイン管理</a></li>
                                 <li><a class="dropdown-item" href="apps/work-time-tracker/index.html">月次作業時間トラッカー</a></li>
-                                <!-- ... -->
                             </ul>
                         </li>
-                        <!-- このページは「AIと創るアイデア」の一部として、そちらをアクティブにする -->
-                        <li class="nav-item"><a class="nav-link active" aria-current="page" href="ai-creation.html">AIと創るアイデア</a></li>
+                        <!-- ▲ ここまで修正(1) ▲ -->
+                        <!-- ▼ ここから修正(2) ▼ -->
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle active" href="#" id="navbarStoryDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                AIと創るアイデア
+                            </a>
+                            <ul class="dropdown-menu" aria-labelledby="navbarStoryDropdown">
+                                <li><a class="dropdown-item" href="ai-creation.html">開発コンセプト</a></li>
+                                <li><a class="dropdown-item active" aria-current="page" href="ai-dev-story-tracker.html">開発日誌：作業時間トラッカー</a></li>
+                            </ul>
+                        </li>
+                        <!-- ▲ ここまで修正(2) ▲ -->
                     </ul>
                 </div>
             </div>
@@ -255,9 +271,52 @@
         </div>
     </footer>
 
-    <!-- 利用規約のモーダル (トップページ等からコピー) -->
+    <!-- 利用規約のモーダル -->
     <div class="modal fade" id="termsModal" tabindex="-1" aria-labelledby="termsModalLabel" aria-hidden="true">
-        <!-- ... モーダルの内容は省略（既存のものと同じものをここに配置） ... -->
+        <div class="modal-dialog modal-dialog-scrollable modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="termsModalLabel">利用規約</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-start">
+                    <!-- ... モーダルの内容は省略（既存のものと同じものをここに配置） ... -->
+                     <p>本ウェブサイトで提供するアプリケーション（以下「本アプリ」）をご利用いただくにあたり、以下の利用規約（以下「本規約」）を設けております。本アプリの利用を開始した時点で、本規約に同意したものとみなします。</p>
+                    <hr>
+                    <h6 class="fw-bold">第1条（本アプリの特性とデータの取り扱い）</h6>
+                    <ol>
+                        <li>本アプリは、すべての処理がご利用のブラウザ内で完結するローカルアプリケーションです。入力された情報や作成されたデータが、当サイトのサーバーや第三者に送信されることは一切ありません。</li>
+                        <li>データの保存は、ご利用者様自身の操作によるJSONファイルのダウンロードによって行われます。データの管理（バックアップ、保管、パスワード設定など）は、すべてご利用者様の責任において行ってください。</li>
+                    </ol>
+                    <h6 class="fw-bold mt-3">第2条（セキュリティと自己責任）</h6>
+                    <ol>
+                        <li>本アプリで作成・保存したJSONファイルの紛失、破損、情報漏洩などによって生じたいかなる損害についても、当サイトは一切の責任を負いません。</li>
+                        <li>機密情報、重要な個人情報、その他取り扱いに注意を要するデータの入力は、ご利用者様ご自身の判断と責任において行ってください。</li>
+                    </ol>
+                    <h6 class="fw-bold mt-3">第3条（免責事項）</h6>
+                    <ol>
+                        <li>当サイトは、本アプリの正確性、完全性、有用性、特定目的への適合性について、一切の保証をいたしません。</li>
+                        <li>本アプリの利用に起因して生じた、いかなる直接的または間接的な損害（データの損失、業務の中断、逸失利益などを含む）について、当サイトは一切の責任を負わないものとします。</li>
+                        <li>当サイトは、予告なく本アプリの仕様変更、提供の中断または終了を行うことができるものとします。</li>
+                    </ol>
+                    <h6 class="fw-bold mt-3">第4条（著作権）</h6>
+                    <p>本アプリおよび本ウェブサイトに含まれるコンテンツの著作権は、当サイトの制作者に帰属します。</p>
+                    <h6 class="fw-bold mt-3">第5条（禁止事項）</h6>
+                    <p>ご利用者様は、本アプリの利用にあたり、以下の行為を行ってはならないものとします。</p>
+                    <ul>
+                        <li>法令または公序良俗に違反する行為</li>
+                        <li>本アプリのソースコードの無断での再配布、販売（学習や個人的な改変を除く）</li>
+                        <li>当サイトの運営を妨害するおそれのある行為</li>
+                    </ul>
+                    <h6 class="fw-bold mt-3">第6条（規約の変更）</h6>
+                    <p>当サイトは、必要と判断した場合には、ご利用者様に通知することなくいつでも本規約を変更することができるものとします。</p>
+                    <p class="text-end mt-4">制定日: 2024年5月22日</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary" data-bs-dismiss="modal">閉じる</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Bootstrap JS Bundle -->
