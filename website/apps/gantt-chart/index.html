@@ -16,8 +16,8 @@
     <meta name="description" content="プロジェクト管理に役立つガントチャートアプリ。タスク管理、期間調整、進捗表示、ビュー切替、JSON保存/読込に対応。AIを活用して開発。">
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Bootstrap Icons CSS -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <!-- Bootstrap Icons CSS (1.11.1に更新) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <!-- Custom CSS -->
     <link rel="stylesheet" href="../../assets/css/style.css"> <!-- 相対パス注意 -->
     <!-- Favicon -->
@@ -25,6 +25,14 @@
     <style>
       body {
         padding-top: 59px;
+      }
+      .screenshot {
+        max-width: 100%;
+        height: auto;
+        border: 1px solid #dee2e6;
+        border-radius: .25rem;
+        margin-bottom: 1rem;
+        box-shadow: 0 .125rem .25rem rgba(0,0,0,.075);
       }
     </style>
 </head>
@@ -58,7 +66,17 @@
                                 <li><a class="dropdown-item" href="../work-time-tracker/index.html">月次作業時間トラッカー</a></li>
                             </ul>
                         </li>
-                        <li class="nav-item"><a class="nav-link" href="../../ai-creation.html">AIと創るアイデア</a></li>
+                        <!-- ▼ ここから修正 ▼ -->
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="navbarStoryDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                AIと創るアイデア
+                            </a>
+                            <ul class="dropdown-menu" aria-labelledby="navbarStoryDropdown">
+                                <li><a class="dropdown-item" href="../../ai-creation.html">開発コンセプト</a></li>
+                                <li><a class="dropdown-item" href="../../ai-dev-story-tracker.html">開発日誌：作業時間トラッカー</a></li>
+                            </ul>
+                        </li>
+                        <!-- ▲ ここまで修正 ▲ -->
                     </ul>
                 </div>
             </div>
@@ -69,13 +87,12 @@
         <div class="row">
             <div class="col-lg-8">
                  <article class="manual-section">
-                    <h1 class="mb-4">📊 ガントチャート (Gantt Chart)</h1>
+                    <h1 class="mb-4">📊 ガントチャート</h1>
                     <p class="lead">プロジェクトのタスクとスケジュールを視覚的に管理するためのツールです。</p>
 
                     <div class="text-center my-4">
-                        <!-- ここにガントチャートのメインスクリーンショット画像を挿入 -->
                         <img src="../../assets/images/gantt-chart-screenshot.png" alt="ガントチャートの画面" class="img-fluid rounded border shadow-sm mb-3 screenshot">
-                        <a href="https://LifeBook2021.github.io/app/Gant/" target="_blank" rel="noopener noreferrer" class="btn btn-success btn-lg">
+                        <a href="app.html" target="_blank" rel="noopener noreferrer" class="btn btn-success btn-lg">
                             <i class="bi bi-play-circle me-2"></i>ガントチャートを使ってみる (無料)
                         </a>
                     </div>
@@ -92,9 +109,8 @@
                     </ul>
 
                     <h2>使い方マニュアル</h2>
-
+                    <!-- ... 記事の後半部分は元のまま ... -->
                     <h3>画面構成</h3>
-                    <!-- ここにガントチャートの画面構成を示す画像を挿入 (ヘッダー、タスクリスト、タイムラインを指し示す) -->
                     <img src="../../assets/images/gantt-chart-layout.png" alt="ガントチャート 画面構成" class="screenshot">
                     <ol>
                         <li><strong>ヘッダー:</strong> タスク追加ボタン、ビュー切替、JSON保存/読込ボタンがあります。</li>
@@ -128,7 +144,6 @@
                                 <li><strong>開始日変更:</strong> バーの左端（少し内側）にマウスを乗せ、左右矢印カーソル<i class="bi bi-arrows-expand"></i>になったらドラッグします。</li>
                                 <li><strong>終了日変更:</strong> バーの右端（少し内側）にマウスを乗せ、左右矢印カーソル<i class="bi bi-arrows-expand"></i>になったらドラッグします。</li>
                             </ul>
-                            <!-- ここに期間変更の操作を示すGIF画像を挿入 -->
                             <img src="../../assets/images/gantt-chart-drag-resize.gif" alt="ガントバーの期間変更操作" class="screenshot mt-2">
                         </li>
                         <li class="list-group-item"><strong>進捗率の変更 (日表示):</strong>
@@ -136,7 +151,6 @@
                                 <li>タスクリストの「進捗率」セルをクリックして数値を入力します。</li>
                                 <li>タイムライン上のガントバーにマウスを乗せると、進捗を示す緑色の部分の右端に小さな丸いハンドル<i class="bi bi-circle-fill" style="font-size:0.8em; color:#666;"></i>が表示されます。このハンドルを左右にドラッグします。</li>
                             </ul>
-                            <!-- ここに進捗変更の操作を示すGIF画像を挿入 -->
                             <img src="../../assets/images/gantt-chart-progress.gif" alt="ガントバーの進捗変更操作" class="screenshot mt-2">
                         </li>
                         <li class="list-group-item"><strong>表示のスクロール:</strong>
@@ -164,51 +178,96 @@
                             <h5 class="card-title">アプリ情報</h5>
                             <ul class="list-unstyled">
                                 <li><strong>バージョン:</strong> 1.0</li>
-                                <li><strong>最終更新:</strong> 2025/04/30</li> <!-- 適宜更新 -->
-                                <li><strong>技術:</strong> HTML, CSS, Vanilla JavaScript, Bootstrap 5</li>
+                                <li><strong>最終更新:</strong> 2024/04/30</li>
+                                <li><strong>技術:</strong> HTML, CSS, JavaScript, Bootstrap 5</li>
                                 <li><strong>外部API:</strong> holidays-jp (祝日データ取得)</li>
                                 <li><strong>開発協力:</strong> Google AI Studio</li>
                             </ul>
-                            <a href="https://LifeBook2021.github.io/app/Gant/" target="_blank" rel="noopener noreferrer" class="btn btn-success w-100 mb-2">
+                            <a href="app.html" target="_blank" rel="noopener noreferrer" class="btn btn-success w-100 mb-2">
                                 <i class="bi bi-play-circle me-2"></i>アプリを起動
                             </a>
                              <div>
                                 <small class="text-muted">
-                                    このアプリのソースコード (HTML, CSS, JavaScript) は、以下の手順で確認・保存できます。
-                                    <ul class="list-unstyled mt-2 mb-0" style="padding-left: 1em; text-indent: -1em;">
-                                        <li class="mb-1">1. 上記「アプリを起動」ボタンでアプリページを開きます。</li>
-                                        <li class="mb-1">2. ページ上で右クリックし、「ページのソースを表示」(または類似の名称) を選択します。</li>
-                                        <li class="mb-1">3. 表示されたコードを全選択 (<kbd>Ctrl</kbd>+<kbd>A</kbd> / <kbd>Cmd</kbd>+<kbd>A</kbd>) し、コピー (<kbd>Ctrl</kbd>+<kbd>C</kbd> / <kbd>Cmd</kbd>+<kbd>C</kbd>) します。</li>
-                                        <li class="mb-1">4. テキストエディタ (メモ帳, VS Code等) に貼り付け (<kbd>Ctrl</kbd>+<kbd>V</kbd> / <kbd>Cmd</kbd>+<kbd>V</kbd>) ます。</li>
-                                        <li>5. ファイル名を付けて保存します。HTMLファイル (<code>.html</code>) として保存し、文字コードは「UTF-8」を推奨します。(必要に応じ CSS/JS を分離)</li>
-                                    </ul>
+                                    このアプリは単一のHTMLファイルで動作します。ソースコードは、上記「アプリを起動」で開いたページ上で右クリックし、「ページのソースを表示」から確認・保存できます。
                                 </small>
                             </div>
                         </div>
                     </div>
+                    <!-- ▼ ここから修正 ▼ -->
                     <div class="card mt-4">
                          <div class="card-body">
                              <h5 class="card-title">開発ストーリー</h5>
-                             <p class="small">「タスクリストと連携するタイムラインが欲しい」という要望からスタート。AIに依頼し、HTML構造、CSS、JavaScriptの基本機能を生成。その後、「バーをドラッグで動かしたい」「進捗もバーで示したい」「祝日を表示したい」といった要求を追加し、AIが提供するコードを修正・統合して完成させました。</p>
-                             <a href="../../ai-creation.html" class="btn btn-outline-info btn-sm">AIとの開発をもっと詳しく</a>
+                             <p class="small">「タスクリストと連携するタイムラインが欲しい」という要望からスタート。AIに基本機能を生成させ、「バーのドラッグ操作」「進捗表示」「祝日表示」などを追加し、AI提供のコードを修正・統合して完成させました。</p>
+                             <a href="../../ai-creation.html" class="btn btn-outline-info w-100"><i class="bi bi-lightbulb me-1"></i>AI活用のコンセプトを見る</a>
+                             <a href="../../ai-dev-story-tracker.html" class="btn btn-outline-secondary w-100 mt-2"><i class="bi bi-book-half me-1"></i>別アプリの開発日誌も読む</a>
                          </div>
                      </div>
+                     <!-- ▲ ここまで修正 ▲ -->
                 </aside>
             </div>
         </div>
     </main>
 
+    <!-- ▼ ここから修正 ▼ -->
     <footer class="footer mt-auto">
         <div class="container text-center">
-            <span class="text-muted">&copy; 2025 AIと創るJavaScriptツールキット. All Rights Reserved.</span>
-
+            <span class="text-muted">&copy; <span id="copyright-year"></span> AIと創るJavaScriptツールキット. All Rights Reserved.</span>
+            <script>document.getElementById('copyright-year').textContent = new Date().getFullYear();</script>
             <div class="mt-2">
                 <i class="bi bi-envelope me-1"></i>
                 <a href="mailto:lifebook20210120@gmail.com">lifebook20210120@gmail.com</a>
+                <span class="mx-2 text-muted">|</span>
+                <a href="#" data-bs-toggle="modal" data-bs-target="#termsModal">利用規約</a>
             </div>
-
         </div>
     </footer>
+
+    <div class="modal fade" id="termsModal" tabindex="-1" aria-labelledby="termsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-scrollable modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="termsModalLabel">利用規約</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-start">
+                    <p>本ウェブサイトで提供するアプリケーション（以下「本アプリ」）をご利用いただくにあたり、以下の利用規約（以下「本規約」）を設けております。本アプリの利用を開始した時点で、本規約に同意したものとみなします。</p>
+                    <hr>
+                    <h6 class="fw-bold">第1条（本アプリの特性とデータの取り扱い）</h6>
+                    <ol>
+                        <li>本アプリは、すべての処理がご利用のブラウザ内で完結するローカルアプリケーションです。入力された情報や作成されたデータが、当サイトのサーバーや第三者に送信されることは一切ありません。</li>
+                        <li>データの保存は、ご利用者様自身の操作によるJSONファイルのダウンロードによって行われます。データの管理（バックアップ、保管、パスワード設定など）は、すべてご利用者様の責任において行ってください。</li>
+                    </ol>
+                    <h6 class="fw-bold mt-3">第2条（セキュリティと自己責任）</h6>
+                    <ol>
+                        <li>本アプリで作成・保存したJSONファイルの紛失、破損、情報漏洩などによって生じたいかなる損害についても、当サイトは一切の責任を負いません。</li>
+                        <li>機密情報、重要な個人情報、その他取り扱いに注意を要するデータの入力は、ご利用者様ご自身の判断と責任において行ってください。</li>
+                    </ol>
+                    <h6 class="fw-bold mt-3">第3条（免責事項）</h6>
+                    <ol>
+                        <li>当サイトは、本アプリの正確性、完全性、有用性、特定目的への適合性について、一切の保証をいたしません。</li>
+                        <li>本アプリの利用に起因して生じた、いかなる直接的または間接的な損害（データの損失、業務の中断、逸失利益などを含む）について、当サイトは一切の責任を負わないものとします。</li>
+                        <li>当サイトは、予告なく本アプリの仕様変更、提供の中断または終了を行うことができるものとします。</li>
+                    </ol>
+                    <h6 class="fw-bold mt-3">第4条（著作権）</h6>
+                    <p>本アプリおよび本ウェブサイトに含まれるコンテンツの著作権は、当サイトの制作者に帰属します。</p>
+                    <h6 class="fw-bold mt-3">第5条（禁止事項）</h6>
+                    <p>ご利用者様は、本アプリの利用にあたり、以下の行為を行ってはならないものとします。</p>
+                    <ul>
+                        <li>法令または公序良俗に違反する行為</li>
+                        <li>本アプリのソースコードの無断での再配布、販売（学習や個人的な改変を除く）</li>
+                        <li>当サイトの運営を妨害するおそれのある行為</li>
+                    </ul>
+                    <h6 class="fw-bold mt-3">第6条（規約の変更）</h6>
+                    <p>当サイトは、必要と判断した場合には、ご利用者様に通知することなくいつでも本規約を変更することができるものとします。</p>
+                    <p class="text-end mt-4">制定日: 2024年5月22日</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">閉じる</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- ▲ ここまで修正 ▲ -->
 
     <!-- Bootstrap JS Bundle -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
