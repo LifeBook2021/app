@@ -16,7 +16,7 @@
     <meta name="description" content="プログラミング不要！生成AI(Google AI Studio等)を活用して、アイデアをJavaScriptのWebアプリとして形にするプロセスを紹介。開発のヒントやAIとの対話のコツも。">
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Bootstrap Icons (追加) -->
+    <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <!-- Custom CSS -->
     <link rel="stylesheet" href="assets/css/style.css">
@@ -54,13 +54,21 @@
                                 <li><a class="dropdown-item" href="apps/schedule/index.html">スケジュールチェック</a></li>
                                 <li><a class="dropdown-item" href="apps/mindmap/index.html">マインドマップ</a></li>
                                 <li><a class="dropdown-item" href="apps/todolist/index.html">週間ToDoカレンダー</a></li>
-                                <!-- ▼ 修正点: パスを修正 ▼ -->
                                 <li><a class="dropdown-item" href="apps/assign-management/index.html">アサイン管理</a></li>
-                                <!-- ▲ 修正点: パスを修正 ▲ -->
                                 <li><a class="dropdown-item" href="apps/work-time-tracker/index.html">月次作業時間トラッカー</a></li>
                             </ul>
                         </li>
-                        <li class="nav-item"><a class="nav-link active" aria-current="page" href="ai-creation.html">AIと創るアイデア</a></li>
+                        <!-- ▼ ここから修正 ▼ -->
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle active" href="#" id="navbarStoryDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                AIと創るアイデア
+                            </a>
+                            <ul class="dropdown-menu" aria-labelledby="navbarStoryDropdown">
+                                <li><a class="dropdown-item active" aria-current="page" href="ai-creation.html">開発コンセプト</a></li>
+                                <li><a class="dropdown-item" href="ai-dev-story-tracker.html">開発日誌：作業時間トラッカー</a></li>
+                            </ul>
+                        </li>
+                        <!-- ▲ ここまで修正 ▲ -->
                     </ul>
                 </div>
             </div>
@@ -71,9 +79,7 @@
         <div class="row ai-creation-section">
             <div class="col-lg-8 offset-lg-2">
                 <h1 class="mb-4">AIと創るアイデアJavaScriptツールキット開発ストーリー</h1>
-                <!-- ▼ 修正点: アプリの数を「6つ」から「8つ」に更新 ▼ -->
                 <p class="lead">このサイトで紹介している8つのWebアプリケーションは、特別なプログラミングスキルがなくても、生成AI（Google AI Studioなど）との対話を通じて開発されました。ここでは、そのプロセスやAI活用のポイントについてご紹介します。</p>
-                <!-- ▲ 修正点: アプリの数を「6つ」から「8つ」に更新 ▲ -->
 
                 <hr class="my-4">
 
@@ -111,8 +117,7 @@
                        <p>複雑な機能は「Vue.jsを使ってカンバンボードを作りたい」のように、特定のライブラリを指定して効率的に開発を進めることも可能です。</p>
                     </li>
                 </ol>
-
-                <!-- ▼ ここから追加 ▼ -->
+                
                 <hr class="my-5">
                 <h3 class="mb-4">具体的な開発事例：『月次作業時間トラッカー』の場合</h3>
                 <div class="card mb-4 shadow-sm">
@@ -132,8 +137,6 @@
                         </div>
                     </div>
                 </div>
-                <!-- ▲ ここまで追加 ▲ -->
-
 
                 <div class="highlight my-4">
                     <h4>AI活用のポイント</h4>
@@ -157,7 +160,6 @@
         </div>
     </main>
 
-    <!-- ▼ 修正点: フッターをトップページと統一 ▼ -->
     <footer class="footer mt-auto">
         <div class="container text-center">
             <span class="text-muted">&copy; <span id="copyright-year"></span> AIと創るJavaScriptツールキット. All Rights Reserved.</span>
@@ -217,7 +219,6 @@
             </div>
         </div>
     </div>
-    <!-- ▲ 修正点: フッターをトップページと統一 ▲ -->
 
     <!-- Bootstrap JS Bundle -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
