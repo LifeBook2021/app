@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-XE2CWFLT80"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-XE2CWFLT80');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI開発日誌：『月次作業時間トラッカー』開発の全記録 - AIと創るJavaScriptツールキット</title>
+    <meta name="description" content="53回にわたるAIとの対話全記録。Gemini 2.5 ProとのチャットだけでWebアプリは作れるのか？エラー、試行錯誤、そして『Chatリセット』の重要性まで、リアルな開発プロセスを完全公開。">
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="assets/css/style.css">
+    <!-- Favicon -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📝</text></svg>">
+    <style>
+      body {
+        padding-top: 59px;
+      }
+      .prompt-block {
+        background-color: #f8f9fa;
+        border-left: 5px solid #0d6efd;
+        padding: 15px;
+        margin: 20px 0;
+        border-radius: 5px;
+      }
+      .prompt-block .prompt-title {
+        font-weight: bold;
+        color: #0d6efd;
+      }
+      .commentary {
+        margin-top: 10px;
+        padding: 10px;
+        background-color: #e9f5ff;
+        border: 1px solid #cce5ff;
+        border-radius: 5px;
+      }
+      .chapter-divider {
+        margin-top: 3rem;
+        margin-bottom: 3rem;
+        border-top: 3px solid #dee2e6;
+      }
+      .takeaway {
+        background-color: #fffbe6;
+        border: 1px solid #ffe58f;
+      }
+    </style>
+</head>
+<body>
+
+    <header>
+        <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+            <div class="container">
+                 <a class="navbar-brand" href="./">
+                    <img src="assets/images/logo.png" alt="サイトロゴ">                     
+                    <span class="fw-bold">AIと創るJavaScriptツールキット</span>
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarNav">
+                     <ul class="navbar-nav ms-auto">
+                        <li class="nav-item"><a class="nav-link" href="./">ホーム</a></li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                アプリ紹介
+                            </a>
+                            <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                                <!-- 他のアプリへのリンクをここに追加 -->
+                                <li><a class="dropdown-item" href="apps/work-time-tracker/index.html">月次作業時間トラッカー</a></li>
+                                <!-- ... -->
+                            </ul>
+                        </li>
+                        <!-- このページは「AIと創るアイデア」の一部として、そちらをアクティブにする -->
+                        <li class="nav-item"><a class="nav-link active" aria-current="page" href="ai-creation.html">AIと創るアイデア</a></li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container mt-4 mb-5">
+        <div class="row">
+            <div class="col-lg-10 offset-lg-1">
+                <article>
+                    <h1 class="mb-3">AI開発日誌：『月次作業時間トラッカー』開発の全記録</h1>
+                    <p class="lead">プログラミングのコードを1行も書かずに、AIとのチャットだけでWebアプリは完成するのか？ここでは、その挑戦の記録として「月次作業時間トラッカー」が生まれるまでの、<strong class="text-primary">53回にわたるAI（Google AI Studio - Gemini 2.5 Pro）との対話の全貌</strong>を公開します。成功も失敗も、すべてがリアルな開発の軌跡です。</p>
+                    <div class="text-center my-4">
+                        <a href="apps/work-time-tracker/index.html" class="btn btn-success btn-lg">
+                           <i class="bi bi-window-fullscreen me-2"></i>完成したアプリを見てみる
+                        </a>
+                    </div>
+
+                    <hr class="chapter-divider">
+
+                    <h2 id="chapter1"><span class="text-muted fw-light">序章：</span> アイデアを言葉にする：最初のプロトタイプ開発</h2>
+                    <p>すべての始まりは「こんなアプリが欲しい」という漠然としたアイデアでした。それをAIに伝わる言葉に変換することから開発はスタートします。</p>
+
+                    <div class="prompt-block">
+                        <p class="prompt-title"><i class="bi bi-lightbulb-fill me-2"></i>指示 1-2：全体像の提示</p>
+                        <p class="mb-0 small">「javascriptを使ってHTMLファイル1つでWEBアプリを作成したい。データの永続性はJSONファイルの保存と読込で実現する。」<br>「月次の作業時間を毎日登録して、最終日になったら月次集計をするアプリを作成したい。日次モードと月次モードの2つの表示モードを持ち...（詳細な仕様説明）」</p>
+                        <div class="commentary">
+                            <p class="mb-0"><strong><i class="bi bi-check-circle-fill text-success me-1"></i>ポイント：</strong>最初にアプリの<strong>「骨格」</strong>と<strong>「最も重要な要件」</strong>をまとめて伝えました。これにより、AIはこれから作るものの全体像を把握でき、一貫性のあるコードを生成しやすくなります。この段階で、完璧なアプリのプロトタイプが生成されました。</p>
+                        </div>
+                    </div>
+
+                    <hr class="chapter-divider">
+
+                    <h2 id="chapter2"><span class="text-muted fw-light">第1章：</span> 機能の肉付け：段階的な要求とUI改善</h2>
+                    <p>骨格ができたら、次は具体的な機能を一つずつ追加していきます。一度に多くを求めず、対話を重ねてアプリを育てていくフェーズです。</p>
+
+                    <div class="prompt-block">
+                        <p class="prompt-title"><i class="bi bi-puzzle-fill me-2"></i>指示 3-7：機能の追加と配置</p>
+                        <p class="mb-0 small">「カテゴリの動的編集機能を追加して」「集計表示を見やすいテーブル形式にして」「日次モードでドラッグ選択できるようにして」「月次集計ボタンはヘッダ部に配置して」...</p>
+                        <div class="commentary">
+                            <p class="mb-0"><strong><i class="bi bi-check-circle-fill text-success me-1"></i>ポイント：</strong>「Aして、Bして、Cして」というように、関連する機能追加やUI改善の要望をまとめて指示。AIはこれらの要求を的確に理解し、コードに反映させていきました。この時点では非常にスムーズな対話が続きます。</p>
+                        </div>
+                    </div>
+
+                    <hr class="chapter-divider">
+
+                    <h2 id="chapter3"><span class="text-muted fw-light">第2章：</span> 予期せぬ壁：表示崩れとの粘り強い対話</h2>
+                    <p>順調に進んでいた開発に、最初の壁が立ちはだかります。複雑なUIを実装したことで発生した「表示崩れ」。ここからAIとの粘り強い対話が始まります。</p>
+
+                    <div class="prompt-block">
+                        <p class="prompt-title"><i class="bi bi-exclamation-triangle-fill text-danger me-2"></i>指示 8：問題の報告</p>
+                        <p class="mb-0 small">「横スクロールするとカテゴリの表示が作業の表示の裏側にまわって見えなくなる」</p>
+                        <div class="commentary">
+                            <p class="mb-0"><strong><i class="bi bi-chat-dots-fill me-1"></i>観察：</strong>具体的な問題点を伝えると、AIはCSSの `position: sticky` や `z-index` を使った修正案を提示。しかし、最初の提案ではうまくいきませんでした。</p>
+                        </div>
+                    </div>
+                     <div class="prompt-block">
+                        <p class="prompt-title"><i class="bi bi-arrow-repeat me-2"></i>指示 9, 11, 13：試行錯誤</p>
+                        <p class="mb-0 small">「完全なコードでください」</p>
+                        <div class="commentary">
+                            <p class="mb-0"><strong><i class="bi bi-exclamation-circle-fill text-warning me-1"></i>教訓：</strong>AIが差分（変更部分）だけを提示してきた結果、別の部分で不整合が起きて問題が解決しないことがありました。そのため、<strong>「完全なコードでください」</strong>と要求し、全体を再生成させることで問題を切り分けました。これはAI開発で非常に有効なテクニックです。</p>
+                        </div>
+                    </div>
+                    <p>この後も「作業部分の前半が切れる」「ヘッダ部も裏側にまわる」といった二次的な問題が発生。その都度、具体的な現象を伝え、修正を繰り返すことで、ようやく表示崩れを解決できました。（指示8〜14）</p>
+
+                    <hr class="chapter-divider">
+                    
+                    <h2 id="chapter4"><span class="text-muted fw-light">第3章：</span> 試練の時：AIの混乱とデバッグ地獄</h2>
+                    <p>最大の難関は、複雑な「カテゴリ編集」機能の実装でした。ドラッグ＆ドロップによる並び替えという高度な要求に対し、AIはついに限界を見せ始めます。</p>
+
+                    <div class="prompt-block">
+                        <p class="prompt-title"><i class="bi bi-code-slash me-2"></i>指示 23：根本的な作り直しを要求</p>
+                        <p class="mb-0 small">「カテゴリ編集のモーダルは見た目も悪く、操作性も悪い。使用する技術についても最適なものを再検討して実装しなおしてほしい」</p>
+                        <div class="commentary">
+                            <p class="mb-0"><strong><i class="bi bi-wrench-adjustable-circle-fill me-1"></i>挑戦：</strong>より良い実装を求めて、AIに大胆な再設計を依頼。AIは `SortableJS` というライブラリの利用を提案し、コードを大幅に書き換えました。</p>
+                        </div>
+                    </div>
+                     <div class="prompt-block">
+                        <p class="prompt-title"><i class="bi bi-bug-fill text-danger me-2"></i>指示 25-31：エラーの連鎖とAIの"故障"</p>
+                        <p class="mb-0 small">「カテゴリと作業が分離して表示される」<br>「Uncaught SyntaxError: Invalid or unexpected token」<br>...</p>
+                        <div class="commentary">
+                            <p class="mb-0"><strong><i class="bi bi-cone-striped text-danger me-1"></i>重大な問題：</strong>ここから事態は暗転します。生成されたコードは不完全で、文法エラーを連発。エラーメッセージを伝えても、AIは同じ不完全なコードを繰り返し生成する<strong>"ループ状態"</strong>に陥ってしまいました。複雑な修正でAIのコンテキスト（文脈）が混乱したのが原因と考えられます。</p>
+                        </div>
+                    </div>
+
+                    <hr class="chapter-divider">
+
+                    <h2 id="chapter5"><span class="text-muted fw-light">第4章：</span> 突破口：『Chatリセット』という名の特効薬</h2>
+                    <p>AIが機能不全に陥ったとき、どうすればいいのか？答えはシンプルでした。「会話をやり直す」ことです。</p>
+
+                    <div class="alert alert-info" role="alert">
+                        <h4 class="alert-heading"><i class="bi bi-arrow-clockwise me-2"></i>テクニック：Chatの新規作成（コンテキストのリセット）</h4>
+                        <p>AIとの対話が行き詰まったら、新しいChatセッションを開始します。そして、<strong>「正常に動作していた時点の最新のコード」</strong>と<strong>「解決したい問題点」</strong>だけを改めて伝えるのです。これにより、AIは混乱した文脈から解放され、フレッシュな状態で問題に取り組むことができます。</p>
+                    </div>
+
+                    <div class="prompt-block">
+                        <p class="prompt-title"><i class="bi bi-chat-right-text-fill me-2"></i>指示 33-34：Chatをリセットして再挑戦</p>
+                        <p class="mb-0 small">「これからJavascriptを使ってHTML1つで作成したWEBアプリのコードを共有します。共有後に要件を伝えます」<br>「カテゴリ編集画面で、カテゴリと作業が分離して表示される問題を解決したい」</p>
+                         <div class="commentary">
+                            <p class="mb-0"><strong><i class="bi bi-magic text-success me-1"></i>効果は絶大：</strong>このリセット戦略は驚くほど効果的でした。AIはすぐに問題を理解し、正しいコードを生成。その後も「ドラッグ＆ドロップが保存されない(指示39)」「カテゴリをまたいで移動させたくない(指示43)」といった細かい問題を一つずつ潰していき、ついに複雑だったカテゴリ編集機能を完成させることができました。</p>
+                        </div>
+                    </div>
+
+                    <hr class="chapter-divider">
+
+                     <h2 id="chapter6"><span class="text-muted fw-light">第5章：</span> 最終仕上げ：タイマー機能とUX向上</h2>
+                    <p>主要機能が固まった後、再びChatをリセットし、最後の大きな機能「タイマー」と、ユーザー体験を向上させるための細かな改善を行いました。</p>
+                     <div class="prompt-block">
+                        <p class="prompt-title"><i class="bi bi-plus-circle-fill me-2"></i>指示 46, 48, 50, 52：最後の仕上げ</p>
+                        <p class="mb-0 small">「タイマーアイコンを配置し、クリックで計測できるようにしてほしい」<br>「データ更新時に保存ボタンの色を変えてほしい」<br>「保存ファイル名にタイムスタンプを付けてほしい」<br>「Escキーでモーダルを閉じるようにしてほしい」</p>
+                        <div class="commentary">
+                            <p class="mb-0"><strong><i class="bi bi-star-fill text-warning me-1"></i>神は細部に宿る：</strong>ここでの指示は、アプリの「使いやすさ」を格段に向上させるものばかりです。AIはこれらの細かな要望にも正確に応え、アプリの完成度を最後の最後まで高めてくれました。</p>
+                        </div>
+                    </div>
+
+                    <hr class="chapter-divider">
+
+                    <h2 id="summary" class="mb-4">【まとめ】この開発ストーリーから得られる5つの教訓</h2>
+                    <p>53回にわたる対話の旅路は、AIとの協働開発における貴重な知見を私たちに与えてくれました。</p>
+
+                    <div class="list-group">
+                        <div class="list-group-item list-group-item-action flex-column align-items-start takeaway">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h5 class="mb-1">1. 指示は「具体的」かつ「段階的」に</h5>
+                            </div>
+                            <p class="mb-1">最初に全体像を伝え、その後は機能単位で小さく、具体的に指示する。これがAIの能力を最大限に引き出す鍵です。</p>
+                        </div>
+                        <div class="list-group-item list-group-item-action flex-column align-items-start takeaway">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h5 class="mb-1">2. 「完全なコード」を要求する勇気</h5>
+                            </div>
+                            <p class="mb-1">AIが提示する差分コードで問題が解決しない場合は、迷わず「完全なコード」を要求しましょう。問題の切り分けに繋がります。</p>
+                        </div>
+                        <div class="list-group-item list-group-item-action flex-column align-items-start takeaway">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h5 class="mb-1">3. エラーメッセージは最高の"対話の材料"</h5>
+                            </div>
+                            <p class="mb-1">エラーは失敗ではありません。エラーメッセージをそのままAIに伝えることで、AIは具体的な問題箇所を特定し、より精度の高い修正案を提示できます。</p>
+                        </div>
+                        <div class="list-group-item list-group-item-action flex-column align-items-start takeaway">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h5 class="mb-1">4. 最強のデバッグ術は「Chatリセット」</h5>
+                            </div>
+                            <p class="mb-1">AIが混乱し始めたら、Chatをリセット。正常なコードと解決したい課題だけを新しいChatで伝え直す。これは、どんな複雑な問題にも通用する最終兵器です。</p>
+                        </div>
+                         <div class="list-group-item list-group-item-action flex-column align-items-start takeaway">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h5 class="mb-1">5. AIはパートナーであり、万能の神ではない</h5>
+                            </div>
+                            <p class="mb-1">AIは驚くほど優秀ですが、間違うことも混乱することもあります。最終的な判断を下し、粘り強く対話を続ける「人間」の役割が、良いプロダクトを生み出すためには不可欠です。</p>
+                        </div>
+                    </div>
+                     <div class="text-center mt-5">
+                         <a href="./#apps" class="btn btn-primary btn-lg">他のアプリも見てみる</a>
+                         <a href="ai-creation.html" class="btn btn-outline-info btn-lg ms-2">開発コンセプトに戻る</a>
+                    </div>
+                </article>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer mt-auto">
+        <div class="container text-center">
+            <span class="text-muted">&copy; <span id="copyright-year"></span> AIと創るJavaScriptツールキット. All Rights Reserved.</span>
+            <script>document.getElementById('copyright-year').textContent = new Date().getFullYear();</script>
+            <div class="mt-2">
+                <i class="bi bi-envelope me-1"></i>
+                <a href="mailto:lifebook20210120@gmail.com">lifebook20210120@gmail.com</a>
+                <span class="mx-2 text-muted">|</span>
+                <a href="#" data-bs-toggle="modal" data-bs-target="#termsModal">利用規約</a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- 利用規約のモーダル (トップページ等からコピー) -->
+    <div class="modal fade" id="termsModal" tabindex="-1" aria-labelledby="termsModalLabel" aria-hidden="true">
+        <!-- ... モーダルの内容は省略（既存のものと同じものをここに配置） ... -->
+    </div>
+
+    <!-- Bootstrap JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
