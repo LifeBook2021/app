@@ -17,9 +17,11 @@
     <meta name="keywords" content="JavaScript, シングルページアプリケーション, SPA, 生成AI, Google AI Studio, プログラミング不要, バイブコーディング, Vibe Coding, アイデア具現化, マインドマップ, スケジュール管理, 付箋, ガントチャート, カンバンボード, ToDoリスト, アサイン管理, 時間管理, タイムトラッカー, Webアプリ, 無料ツール">
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons (追加) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <!-- Custom CSS -->
     <link rel="stylesheet" href="assets/css/style.css">
-    <!-- Favicon (仮) -->
+    <!-- Favicon -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🚀</text></svg>">
     <meta name="google-site-verification" content="s9F_Smk0mbN5kL13-QlpwpYkZtVZqEPF7scD5SoqAiE" />
     <style>
@@ -55,12 +57,20 @@
                                 <li><a class="dropdown-item" href="apps/mindmap/index.html">マインドマップ</a></li>
                                 <li><a class="dropdown-item" href="apps/todolist/index.html">週間ToDoカレンダー</a></li>
                                 <li><a class="dropdown-item" href="apps/assign-management/index.html">アサイン管理</a></li>
-                                <!-- ▼ ここから追加 ▼ -->
                                 <li><a class="dropdown-item" href="apps/work-time-tracker/index.html">月次作業時間トラッカー</a></li>
-                                <!-- ▲ ここまで追加 ▲ -->
                             </ul>
                         </li>
-                        <li class="nav-item"><a class="nav-link" href="ai-creation.html">AIと創るアイデア</a></li>
+                        <!-- ▼ ここから修正 ▼ -->
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="navbarStoryDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                AIと創るアイデア
+                            </a>
+                            <ul class="dropdown-menu" aria-labelledby="navbarStoryDropdown">
+                                <li><a class="dropdown-item" href="ai-creation.html">開発コンセプト</a></li>
+                                <li><a class="dropdown-item" href="ai-dev-story-tracker.html">開発日誌：作業時間トラッカー</a></li>
+                            </ul>
+                        </li>
+                        <!-- ▲ ここまで修正 ▲ -->
                     </ul>
                 </div>
             </div>
@@ -72,7 +82,6 @@
         <section class="hero-section">
             <div class="container">
                 <h1>そのアイデア、AIと共に形にしませんか？</h1>
-                <!-- 変更点：ツールの数を8つに更新 -->
                 <p class="lead">JavaScriptの力と生成AIのサポートがあれば、コーディング経験がなくても高度なWebアプリケーションを創り出せます。昨今「<strong class="text-info">バイブコーディング (Vibe Coding)</strong>」とも呼ばれるこの手法で、あなたのアイデアを形にしませんか？このサイトでは、その実例となる8つのツールと、AIを活用した開発プロセスを紹介します。</p>
                 <a href="#apps" class="btn btn-primary btn-lg">アプリを試す</a>
                 <a href="ai-creation.html" class="btn btn-outline-light btn-lg ms-2">AI活用ストーリーを読む</a>
@@ -169,7 +178,7 @@
                         </div>
                     </div>
                 </div>
-                <!-- ▼ ここから追加 ▼ -->
+                <!-- 月次作業時間トラッカー -->
                 <div class="col-lg-4 col-md-6">
                     <div class="card app-card">
                         <img src="assets/images/work-time-tracker-screenshot.png" class="card-img-top" alt="月次作業時間トラッカー スクリーンショット">
@@ -180,7 +189,6 @@
                         </div>
                     </div>
                 </div>
-                <!-- ▲ ここまで追加 ▲ -->
             </div>
         </section>
 
@@ -221,11 +229,9 @@
 
     <footer class="footer mt-auto">
         <div class="container text-center">
-            <!-- 変更点: コピーライトの年をJavaScriptで動的に表示するように変更 -->
             <span class="text-muted">&copy; <span id="copyright-year"></span> AIと創るJavaScriptツールキット. All Rights Reserved.</span>
             <script>document.getElementById('copyright-year').textContent = new Date().getFullYear();</script>
 
-            <!-- 変更点: 利用規約へのリンクを追加 -->
             <div class="mt-2">
                 <i class="bi bi-envelope me-1"></i>
                 <a href="mailto:lifebook20210120@gmail.com">lifebook20210120@gmail.com</a>
@@ -235,7 +241,7 @@
         </div>
     </footer>
 
-    <!-- 変更点: ここから利用規約のモーダルを追加 -->
+    <!-- 利用規約のモーダル -->
     <div class="modal fade" id="termsModal" tabindex="-1" aria-labelledby="termsModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-scrollable modal-lg">
             <div class="modal-content">
@@ -286,7 +292,6 @@
             </div>
         </div>
     </div>
-    <!-- 変更点: 利用規約モーダルの追加ここまで -->
 
     <!-- Bootstrap JS Bundle -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
